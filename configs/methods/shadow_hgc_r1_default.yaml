@@ -1,0 +1,39 @@
+method: Shadow-HGC-R-1
+dataset: toy
+target_type: paper
+directed_relations:
+  - [paper, cite_ref, paper]
+  - [paper, cited_by, paper]
+  - [author, writes, paper]
+feature_dim: 4
+projection_type: fixed_random_projection
+standardization_scope: train_only
+M_tau: 4
+M_r:
+  paper--cite_ref-->paper: 3
+  paper--cited_by-->paper: 3
+  author--writes-->paper: 3
+k_s: 2
+shadow_assignment_b: 1
+loss_type: cell_weighted_ce
+seed: 0
+resource_budget:
+  max_full_edge_scans_per_relation: 2
+  train_target_only_demand: true
+relation:
+  direction: source_to_destination
+  normalization: destination_row_alpha
+prototype:
+  clustering: class_wise_minibatch_kmeans
+  eta: 0.1
+skeleton:
+  target_target: true
+  renormalize_topk: false
+shadow:
+  residual_features_signed: true
+  edge_weights_nonnegative: true
+io:
+  train_target_only_demand: true
+  max_full_edge_scans_per_relation: 2
+  active_source_materialization: true
+  target_target_edge_slice_cache: true

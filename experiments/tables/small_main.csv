@@ -1,0 +1,25 @@
+dataset,method,mode,M_tau,seeds,accuracy_mean,accuracy_std,status
+acm,Shadow-HGC-R-1,processed_local,8,0 1 2,0.434215,0.008709,completed
+acm,Random-HG,target_feature_coreset_baseline,8,0 1 2,0.354265,0.015140,completed
+acm,Herding-HG,target_feature_coreset_baseline,8,0 1 2,0.370633,0.008983,completed
+acm,K-Center-HG,target_feature_coreset_baseline,8,0 1 2,0.347655,0.027178,completed
+acm,Shadow-HGC-R-1,processed_local,16,0 1 2,0.437834,0.013944,completed
+acm,Random-HG,target_feature_coreset_baseline,16,0 1 2,0.344193,0.027861,completed
+acm,Herding-HG,target_feature_coreset_baseline,16,0 1 2,0.371577,0.008816,completed
+acm,K-Center-HG,target_feature_coreset_baseline,16,0 1 2,0.358514,0.008911,completed
+dblp,Shadow-HGC-R-1,processed_local,8,0 1 2,0.315728,0.035363,completed
+dblp,Random-HG,target_feature_coreset_baseline,8,0 1 2,0.264906,0.014393,completed
+dblp,Herding-HG,target_feature_coreset_baseline,8,0 1 2,0.300704,0.016989,completed
+dblp,K-Center-HG,target_feature_coreset_baseline,8,0 1 2,0.265493,0.025829,completed
+dblp,Shadow-HGC-R-1,processed_local,16,0 1 2,0.313146,0.032711,completed
+dblp,Random-HG,target_feature_coreset_baseline,16,0 1 2,0.277347,0.013400,completed
+dblp,Herding-HG,target_feature_coreset_baseline,16,0 1 2,0.292840,0.018412,completed
+dblp,K-Center-HG,target_feature_coreset_baseline,16,0 1 2,0.276056,0.030267,completed
+imdb,Shadow-HGC-R-1,processed_local,8,0 1 2,0.274308,0.012581,completed
+imdb,Random-HG,target_feature_coreset_baseline,8,0 1 2,0.219030,0.025569,completed
+imdb,Herding-HG,target_feature_coreset_baseline,8,0 1 2,0.242869,0.010127,completed
+imdb,K-Center-HG,target_feature_coreset_baseline,8,0 1 2,0.223090,0.038994,completed
+imdb,Shadow-HGC-R-1,processed_local,16,0 1 2,0.276390,0.008426,completed
+imdb,Random-HG,target_feature_coreset_baseline,16,0 1 2,0.225172,0.035159,completed
+imdb,Herding-HG,target_feature_coreset_baseline,16,0 1 2,0.227775,0.020098,completed
+imdb,K-Center-HG,target_feature_coreset_baseline,16,0 1 2,0.215803,0.026775,completed

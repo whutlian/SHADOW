@@ -1,0 +1,119 @@
+{
+  "method": "Shadow-HGC-R-1",
+  "dataset": "ogbn-arxiv",
+  "split": "processed_local",
+  "target_type": "paper",
+  "directed_relations": [
+    "paper--cite_ref-->paper",
+    "paper--cited_by-->paper"
+  ],
+  "M_tau": 16,
+  "M_r": {
+    "paper--cite_ref-->paper": 4,
+    "paper--cited_by-->paper": 4
+  },
+  "k_s": 4,
+  "feature_dim": 8,
+  "target_input_dim": 30,
+  "seed": 0,
+  "condensed_nodes_by_type": {
+    "paper": 48
+  },
+  "condensed_edges_by_relation": {
+    "paper--cite_ref-->paper": 200,
+    "paper--cited_by-->paper": 200
+  },
+  "condensation_time": 3.9766112000000007,
+  "training_time": 0.001618199999999348,
+  "inference_time": 0.09297169999999966,
+  "peak_cpu_ram": 2078756864,
+  "peak_gpu_ram": 0,
+  "disk_bytes": 0,
+  "num_full_edge_scans": 0,
+  "edge_slice_cache_bytes": 0,
+  "demand_edge_chunk_size": 500000,
+  "inference_edge_chunk_size": 500000,
+  "accuracy": 0.24461452662944794,
+  "macro_f1": 0.03159439222072251,
+  "diagnostics": {
+    "paper--cite_ref-->paper": {
+      "SkeletonMassCoverage": 0.7682285585072105,
+      "ResidualEnergy": 0.6828284552002486,
+      "ShadowReconErr": 0.2941480764410105,
+      "gamma": 1.0166826248168945,
+      "shadow_norms": {
+        "min": 1.0670770406723022,
+        "median": 1.114763617515564,
+        "max": 1.7488383054733276
+      }
+    },
+    "paper--cited_by-->paper": {
+      "SkeletonMassCoverage": 0.7636216314501607,
+      "ResidualEnergy": 0.6082498473645669,
+      "ShadowReconErr": 0.21035694844291236,
+      "gamma": 0.9991132616996765,
+      "shadow_norms": {
+        "min": 1.1027053594589233,
+        "median": 1.3925683498382568,
+        "max": 2.6163954734802246
+      }
+    }
+  },
+  "target_prototypes_by_class": {
+    "0": 1,
+    "1": 1,
+    "2": 1,
+    "3": 1,
+    "4": 1,
+    "5": 1,
+    "6": 1,
+    "7": 1,
+    "8": 1,
+    "9": 1,
+    "10": 1,
+    "11": 1,
+    "12": 1,
+    "13": 1,
+    "14": 1,
+    "15": 1,
+    "16": 1,
+    "17": 1,
+    "18": 1,
+    "19": 1,
+    "20": 1,
+    "21": 1,
+    "22": 1,
+    "23": 1,
+    "24": 1,
+    "25": 1,
+    "26": 1,
+    "27": 1,
+    "28": 1,
+    "29": 1,
+    "30": 1,
+    "31": 1,
+    "32": 1,
+    "33": 1,
+    "34": 1,
+    "35": 1,
+    "36": 1,
+    "37": 1,
+    "38": 1,
+    "39": 1
+  },
+  "cluster_size_distribution": {
+    "min": 21.0,
+    "median": 1290.0,
+    "max": 16284.0
+  },
+  "ablation": {
+    "include_degree_features": true,
+    "residual_shadow": true,
+    "shadow_mode": "virtual_demand_shadow",
+    "loss_type": "weighted",
+    "calibration_enabled": true
+  },
+  "schema_preserved": true,
+  "all_edge_weights_nonnegative": true,
+  "residual_shadows_signed": true
+}

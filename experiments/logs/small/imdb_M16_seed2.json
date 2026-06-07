@@ -1,0 +1,116 @@
+{
+  "method": "Shadow-HGC-R-1",
+  "dataset": "imdb",
+  "split": "processed_local",
+  "target_type": "movie",
+  "directed_relations": [
+    "director--directs-->movie",
+    "actor--acts_in-->movie",
+    "keyword--keyword_in-->movie"
+  ],
+  "M_tau": 16,
+  "M_r": {
+    "director--directs-->movie": 4,
+    "actor--acts_in-->movie": 4,
+    "keyword--keyword_in-->movie": 4
+  },
+  "k_s": 2,
+  "feature_dim": 8,
+  "target_input_dim": 41,
+  "seed": 2,
+  "condensed_nodes_by_type": {
+    "movie": 16,
+    "director": 4,
+    "actor": 4,
+    "keyword": 4
+  },
+  "condensed_edges_by_relation": {
+    "director--directs-->movie": 16,
+    "actor--acts_in-->movie": 16,
+    "keyword--keyword_in-->movie": 16
+  },
+  "condensation_time": 0.6830485999999993,
+  "training_time": 0.0016970000000000596,
+  "inference_time": 0.0021536000000033084,
+  "peak_cpu_ram": 1168400384,
+  "peak_gpu_ram": 0,
+  "disk_bytes": 0,
+  "num_full_edge_scans": 0,
+  "edge_slice_cache_bytes": 0,
+  "demand_edge_chunk_size": 500000,
+  "inference_edge_chunk_size": 500000,
+  "accuracy": 0.26639601588249207,
+  "macro_f1": 0.20559414625167846,
+  "diagnostics": {
+    "director--directs-->movie": {
+      "SkeletonMassCoverage": 0.0,
+      "ResidualEnergy": 1.0,
+      "ShadowReconErr": 0.7591093570372144,
+      "gamma": 1.2965234518051147,
+      "shadow_norms": {
+        "min": 0.2877572476863861,
+        "median": 0.2982467710971832,
+        "max": 0.6010154485702515
+      },
+      "real_source_norms": {
+        "min": 0.28387677669525146,
+        "median": 2.471895456314087,
+        "max": 12.562474250793457
+      }
+    },
+    "actor--acts_in-->movie": {
+      "SkeletonMassCoverage": 0.0,
+      "ResidualEnergy": 1.0,
+      "ShadowReconErr": 0.7038702473460691,
+      "gamma": 1.4659507274627686,
+      "shadow_norms": {
+        "min": 0.2932688891887665,
+        "median": 0.3168303966522217,
+        "max": 0.44323083758354187
+      },
+      "real_source_norms": {
+        "min": 0.29844892024993896,
+        "median": 2.4519565105438232,
+        "max": 10.05134105682373
+      }
+    },
+    "keyword--keyword_in-->movie": {
+      "SkeletonMassCoverage": 0.0,
+      "ResidualEnergy": 1.0,
+      "ShadowReconErr": 0.6302260476028732,
+      "gamma": 1.1669363975524902,
+      "shadow_norms": {
+        "min": 0.4782354533672333,
+        "median": 0.4899797737598419,
+        "max": 0.7188183069229126
+      },
+      "real_source_norms": {
+        "min": 0.418131560087204,
+        "median": 2.043513774871826,
+        "max": 30.997251510620117
+      }
+    }
+  },
+  "target_prototypes_by_class": {
+    "0": 4,
+    "1": 4,
+    "2": 3,
+    "3": 2,
+    "4": 3
+  },
+  "cluster_size_distribution": {
+    "min": 40.0,
+    "median": 87.0,
+    "max": 117.0
+  },
+  "ablation": {
+    "include_degree_features": true,
+    "residual_shadow": true,
+    "shadow_mode": "virtual_demand_shadow",
+    "loss_type": "weighted",
+    "calibration_enabled": true
+  },
+  "schema_preserved": true,
+  "all_edge_weights_nonnegative": true,
+  "residual_shadows_signed": true
+}

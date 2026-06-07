@@ -1,0 +1,6 @@
+dataset: imdb
+target_type: movie
+directed_relations:
+  - [actor, acts_in, movie]
+  - [director, directs, movie]
+standardization_scope: documented_small_transductive_or_train_only

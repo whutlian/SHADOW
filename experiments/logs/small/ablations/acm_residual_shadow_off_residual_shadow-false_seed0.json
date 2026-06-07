@@ -1,0 +1,142 @@
+{
+  "method": "Shadow-HGC-R-1",
+  "dataset": "acm",
+  "split": "processed_local",
+  "target_type": "paper",
+  "directed_relations": [
+    "paper--cite_ref-->paper",
+    "paper--cited_by-->paper",
+    "author--writes-->paper",
+    "subject--subject_of-->paper",
+    "term--term_in-->paper"
+  ],
+  "M_tau": 4,
+  "M_r": {
+    "paper--cite_ref-->paper": 2,
+    "paper--cited_by-->paper": 2,
+    "author--writes-->paper": 2,
+    "subject--subject_of-->paper": 2,
+    "term--term_in-->paper": 2
+  },
+  "k_s": 2,
+  "feature_dim": 4,
+  "target_input_dim": 59,
+  "seed": 0,
+  "condensed_nodes_by_type": {
+    "paper": 6,
+    "author": 2,
+    "subject": 2,
+    "term": 2
+  },
+  "condensed_edges_by_relation": {
+    "paper--cite_ref-->paper": 12,
+    "paper--cited_by-->paper": 12,
+    "author--writes-->paper": 4,
+    "subject--subject_of-->paper": 4,
+    "term--term_in-->paper": 4
+  },
+  "condensation_time": 0.530506299999999,
+  "training_time": 0.0014599999999997948,
+  "inference_time": 0.004368499999999997,
+  "peak_cpu_ram": 834519040,
+  "peak_gpu_ram": 0,
+  "disk_bytes": 0,
+  "num_full_edge_scans": 0,
+  "edge_slice_cache_bytes": 0,
+  "demand_edge_chunk_size": 500000,
+  "inference_edge_chunk_size": 500000,
+  "accuracy": 0.40509915351867676,
+  "macro_f1": 0.35062752415736514,
+  "diagnostics": {
+    "paper--cite_ref-->paper": {
+      "SkeletonMassCoverage": 0.9617547708483491,
+      "ResidualEnergy": 0.7282338957669914,
+      "ShadowReconErr": 0.9999999999997252,
+      "gamma": 1.0,
+      "shadow_norms": {
+        "min": 0.0,
+        "median": 0.0,
+        "max": 0.0
+      }
+    },
+    "paper--cited_by-->paper": {
+      "SkeletonMassCoverage": 0.9023263162212836,
+      "ResidualEnergy": 0.7505741332325712,
+      "ShadowReconErr": 0.9999999999998128,
+      "gamma": 1.0,
+      "shadow_norms": {
+        "min": 0.0,
+        "median": 0.0,
+        "max": 0.0
+      }
+    },
+    "author--writes-->paper": {
+      "SkeletonMassCoverage": 0.0,
+      "ResidualEnergy": 1.0,
+      "ShadowReconErr": 0.36452503023006194,
+      "gamma": 0.9629696607589722,
+      "shadow_norms": {
+        "min": 0.7836319804191589,
+        "median": 0.7836319804191589,
+        "max": 0.8229616284370422
+      },
+      "real_source_norms": {
+        "min": 0.27699437737464905,
+        "median": 1.6718189716339111,
+        "max": 9.87015151977539
+      }
+    },
+    "subject--subject_of-->paper": {
+      "SkeletonMassCoverage": 0.0,
+      "ResidualEnergy": 1.0,
+      "ShadowReconErr": 0.07317234115556807,
+      "gamma": 0.9362001419067383,
+      "shadow_norms": {
+        "min": 3.3968262672424316,
+        "median": 3.3968262672424316,
+        "max": 3.6285653114318848
+      },
+      "real_source_norms": {
+        "min": 0.32821765542030334,
+        "median": 1.5273665189743042,
+        "max": 4.823598384857178
+      }
+    },
+    "term--term_in-->paper": {
+      "SkeletonMassCoverage": 0.0,
+      "ResidualEnergy": 1.0,
+      "ShadowReconErr": 0.04430798116803409,
+      "gamma": 0.9988225102424622,
+      "shadow_norms": {
+        "min": 0.09348131716251373,
+        "median": 0.09348131716251373,
+        "max": 0.12372845411300659
+      },
+      "real_source_norms": {
+        "min": 0.02883344516158104,
+        "median": 0.3679675757884979,
+        "max": 1.7969526052474976
+      }
+    }
+  },
+  "target_prototypes_by_class": {
+    "0": 1,
+    "1": 1,
+    "2": 2
+  },
+  "cluster_size_distribution": {
+    "min": 167.0,
+    "median": 167.0,
+    "max": 293.0
+  },
+  "ablation": {
+    "include_degree_features": true,
+    "residual_shadow": false,
+    "shadow_mode": "virtual_demand_shadow",
+    "loss_type": "weighted",
+    "calibration_enabled": true
+  },
+  "schema_preserved": true,
+  "all_edge_weights_nonnegative": true,
+  "residual_shadows_signed": true
+}

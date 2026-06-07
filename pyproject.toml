@@ -1,0 +1,15 @@
+[project]
+name = "shadow-hgc-r1"
+version = "0.1.0"
+description = "Shadow-HGC-R-1 research code for target-type heterogeneous graph condensation"
+requires-python = ">=3.9"
+dependencies = [
+  "numpy",
+  "torch",
+  "scikit-learn",
+  "pyyaml",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

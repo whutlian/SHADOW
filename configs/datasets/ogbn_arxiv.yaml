@@ -1,0 +1,6 @@
+dataset: ogbn-arxiv
+target_type: paper
+directed_relations:
+  - [paper, cite_ref, paper]
+  - [paper, cited_by, paper]
+standardization_scope: train_only

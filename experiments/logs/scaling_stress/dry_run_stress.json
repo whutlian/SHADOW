@@ -1,0 +1,17 @@
+{
+  "dataset": "synthetic_streaming_stress",
+  "num_edges": 20000000,
+  "num_src_nodes": 10000,
+  "num_dst_nodes": 10000,
+  "num_train_targets": 1000,
+  "feature_dim": 16,
+  "chunk_size": 1000000,
+  "full_edge_scans": 2,
+  "active_source_count": 10000,
+  "edge_slice_cache_bytes": 2395704,
+  "demand_shape": [
+    1000,
+    16
+  ],
+  "cache_all_targets": false
+}

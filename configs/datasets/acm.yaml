@@ -1,0 +1,7 @@
+dataset: acm
+target_type: paper
+directed_relations:
+  - [paper, cite_ref, paper]
+  - [paper, cited_by, paper]
+  - [author, writes, paper]
+standardization_scope: documented_small_transductive_or_train_only

@@ -1,0 +1,1 @@
+"""Condensed graph materialization utilities."""

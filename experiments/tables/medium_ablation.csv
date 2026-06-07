@@ -1,0 +1,11 @@
+dataset,ablation,setting,seed,accuracy,skeleton_coverage_mean,residual_energy_mean,shadow_recon_err_mean,condensation_time,training_time,status
+ogbn-arxiv,target_target_skeleton,k_s=0,0,0.241446,0.000000,1.000000,0.293195,3.962379,0.001666,completed
+ogbn-arxiv,target_target_skeleton,k_s=1,0,0.243648,0.528638,0.747695,0.251759,3.985248,0.001448,completed
+ogbn-arxiv,target_target_skeleton,k_s=2,0,0.242927,0.648044,0.693724,0.256383,3.949201,0.001016,completed
+ogbn-arxiv,target_target_skeleton,k_s=4,0,0.244615,0.765925,0.645539,0.252253,3.976611,0.001618,completed
+ogbn-arxiv,target_target_skeleton,k_s=8,0,0.244244,0.878568,0.605760,0.262278,3.934342,0.001669,completed
+ogbn-products,target_target_skeleton,k_s=0,0,0.053704,0.000000,1.000000,0.110570,27.940683,0.040282,completed
+ogbn-products,target_target_skeleton,k_s=1,0,0.053828,0.647667,0.799383,0.136544,26.985672,0.029621,completed
+ogbn-products,target_target_skeleton,k_s=2,0,0.054309,0.768536,0.758919,0.138984,30.391392,0.038771,completed
+ogbn-products,target_target_skeleton,k_s=4,0,0.055404,0.872468,0.724624,0.140327,29.036228,0.054369,completed
+ogbn-products,target_target_skeleton,k_s=8,0,0.054860,0.946826,0.699621,0.143868,27.767318,0.047720,completed

@@ -1,0 +1,6 @@
+dataset: ogbn-products
+target_type: product
+directed_relations:
+  - [product, co_purchase, product]
+  - [product, co_purchased_by, product]
+standardization_scope: train_only

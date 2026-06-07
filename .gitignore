@@ -1,0 +1,34 @@
+# Python/runtime cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local environments
+.venv/
+venv/
+env/
+.env
+.env.*
+
+# Large downloaded datasets and local benchmark caches
+/dataset/
+/data/
+*.pt
+*.pth
+*.ckpt
+*.npy
+*.npz
+*.memmap
+
+# One-off local debug attempts; canonical experiment outputs remain tracked.
+/experiments/logs/medium_products_attempt/
+/experiments/tables/medium_products_attempt*.csv
+
+# Local/editor metadata
+.idea/
+.vscode/
+*.swp
+Thumbs.db
+Desktop.ini

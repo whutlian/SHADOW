@@ -1,0 +1,3 @@
+dataset,method,status,accuracy,condensation_time,training_time,inference_time
+ogbn-arxiv,Shadow-HGC-R-1,completed,0.242927,5.878209,0.008376,0.106079
+ogbn-products,Shadow-HGC-R-1,completed,0.054309,16.751193,0.000883,38.973399

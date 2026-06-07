@@ -1,0 +1,121 @@
+{
+  "method": "Shadow-HGC-R-1",
+  "dataset": "ogbn-products",
+  "split": "processed_local",
+  "target_type": "product",
+  "directed_relations": [
+    "product--co_purchase-->product",
+    "product--co_purchased_by-->product"
+  ],
+  "M_tau": 16,
+  "M_r": {
+    "product--co_purchase-->product": 4,
+    "product--co_purchased_by-->product": 4
+  },
+  "k_s": 2,
+  "feature_dim": 8,
+  "target_input_dim": 30,
+  "seed": 0,
+  "condensed_nodes_by_type": {
+    "product": 50
+  },
+  "condensed_edges_by_relation": {
+    "product--co_purchase-->product": 125,
+    "product--co_purchased_by-->product": 125
+  },
+  "condensation_time": 30.391392399999972,
+  "training_time": 0.03877119999998513,
+  "inference_time": 64.41604440000003,
+  "peak_cpu_ram": 7723732992,
+  "peak_gpu_ram": 0,
+  "disk_bytes": 0,
+  "num_full_edge_scans": 0,
+  "edge_slice_cache_bytes": 0,
+  "demand_edge_chunk_size": 500000,
+  "inference_edge_chunk_size": 500000,
+  "accuracy": 0.054308656603097916,
+  "macro_f1": 0.008875331653187112,
+  "diagnostics": {
+    "product--co_purchase-->product": {
+      "SkeletonMassCoverage": 0.768536172253657,
+      "ResidualEnergy": 0.7589187805028875,
+      "ShadowReconErr": 0.12821224847298635,
+      "gamma": 0.9999998211860657,
+      "shadow_norms": {
+        "min": 3.9213876724243164,
+        "median": 3.942105770111084,
+        "max": 6.126907825469971
+      }
+    },
+    "product--co_purchased_by-->product": {
+      "SkeletonMassCoverage": 0.768536172253657,
+      "ResidualEnergy": 0.7589187805028875,
+      "ShadowReconErr": 0.1497550031504102,
+      "gamma": 0.9988848567008972,
+      "shadow_norms": {
+        "min": 3.6679933071136475,
+        "median": 4.71819543838501,
+        "max": 6.213081359863281
+      }
+    }
+  },
+  "target_prototypes_by_class": {
+    "0": 1,
+    "1": 1,
+    "2": 1,
+    "3": 1,
+    "4": 1,
+    "5": 1,
+    "6": 1,
+    "7": 1,
+    "8": 1,
+    "9": 1,
+    "10": 1,
+    "11": 1,
+    "12": 1,
+    "13": 1,
+    "14": 1,
+    "15": 1,
+    "16": 1,
+    "17": 1,
+    "18": 1,
+    "19": 1,
+    "20": 1,
+    "21": 1,
+    "22": 1,
+    "23": 1,
+    "24": 1,
+    "25": 1,
+    "26": 1,
+    "27": 1,
+    "28": 1,
+    "29": 1,
+    "30": 1,
+    "31": 1,
+    "32": 1,
+    "33": 1,
+    "34": 1,
+    "35": 1,
+    "36": 1,
+    "37": 1,
+    "38": 1,
+    "39": 1,
+    "40": 1,
+    "41": 1
+  },
+  "cluster_size_distribution": {
+    "min": 1.0,
+    "median": 461.0,
+    "max": 60630.0
+  },
+  "ablation": {
+    "include_degree_features": true,
+    "residual_shadow": true,
+    "shadow_mode": "virtual_demand_shadow",
+    "loss_type": "weighted",
+    "calibration_enabled": true
+  },
+  "schema_preserved": true,
+  "all_edge_weights_nonnegative": true,
+  "residual_shadows_signed": true
+}

@@ -1,0 +1,5 @@
+"""Shadow-HGC-R-1 research code package."""
+
+__all__ = ["__version__"]
+
+__version__ = "0.1.0"
