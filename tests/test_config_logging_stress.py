@@ -1,6 +1,7 @@
 import json
+import pytest
 
-from shadow_hgc.config import load_experiment_config
+from shadow_hgc.config import load_experiment_config, validate_experiment_config
 from shadow_hgc.data.edge_stream import run_synthetic_streaming_stress
 from shadow_hgc.eval.logging import write_json_summary
 
@@ -12,6 +13,23 @@ def test_default_config_contains_required_shadow_hgc_fields():
     assert config["target_type"] == "paper"
     assert config["relation"]["normalization"] == "destination_row_alpha"
     assert config["io"]["train_target_only_demand"] is True
+
+
+def test_config_validation_rejects_invalid_projection_loss_and_model():
+    config = load_experiment_config("configs/methods/shadow_hgc_r1_default.yaml")
+    config["projection_type"] = "pca"
+    with pytest.raises(ValueError, match="projection_type"):
+        validate_experiment_config(config)
+
+    config = load_experiment_config("configs/methods/shadow_hgc_r1_default.yaml")
+    config["loss_type"] = "bad_loss"
+    with pytest.raises(ValueError, match="loss_type"):
+        validate_experiment_config(config)
+
+    config = load_experiment_config("configs/methods/shadow_hgc_r1_default.yaml")
+    config["model"] = "hgt"
+    with pytest.raises(ValueError, match="model"):
+        validate_experiment_config(config)
 
 
 def test_json_summary_writer_creates_parent_directory(tmp_path):

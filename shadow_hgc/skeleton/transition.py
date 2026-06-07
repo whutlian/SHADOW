@@ -69,6 +69,7 @@ def compute_target_target_residual_skeleton(
     edge_index: torch.Tensor,
     alpha: torch.Tensor,
     k_s: int,
+    demand_row_by_target: torch.Tensor | None = None,
     eps: float = 1e-12,
 ) -> SkeletonResult:
     """Decompose target-target demand into sparse skeleton plus residual demand."""
@@ -82,7 +83,12 @@ def compute_target_target_residual_skeleton(
     D = torch.zeros(num_cells, demand.shape[1], dtype=demand.dtype, device=demand.device)
     for cell_id, members in enumerate(cell_members):
         if len(members) > 0:
-            D[cell_id] = demand[members.to(demand.device)].mean(dim=0)
+            rows = members.to(demand.device)
+            if demand_row_by_target is not None:
+                rows = demand_row_by_target.to(demand.device)[rows]
+                rows = rows[rows >= 0]
+            if rows.numel() > 0:
+                D[cell_id] = demand[rows].mean(dim=0)
 
     S = compute_transition_mass(
         edge_index=edge_index,

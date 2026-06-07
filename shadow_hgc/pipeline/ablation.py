@@ -21,6 +21,9 @@ def _row(dataset: str, ablation: str, setting: str, seed: int, summary: dict, st
         "setting": setting,
         "seed": seed,
         "accuracy": "" if summary.get("accuracy") is None else f"{summary['accuracy']:.6f}",
+        "macro_f1": "" if summary.get("macro_f1") is None else f"{summary['macro_f1']:.6f}",
+        "num_predicted_classes": summary.get("num_predicted_classes", ""),
+        "prototype_train_acc": "" if summary.get("prototype_train_acc") is None else f"{summary['prototype_train_acc']:.6f}",
         "skeleton_coverage_mean": f"{_mean_diag(summary, 'SkeletonMassCoverage'):.6f}",
         "residual_energy_mean": f"{_mean_diag(summary, 'ResidualEnergy'):.6f}",
         "shadow_recon_err_mean": f"{_mean_diag(summary, 'ShadowReconErr'):.6f}",
@@ -37,9 +40,20 @@ def run_ablation_suite(
     seed: int,
     epochs: int,
     M_tau: int,
-    M_r: int,
+    M_r: int | dict | None,
     k_s: int,
     feature_dim: int,
+    projection_type: str = "random",
+    degree_scale: float = 0.1,
+    min_proto_per_class: int = 1,
+    budget_alpha: float = 0.5,
+    loss_type: str = "weighted",
+    model_type: str = "relation_linear",
+    hidden_dim: int = 128,
+    dropout: float = 0.3,
+    lr: float = 0.03,
+    weight_decay: float = 1e-4,
+    skip_existing: bool = False,
     k_s_values: list[int] | None = None,
 ) -> list[dict]:
     log_dir = Path(log_dir)
@@ -51,25 +65,44 @@ def run_ablation_suite(
         "M_r": M_r,
         "k_s": k_s,
         "feature_dim": feature_dim,
+        "projection_type": projection_type,
+        "degree_scale": degree_scale,
+        "min_proto_per_class": min_proto_per_class,
+        "budget_alpha": budget_alpha,
+        "loss_type": loss_type,
+        "model_type": model_type,
+        "hidden_dim": hidden_dim,
+        "dropout": dropout,
+        "lr": lr,
+        "weight_decay": weight_decay,
     }
 
     variants = [
         ("mean_only_demand", "include_degree_features=false", {"include_degree_features": False}),
         ("residual_shadow_off", "residual_shadow=false", {"residual_shadow": False}),
         ("real_source_centroid", "shadow_mode=real_source_centroid", {"shadow_mode": "real_source_centroid"}),
+        ("private_shadow_upper_bound", "shadow_mode=private_shadow", {"shadow_mode": "private_shadow"}),
         ("prototype_loss", "loss_type=unweighted", {"loss_type": "unweighted"}),
         ("prototype_loss", "loss_type=clipped", {"loss_type": "clipped"}),
         ("prototype_loss", "loss_type=class_balanced", {"loss_type": "class_balanced"}),
+        ("prototype_loss", "loss_type=sqrt_weighted", {"loss_type": "sqrt_weighted"}),
+        ("backbone", "model=relation_linear", {"model_type": "relation_linear"}),
+        ("backbone", "model=relation_mlp", {"model_type": "relation_mlp"}),
         ("relation_norm_calibration", "calibration_enabled=false", {"calibration_enabled": False}),
     ]
     for ablation, setting, overrides in variants:
         output_path = log_dir / f"{graph.dataset_name}_{ablation}_{setting.replace('=', '-').replace(',', '_')}_seed{seed}.json"
-        summary = run_shadow_hgc_experiment(graph, output_path=output_path, **base_kwargs, **overrides)
+        if skip_existing and output_path.exists():
+            continue
+        kwargs = {**base_kwargs, **overrides}
+        summary = run_shadow_hgc_experiment(graph, output_path=output_path, **kwargs)
         rows.append(_row(graph.dataset_name, ablation, setting, seed, summary))
 
     if any(relation.is_target_target(graph.target_type) for relation in graph.relations):
         for value in (k_s_values or [0, 1, 2, 4, 8]):
             output_path = log_dir / f"{graph.dataset_name}_target_target_skeleton_ks{value}_seed{seed}.json"
+            if skip_existing and output_path.exists():
+                continue
             summary = run_shadow_hgc_experiment(graph, output_path=output_path, **{**base_kwargs, "k_s": value})
             rows.append(_row(graph.dataset_name, "target_target_skeleton", f"k_s={value}", seed, summary))
     else:

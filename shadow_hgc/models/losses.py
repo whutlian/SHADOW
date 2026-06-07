@@ -21,6 +21,8 @@ def prototype_cross_entropy(
 
     if loss_type == "weighted":
         effective = weights
+    elif loss_type == "sqrt_weighted":
+        effective = torch.sqrt(weights.clamp_min(0.0))
     elif loss_type == "unweighted":
         effective = torch.ones_like(weights)
     elif loss_type == "clipped":

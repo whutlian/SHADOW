@@ -29,8 +29,13 @@ def source_id_block_gather(
     """Gather features by sorted source-id blocks, then restore request order."""
 
     source_ids = np.asarray(source_ids, dtype=np.int64)
+    base_stats = {
+        "block_size": int(block_size),
+        "num_unique_source_ids": int(np.unique(source_ids).size),
+        "random_access_avoidance_enabled": True,
+    }
     if source_ids.size == 0:
-        return np.empty((0, store.shape[1]), dtype=store.dtype), {"num_blocks": 0}
+        return np.empty((0, store.shape[1]), dtype=store.dtype), {"num_blocks": 0, **base_stats}
 
     order = np.argsort(source_ids, kind="stable")
     sorted_ids = source_ids[order]
@@ -49,4 +54,4 @@ def source_id_block_gather(
 
     inverse = np.empty_like(order)
     inverse[order] = np.arange(len(order))
-    return gathered_sorted[inverse], {"num_blocks": int(num_blocks)}
+    return gathered_sorted[inverse], {"num_blocks": int(num_blocks), **base_stats}

@@ -1,18 +1,25 @@
 from __future__ import annotations
 
 import time
+from pathlib import Path
 
 import torch
 import torch.nn.functional as F
 
 from shadow_hgc.data.loaders import HeteroGraphData
+from shadow_hgc.eval.logging import attach_run_metadata, write_json_summary
 from shadow_hgc.features.projection import fit_standardizer, fixed_random_projection, standardize
 from shadow_hgc.prototype.budgets import class_wise_budget
 
 
-def _target_features(graph: HeteroGraphData, feature_dim: int, seed: int) -> torch.Tensor:
+def _target_features(graph: HeteroGraphData, feature_dim: int, seed: int, projection_type: str) -> torch.Tensor:
     x = graph.node_features[graph.target_type].to(torch.float32)
-    projected = fixed_random_projection(x, out_dim=feature_dim, seed=seed + 991)
+    if projection_type == "raw":
+        projected = x
+    elif projection_type == "random":
+        projected = fixed_random_projection(x, out_dim=feature_dim, seed=seed + 991)
+    else:
+        raise ValueError(f"unknown projection_type: {projection_type}")
     return standardize(projected, fit_standardizer(projected, rows=graph.train_idx))
 
 
@@ -87,8 +94,10 @@ def run_target_coreset_baselines(
     epochs: int,
     M_tau: int,
     feature_dim: int,
+    projection_type: str = "random",
+    log_dir: str | Path | None = None,
 ) -> list[dict]:
-    x = _target_features(graph, feature_dim, seed)
+    x = _target_features(graph, feature_dim, seed, projection_type)
     budgets = class_wise_budget(graph.labels, graph.train_idx, M_tau)
     selectors = {
         "Random-HG": lambda: _select_random(x, graph.labels, graph.train_idx, budgets, seed),
@@ -106,6 +115,36 @@ def run_target_coreset_baselines(
             epochs=epochs,
             seed=seed,
         )
+        row = {
+            "method": method,
+            "dataset": graph.dataset_name,
+            "target_type": graph.target_type,
+            "mode": "target_feature_coreset_baseline",
+            "requested_M_tau": M_tau,
+            "effective_M_tau": int(selected.numel()),
+            "feature_dim": feature_dim,
+            "projection_type": projection_type,
+            "seed": seed,
+            "epochs": epochs,
+            "accuracy": "" if accuracy is None else f"{accuracy:.6f}",
+            "training_time": f"{train_time:.6f}",
+            "condensation_time": 0.0,
+            "inference_time": 0.0,
+            "status": "completed",
+        }
+        config_for_hash = {
+            "method": method,
+            "dataset": graph.dataset_name,
+            "seed": seed,
+            "epochs": epochs,
+            "M_tau": M_tau,
+            "feature_dim": feature_dim,
+            "projection_type": projection_type,
+        }
+        row = attach_run_metadata(row, config=config_for_hash)
+        if log_dir is not None:
+            output_path = Path(log_dir) / f"{graph.dataset_name}_{method.replace('-', '_')}_M{M_tau}_seed{seed}.json"
+            write_json_summary(output_path, row, config=config_for_hash)
         rows.append(
             {
                 "dataset": graph.dataset_name,
