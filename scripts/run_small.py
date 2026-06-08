@@ -67,7 +67,7 @@ def main() -> None:
         default="clipped",
     )
     parser.add_argument("--logit-adjustment-tau", type=float, default=1.0)
-    parser.add_argument("--model", choices=["relation_linear", "relation_mlp"], default="relation_mlp")
+    parser.add_argument("--model", choices=["relation_linear", "relation_mlp", "shadow_fusion"], default="relation_mlp")
     parser.add_argument("--shadow-policy", choices=["fixed", "rank_adaptive"], default="fixed")
     parser.add_argument("--shadow-min-per-relation", type=int, default=8)
     parser.add_argument("--shadow-max-multiplier", type=float, default=2.0)
@@ -80,6 +80,9 @@ def main() -> None:
     parser.add_argument("--metapath-signature", type=_bool_arg, default=False)
     parser.add_argument("--metapath-model-input", type=_bool_arg, default=False)
     parser.add_argument("--multiscale-dim", type=int, default=128)
+    parser.add_argument("--block-norm", choices=["none", "standardize", "l2", "standardize_l2"], default="none")
+    parser.add_argument("--block-gate", type=_bool_arg, default=False)
+    parser.add_argument("--block-dropout", type=float, default=0.0)
     parser.add_argument("--relation-gate", type=_bool_arg, default=False)
     parser.add_argument("--relation-gate-init", type=float, default=1.0)
     parser.add_argument("--skeleton-policy", choices=["fixed_k", "coverage"], default="fixed_k")
@@ -89,6 +92,12 @@ def main() -> None:
     parser.add_argument("--dropout", type=float, default=0.3)
     parser.add_argument("--lr", type=float, default=0.03)
     parser.add_argument("--weight-decay", type=float, default=1e-4)
+    parser.add_argument("--ratio-mode", choices=["target_only", "total_nodes"], default="target_only")
+    parser.add_argument("--shadow-total-budget", type=int)
+    parser.add_argument("--rank-adaptive-global-cap", type=_bool_arg, default=False)
+    parser.add_argument("--max-total-condensed-ratio", type=float)
+    parser.add_argument("--assignment-chunk-size", type=int)
+    parser.add_argument("--inference-dst-chunk-size", type=int)
     parser.add_argument("--min-proto-per-class", type=int, default=4)
     parser.add_argument("--budget-alpha", type=float, default=0.5)
     parser.add_argument("--skip-full-graph-baseline", action="store_true")
@@ -186,6 +195,9 @@ def main() -> None:
                         metapath_signature=args.metapath_signature,
                         metapath_model_input=args.metapath_model_input,
                         multiscale_dim=args.multiscale_dim,
+                        block_norm=args.block_norm,
+                        block_gate=args.block_gate,
+                        block_dropout=args.block_dropout,
                         relation_gate=args.relation_gate,
                         relation_gate_init=args.relation_gate_init,
                         skeleton_policy=args.skeleton_policy,
@@ -200,6 +212,12 @@ def main() -> None:
                         shadow_target_target_ratio=args.shadow_ratio_target_target,
                         shadow_non_target_ratio=args.shadow_ratio_non_target,
                         min_shadows_per_relation=args.min_shadow_per_relation,
+                        ratio_mode=args.ratio_mode,
+                        shadow_total_budget=args.shadow_total_budget,
+                        rank_adaptive_global_cap=args.rank_adaptive_global_cap,
+                        max_total_condensed_ratio=args.max_total_condensed_ratio,
+                        assignment_chunk_size=args.assignment_chunk_size,
+                        inference_dst_chunk_size=args.inference_dst_chunk_size,
                     )
                 if not args.skip_self_only_baseline:
                     self_path = log_dir / f"{dataset}_Self-Only-MLP_{spec.label}_seed{seed}.json"
@@ -237,6 +255,9 @@ def main() -> None:
                         metapath_signature=args.metapath_signature,
                         metapath_model_input=args.metapath_model_input,
                         multiscale_dim=args.multiscale_dim,
+                        block_norm=args.block_norm,
+                        block_gate=args.block_gate,
+                        block_dropout=args.block_dropout,
                         relation_gate=args.relation_gate,
                         relation_gate_init=args.relation_gate_init,
                         skeleton_policy=args.skeleton_policy,
@@ -251,6 +272,12 @@ def main() -> None:
                         shadow_target_target_ratio=args.shadow_ratio_target_target,
                         shadow_non_target_ratio=args.shadow_ratio_non_target,
                         min_shadows_per_relation=args.min_shadow_per_relation,
+                        ratio_mode=args.ratio_mode,
+                        shadow_total_budget=args.shadow_total_budget,
+                        rank_adaptive_global_cap=args.rank_adaptive_global_cap,
+                        max_total_condensed_ratio=args.max_total_condensed_ratio,
+                        assignment_chunk_size=args.assignment_chunk_size,
+                        inference_dst_chunk_size=args.inference_dst_chunk_size,
                         self_only=True,
                     )
                 if not args.skip_coreset_baselines:

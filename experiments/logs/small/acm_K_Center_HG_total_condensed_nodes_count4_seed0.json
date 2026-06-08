@@ -22,12 +22,12 @@
   "seed": 0,
   "epochs": 1,
   "accuracy": "0.556657",
-  "training_time": "0.000871",
+  "training_time": "0.000534",
   "condensation_time": 0.0,
   "inference_time": 0.0,
   "status": "completed",
-  "generated_at": "2026-06-08T05:47:37Z",
-  "git_commit": "92a00a6",
+  "generated_at": "2026-06-08T09:51:47Z",
+  "git_commit": "457395c",
   "config_hash": "efb63b8d2eebb947",
   "run_id": "acm-K-Center-HG-seed0-efb63b8d"
 }

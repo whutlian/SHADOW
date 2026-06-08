@@ -22,12 +22,12 @@
   "seed": 0,
   "epochs": 1,
   "accuracy": "0.437677",
-  "training_time": "0.000828",
+  "training_time": "0.000598",
   "condensation_time": 0.0,
   "inference_time": 0.0,
   "status": "completed",
-  "generated_at": "2026-06-08T05:47:36Z",
-  "git_commit": "92a00a6",
+  "generated_at": "2026-06-08T09:51:46Z",
+  "git_commit": "457395c",
   "config_hash": "e91f9d07c45f50ee",
   "run_id": "acm-Herding-HG-seed0-e91f9d07"
 }

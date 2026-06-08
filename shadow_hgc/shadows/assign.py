@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from itertools import combinations
+import time
 
 import torch
 
@@ -13,6 +14,7 @@ class TopBAssignmentResult:
     reconstruction: torch.Tensor
     topk_index: torch.Tensor
     topk_weight: torch.Tensor
+    stats: dict[str, float] | None = None
 
 
 def assign_nearest_shadow(demand: torch.Tensor, shadow_features: torch.Tensor) -> torch.Tensor:
@@ -22,6 +24,37 @@ def assign_nearest_shadow(demand: torch.Tensor, shadow_features: torch.Tensor) -
         raise ValueError("cannot assign to an empty shadow pool")
     dist = torch.cdist(demand, shadow_features)
     return torch.argmin(dist, dim=1).to(torch.long)
+
+
+def _peak_memory_bytes(device: torch.device) -> float:
+    if device.type == "cuda":
+        return float(torch.cuda.max_memory_allocated(device))
+    return 0.0
+
+
+def assign_nearest_shadow_chunked(
+    demand: torch.Tensor,
+    shadow_features: torch.Tensor,
+    *,
+    chunk_size: int = 4096,
+) -> torch.Tensor:
+    """Main b=1 nearest shadow assignment without materializing all pair distances."""
+
+    if demand.ndim != 2 or shadow_features.ndim != 2:
+        raise ValueError("demand and shadow_features must be matrices")
+    if demand.shape[1] != shadow_features.shape[1]:
+        raise ValueError("demand and shadow_features must have the same feature dimension")
+    if shadow_features.shape[0] == 0:
+        raise ValueError("cannot assign to an empty shadow pool")
+    chunk_size = max(1, int(chunk_size))
+    assignments: list[torch.Tensor] = []
+    for start in range(0, demand.shape[0], chunk_size):
+        chunk = demand[start : start + chunk_size]
+        dist = torch.cdist(chunk, shadow_features)
+        assignments.append(torch.argmin(dist, dim=1).to(torch.long))
+    if not assignments:
+        return torch.empty(0, dtype=torch.long, device=demand.device)
+    return torch.cat(assignments, dim=0)
 
 
 def build_b1_shadow_edges(assignment: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
@@ -112,4 +145,73 @@ def topb_nonnegative_assignment(
         reconstruction=reconstruction,
         topk_index=topk_index,
         topk_weight=topk_weight,
+        stats=None,
+    )
+
+
+def topb_nonnegative_assignment_chunked(
+    demand: torch.Tensor,
+    shadow_features: torch.Tensor,
+    *,
+    b: int,
+    ridge_lambda: float = 1e-4,
+    chunk_size: int = 2048,
+) -> TopBAssignmentResult:
+    """Chunked top-b nonnegative assignment with dense-equivalent per-row solves."""
+
+    if demand.ndim != 2 or shadow_features.ndim != 2:
+        raise ValueError("demand and shadow_features must be matrices")
+    if demand.shape[1] != shadow_features.shape[1]:
+        raise ValueError("demand and shadow_features must have the same feature dimension")
+    if shadow_features.shape[0] == 0:
+        raise ValueError("cannot assign to an empty shadow pool")
+    chunk_size = max(1, int(chunk_size))
+    start_time = time.perf_counter()
+    edge_indices: list[torch.Tensor] = []
+    edge_weights: list[torch.Tensor] = []
+    reconstructions: list[torch.Tensor] = []
+    topk_indices: list[torch.Tensor] = []
+    topk_weights: list[torch.Tensor] = []
+
+    for start in range(0, demand.shape[0], chunk_size):
+        chunk = demand[start : start + chunk_size]
+        result = topb_nonnegative_assignment(
+            chunk,
+            shadow_features,
+            b=b,
+            ridge_lambda=ridge_lambda,
+        )
+        edge_index = result.edge_index.clone()
+        edge_index[1] += int(start)
+        edge_indices.append(edge_index)
+        edge_weights.append(result.edge_weight)
+        reconstructions.append(result.reconstruction)
+        topk_indices.append(result.topk_index)
+        topk_weights.append(result.topk_weight)
+
+    if edge_indices:
+        edge_index_out = torch.cat(edge_indices, dim=1)
+        edge_weight_out = torch.cat(edge_weights, dim=0)
+        reconstruction = torch.cat(reconstructions, dim=0)
+        topk_index = torch.cat(topk_indices, dim=0)
+        topk_weight = torch.cat(topk_weights, dim=0)
+    else:
+        b_eff = max(1, min(int(b), int(shadow_features.shape[0]), 4))
+        edge_index_out = torch.empty(2, 0, dtype=torch.long, device=demand.device)
+        edge_weight_out = torch.empty(0, dtype=torch.float32, device=demand.device)
+        reconstruction = torch.empty_like(demand)
+        topk_index = torch.empty(0, b_eff, dtype=torch.long, device=demand.device)
+        topk_weight = torch.empty(0, b_eff, dtype=demand.dtype, device=demand.device)
+
+    stats = {
+        "assignment_time_s": float(time.perf_counter() - start_time),
+        "peak_memory_bytes": _peak_memory_bytes(demand.device),
+    }
+    return TopBAssignmentResult(
+        edge_index=edge_index_out.to(torch.long),
+        edge_weight=edge_weight_out.to(torch.float32),
+        reconstruction=reconstruction,
+        topk_index=topk_index,
+        topk_weight=topk_weight,
+        stats=stats,
     )

@@ -21,6 +21,7 @@ env/
 *.npy
 *.npz
 *.memmap
+*.mmap
 
 # One-off local debug attempts; canonical experiment outputs remain tracked.
 /experiments/logs/medium_products_attempt/

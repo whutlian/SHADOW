@@ -22,12 +22,12 @@
   "seed": 0,
   "epochs": 1,
   "accuracy": "0.410293",
-  "training_time": "0.001334",
+  "training_time": "0.000615",
   "condensation_time": 0.0,
   "inference_time": 0.0,
   "status": "completed",
-  "generated_at": "2026-06-08T05:47:36Z",
-  "git_commit": "92a00a6",
+  "generated_at": "2026-06-08T09:51:46Z",
+  "git_commit": "457395c",
   "config_hash": "a8fcc7a771f42286",
   "run_id": "acm-Random-HG-seed0-a8fcc7a7"
 }

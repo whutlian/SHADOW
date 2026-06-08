@@ -22,18 +22,20 @@ from shadow_hgc.eval.resource import current_cpu_ram_bytes, current_gpu_ram_byte
 from shadow_hgc.features.base import featureless_source_neighbor_mean
 from shadow_hgc.features.degree import compute_degree_features
 from shadow_hgc.features.diffusion import diffusion_target_features
+from shadow_hgc.features.block_norm import FeatureBlock, fit_transform_feature_blocks
 from shadow_hgc.features.metapath import metapath_target_features
 from shadow_hgc.features.multiscale import fixed_block_projection
 from shadow_hgc.features.projection import fit_standardizer, fixed_random_projection, standardize
 from shadow_hgc.graph.materialize import RelationShadowPlan, materialize_condensed_graph
 from shadow_hgc.models.losses import prototype_cross_entropy
-from shadow_hgc.models.weighted_rel_linear import RelationMessageEncoderMLP, WeightedRelationLinearConv
+from shadow_hgc.models.factory import build_model
+from shadow_hgc.models.weighted_rel_linear import WeightedRelationLinearConv
 from shadow_hgc.prototype.budgets import compute_target_budget_from_ratio, validate_budget_mode_args
 from shadow_hgc.prototype.cluster import class_wise_prototypes
 from shadow_hgc.prototype.signatures import build_target_signature
-from shadow_hgc.shadows.assign import assign_nearest_shadow
+from shadow_hgc.shadows.assign import assign_nearest_shadow, assign_nearest_shadow_chunked
 from shadow_hgc.shadows.adaptive import adaptive_assignment_b, adaptive_shadow_budgets
-from shadow_hgc.shadows.assign import topb_nonnegative_assignment
+from shadow_hgc.shadows.assign import topb_nonnegative_assignment, topb_nonnegative_assignment_chunked
 from shadow_hgc.shadows.budgets import resolve_shadow_budgets
 from shadow_hgc.shadows.calibrate import calibrate_shadow_norm
 from shadow_hgc.shadows.factorize import factorize_shadows
@@ -52,6 +54,76 @@ def _jsonable(value):
     if isinstance(value, torch.Tensor):
         return value.detach().cpu().tolist()
     return value
+
+
+def _estimate_feature_bytes(features: dict[str, torch.Tensor]) -> int:
+    total = 0
+    for tensor in features.values():
+        total += int(tensor.numel() * tensor.element_size())
+    return int(total)
+
+
+def _estimate_edge_bytes(
+    edge_index: dict[DirectedRelation, torch.Tensor],
+    edge_weight: dict[DirectedRelation, torch.Tensor] | None = None,
+) -> int:
+    total = 0
+    for relation, index in edge_index.items():
+        total += int(index.numel() * index.element_size())
+        if edge_weight is not None and relation in edge_weight:
+            total += int(edge_weight[relation].numel() * edge_weight[relation].element_size())
+    return int(total)
+
+
+def _summarize_block_stats(stats_by_name: dict) -> dict:
+    summary = {}
+    for name, stats in stats_by_name.items():
+        summary[name] = {
+            "dim": int(stats.mean.numel()),
+            "mean_abs": float(stats.mean.abs().mean().item()),
+            "std_mean": float(stats.std.mean().item()),
+            "norm_median": float(stats.norm_median),
+            "norm_p95": float(stats.norm_p95),
+        }
+    return summary
+
+
+def _normalize_named_feature_blocks(
+    features: torch.Tensor,
+    names: list[str],
+    *,
+    prefix: str,
+    target_type: str,
+    train_idx: torch.Tensor,
+    mode: str,
+) -> tuple[torch.Tensor, dict]:
+    if mode == "none" or features.shape[1] == 0 or not names:
+        return features, {}
+    if features.shape[1] % len(names) != 0:
+        blocks = [
+            FeatureBlock(
+                name=f"{prefix}:{'+'.join(names)}",
+                tensor_or_provider=features,
+                dim=int(features.shape[1]),
+                node_type=target_type,
+                role=prefix,
+            )
+        ]
+    else:
+        dim = features.shape[1] // len(names)
+        blocks = [
+            FeatureBlock(
+                name=f"{prefix}:{name}",
+                tensor_or_provider=features[:, start : start + dim],
+                dim=int(dim),
+                node_type=target_type,
+                role=prefix,
+            )
+            for name, start in zip(names, range(0, features.shape[1], dim))
+        ]
+    transformed, stats = fit_transform_feature_blocks(blocks, fit_indices=train_idx, mode=mode)
+    normalized = torch.cat([transformed[block.name] for block in blocks], dim=1)
+    return normalized, _summarize_block_stats(stats)
 
 
 def _trace_memory(stage: str) -> None:
@@ -135,6 +207,7 @@ def prepare_model_features(
     metapath_signature: bool = False,
     metapath_model_input: bool = False,
     multiscale_dim: int = 128,
+    block_norm: str = "none",
     return_metadata: bool = False,
 ):
     target_type = graph.target_type
@@ -206,7 +279,9 @@ def prepare_model_features(
         "metapath_signature": bool(metapath_signature),
         "metapath_model_input": bool(metapath_model_input),
         "multiscale_dim": int(multiscale_dim),
+        "block_norm": block_norm,
         "blocks": [],
+        "block_stats": {},
     }
     if feature_mode in {"diffusion", "diffusion_metapath"}:
         target_target_edges = [
@@ -228,9 +303,18 @@ def prepare_model_features(
                 out_dim=max(1, int(multiscale_dim)) * max(1, len(diffusion.block_names)),
                 seed=_stable_type_seed(seed, f"{target_type}_diffusion"),
             )
+            diffusion_features, block_stats = _normalize_named_feature_blocks(
+                diffusion_features,
+                diffusion.block_names,
+                prefix="diffusion",
+                target_type=target_type,
+                train_idx=graph.train_idx,
+                mode=block_norm,
+            )
             phi[target_type] = torch.cat([phi[target_type], diffusion_features], dim=1)
             signature_extra = diffusion_features
             multiscale_metadata["blocks"].extend(diffusion.block_names)
+            multiscale_metadata["block_stats"].update(block_stats)
     if feature_mode in {"metapath", "diffusion_metapath"}:
         metapath = metapath_target_features(
             edge_index=graph.edge_index,
@@ -245,11 +329,20 @@ def prepare_model_features(
                 out_dim=max(1, int(multiscale_dim)),
                 seed=_stable_type_seed(seed, f"{target_type}_metapath"),
             )
+            metapath_features, block_stats = _normalize_named_feature_blocks(
+                metapath_features,
+                metapath.path_names[:1] or ["metapath"],
+                prefix="metapath",
+                target_type=target_type,
+                train_idx=graph.train_idx,
+                mode=block_norm,
+            )
             if metapath_model_input:
                 phi[target_type] = torch.cat([phi[target_type], metapath_features], dim=1)
             if metapath_signature:
                 signature_extra = metapath_features if signature_extra is None else torch.cat([signature_extra, metapath_features], dim=1)
             multiscale_metadata["blocks"].extend(metapath.path_names)
+            multiscale_metadata["block_stats"].update(block_stats)
     if return_metadata:
         return psi, phi, signature_degree, target_relations, signature_extra, multiscale_metadata
     return psi, phi, signature_degree, target_relations
@@ -324,6 +417,7 @@ def _build_relation_plans(
     shadow_max_multiplier: float = 2.0,
     adaptive_b: bool = False,
     b_max: int = 4,
+    assignment_chunk_size: int | None = None,
     rank_diagnostic_k: int = 64,
     skeleton_policy: str = "fixed_k",
     skeleton_coverage: float = 0.65,
@@ -372,7 +466,15 @@ def _build_relation_plans(
                 skeleton_edge_weight=skeleton_edge_weight,
             )
             return plan, b1_err, 1
-        topb = topb_nonnegative_assignment(residual, shadow_features, b=b_value)
+        if assignment_chunk_size is not None:
+            topb = topb_nonnegative_assignment_chunked(
+                residual,
+                shadow_features,
+                b=b_value,
+                chunk_size=assignment_chunk_size,
+            )
+        else:
+            topb = topb_nonnegative_assignment(residual, shadow_features, b=b_value)
         plan = RelationShadowPlan(
             shadow_features=shadow_features,
             assignment=topb.topk_index[:, 0],
@@ -418,18 +520,30 @@ def _build_relation_plans(
                     num_shadows=num_shadows,
                     seed=seed + rel_index,
                 ).to(residual.device)
-                assignment = assign_nearest_shadow(residual, shadow_features)
+                assignment = (
+                    assign_nearest_shadow_chunked(residual, shadow_features, chunk_size=assignment_chunk_size)
+                    if assignment_chunk_size is not None
+                    else assign_nearest_shadow(residual, shadow_features)
+                )
                 shadow_features, gamma = calibrate_shadow_norm(
                     residual,
                     shadow_features,
                     assignment,
                     enabled=calibration_enabled,
                 )
-                assignment = assign_nearest_shadow(residual, shadow_features)
+                assignment = (
+                    assign_nearest_shadow_chunked(residual, shadow_features, chunk_size=assignment_chunk_size)
+                    if assignment_chunk_size is not None
+                    else assign_nearest_shadow(residual, shadow_features)
+                )
             else:
                 shadow_features = factorize_shadows(residual, num_shadows=num_shadows, seed=seed + rel_index)
                 _trace_memory(f"relation_plan:after_factorize:{relation}")
-                assignment = assign_nearest_shadow(residual, shadow_features)
+                assignment = (
+                    assign_nearest_shadow_chunked(residual, shadow_features, chunk_size=assignment_chunk_size)
+                    if assignment_chunk_size is not None
+                    else assign_nearest_shadow(residual, shadow_features)
+                )
                 _trace_memory(f"relation_plan:after_assign:{relation}")
                 shadow_features, gamma = calibrate_shadow_norm(
                     residual,
@@ -437,7 +551,11 @@ def _build_relation_plans(
                     assignment,
                     enabled=calibration_enabled,
                 )
-                assignment = assign_nearest_shadow(residual, shadow_features)
+                assignment = (
+                    assign_nearest_shadow_chunked(residual, shadow_features, chunk_size=assignment_chunk_size)
+                    if assignment_chunk_size is not None
+                    else assign_nearest_shadow(residual, shadow_features)
+                )
                 _trace_memory(f"relation_plan:after_reassign:{relation}")
             plan, recon_err, b_value = make_plan(
                 relation,
@@ -510,7 +628,11 @@ def _build_relation_plans(
                 sample_weight=None if shadow_mode == "real_source_centroid" else prototype_result.prototype_weights,
             ).to(residual.device)
             _trace_memory(f"relation_plan:after_factorize:{relation}")
-            assignment = assign_nearest_shadow(residual, shadow_features)
+            assignment = (
+                assign_nearest_shadow_chunked(residual, shadow_features, chunk_size=assignment_chunk_size)
+                if assignment_chunk_size is not None
+                else assign_nearest_shadow(residual, shadow_features)
+            )
             _trace_memory(f"relation_plan:after_assign:{relation}")
             shadow_features, gamma = calibrate_shadow_norm(
                 residual,
@@ -518,7 +640,11 @@ def _build_relation_plans(
                 assignment,
                 enabled=calibration_enabled,
             )
-            assignment = assign_nearest_shadow(residual, shadow_features)
+            assignment = (
+                assign_nearest_shadow_chunked(residual, shadow_features, chunk_size=assignment_chunk_size)
+                if assignment_chunk_size is not None
+                else assign_nearest_shadow(residual, shadow_features)
+            )
             _trace_memory(f"relation_plan:after_reassign:{relation}")
             plan, recon_err, b_value = make_plan(relation, residual, shadow_features, assignment)
             plans[relation] = plan
@@ -555,6 +681,7 @@ def _train_and_infer(
     seed: int,
     loss_type: str,
     inference_edge_chunk_size: int | None,
+    inference_dst_chunk_size: int | None,
     model_type: str,
     hidden_dim: int,
     dropout: float,
@@ -562,6 +689,7 @@ def _train_and_infer(
     weight_decay: float,
     relation_gate: bool = False,
     relation_gate_init: float = 1.0,
+    block_gate: bool = False,
     logit_adjustment_tau: float = 1.0,
 ) -> tuple[float | None, float | None, float, float, dict, dict]:
     _trace_memory("train_infer:start")
@@ -569,27 +697,22 @@ def _train_and_infer(
     class_metadata = infer_class_metadata(graph.labels, graph.train_idx, graph.test_idx)
     num_classes = class_metadata["num_classes_global"]
     in_channels = {node_type: features.shape[1] for node_type, features in condensed.node_features.items()}
-    if model_type == "relation_linear":
-        model = WeightedRelationLinearConv(
-            in_channels=in_channels,
-            out_channels=num_classes,
-            node_types=list(condensed.node_features),
-            relations=relations,
-            activation=None,
-            relation_gate=relation_gate,
-            relation_gate_init=relation_gate_init,
-        )
-    elif model_type == "relation_mlp":
-        model = RelationMessageEncoderMLP(
-            in_channels=in_channels,
-            out_channels=num_classes,
-            node_types=list(condensed.node_features),
-            relations=relations,
-            hidden_dim=hidden_dim,
-            dropout=dropout,
-        )
-    else:
-        raise ValueError(f"unknown model_type: {model_type}")
+    model, model_diagnostics = build_model(
+        model_type=model_type,
+        in_channels=in_channels,
+        out_channels=num_classes,
+        node_types=list(condensed.node_features),
+        relations=relations,
+        target_type=graph.target_type,
+        hidden_dim=hidden_dim,
+        dropout=dropout,
+        relation_gate=relation_gate,
+        relation_gate_init=relation_gate_init,
+        block_gate=block_gate,
+    )
+    final_logits_activation = str(model_diagnostics.get("final_logits_activation", "none"))
+    if final_logits_activation == "unsafe_relu_logits":
+        raise ValueError("unsafe final ReLU logits are forbidden in R++")
     opt = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     train_label_counts = torch.bincount(
         graph.labels[graph.train_idx].clamp_min(0).to(torch.long),
@@ -629,13 +752,23 @@ def _train_and_infer(
     infer_start = time.perf_counter()
     _trace_memory("train_infer:before_original_infer")
     with torch.no_grad():
-        out = model(
-            phi,
-            graph.edge_index,
-            {relation: alpha[relation] for relation in relations},
-            edge_chunk_size=inference_edge_chunk_size,
-        )
-        pred = out[graph.target_type].argmax(dim=1)
+        if inference_dst_chunk_size is not None and hasattr(model, "infer_target_chunked"):
+            target_logits = model.infer_target_chunked(
+                phi,
+                graph.edge_index,
+                {relation: alpha[relation] for relation in relations},
+                dst_chunk_size=inference_dst_chunk_size,
+                edge_chunk_size=inference_edge_chunk_size,
+            )
+        else:
+            out = model(
+                phi,
+                graph.edge_index,
+                {relation: alpha[relation] for relation in relations},
+                edge_chunk_size=inference_edge_chunk_size,
+            )
+            target_logits = out[graph.target_type]
+        pred = target_logits.argmax(dim=1)
         accuracy = None
         macro_f1 = None
         pred_diag = prediction_diagnostics(pred, graph.labels, graph.test_idx, num_classes=num_classes)
@@ -650,13 +783,21 @@ def _train_and_infer(
         "train_loss_start": train_loss_start,
         "train_loss_end": train_loss_end,
         "prototype_train_acc": prototype_train_acc,
+        "prototype_train_loss_start": train_loss_start,
+        "prototype_train_loss_end": train_loss_end,
         "num_optimizer_steps": int(epochs),
         "num_epochs": int(epochs),
         "learning_rate": float(lr),
         "weight_decay": float(weight_decay),
+        "final_logits_activation": final_logits_activation,
+        "model_diagnostics": model_diagnostics,
     }
     if hasattr(model, "relation_gate_values"):
         train_metrics["relation_gate_values"] = model.relation_gate_values()
+    if hasattr(model, "block_gate_values"):
+        train_metrics["block_gate_values"] = model.block_gate_values()
+    elif isinstance(model_diagnostics.get("block_gates"), dict):
+        train_metrics["block_gate_values"] = model_diagnostics["block_gates"]
     return accuracy, macro_f1, train_time, infer_time, train_metrics, pred_diag
 
 
@@ -716,6 +857,15 @@ def run_shadow_hgc_experiment(
     weight_decay: float = 1e-4,
     inference_edge_chunk_size: int | None = 500_000,
     demand_edge_chunk_size: int | None = 500_000,
+    ratio_mode: str = "target_only",
+    shadow_total_budget: int | None = None,
+    rank_adaptive_global_cap: bool = False,
+    max_total_condensed_ratio: float | None = None,
+    assignment_chunk_size: int | None = None,
+    inference_dst_chunk_size: int | None = None,
+    block_norm: str = "none",
+    block_gate: bool = False,
+    block_dropout: float = 0.0,
     self_only: bool = False,
 ) -> dict:
     start = time.perf_counter()
@@ -730,6 +880,10 @@ def run_shadow_hgc_experiment(
         raise ValueError("skeleton_policy must be fixed_k or coverage")
     if ratio_base not in {"train_target", "all_target"}:
         raise ValueError("ratio_base must be either train_target or all_target")
+    if ratio_mode not in {"target_only", "total_nodes"}:
+        raise ValueError("ratio_mode must be target_only or total_nodes")
+    if block_norm not in {"none", "standardize", "l2", "standardize_l2"}:
+        raise ValueError("block_norm must be none, standardize, l2, or standardize_l2")
     if M_tau is not None and target_budget is None:
         target_budget = M_tau
     if budget_mode == "ratio":
@@ -783,6 +937,7 @@ def run_shadow_hgc_experiment(
         metapath_signature=metapath_signature,
         metapath_model_input=metapath_model_input,
         multiscale_dim=multiscale_dim,
+        block_norm=block_norm,
         return_metadata=True,
     )
     _trace_memory("pipeline:after_features")
@@ -856,6 +1011,7 @@ def run_shadow_hgc_experiment(
             shadow_max_multiplier=shadow_max_multiplier,
             adaptive_b=adaptive_b,
             b_max=b_max,
+            assignment_chunk_size=assignment_chunk_size,
             rank_diagnostic_k=rank_diagnostic_k,
             skeleton_policy=skeleton_policy,
             skeleton_coverage=skeleton_coverage,
@@ -921,6 +1077,7 @@ def run_shadow_hgc_experiment(
         seed=seed,
         loss_type=loss_type,
         inference_edge_chunk_size=inference_edge_chunk_size,
+        inference_dst_chunk_size=inference_dst_chunk_size,
         model_type=model_type,
         hidden_dim=hidden_dim,
         dropout=dropout,
@@ -928,6 +1085,7 @@ def run_shadow_hgc_experiment(
         weight_decay=weight_decay,
         relation_gate=relation_gate,
         relation_gate_init=relation_gate_init,
+        block_gate=block_gate,
         logit_adjustment_tau=logit_adjustment_tau,
     )
     condensation_time = time.perf_counter() - start - train_time - infer_time
@@ -940,6 +1098,8 @@ def run_shadow_hgc_experiment(
     class_metadata = infer_class_metadata(graph.labels, graph.train_idx, graph.test_idx)
     if train_metrics.get("relation_gate_values"):
         diagnostics["relation_gates"] = train_metrics["relation_gate_values"]
+    if train_metrics.get("block_gate_values"):
+        diagnostics["block_gates"] = train_metrics["block_gate_values"]
     recon_recommendations = {
         relation: "increase M_r or run b=2 ablation"
         for relation, values in diagnostics.items()
@@ -998,12 +1158,31 @@ def run_shadow_hgc_experiment(
         "lr": lr,
         "weight_decay": weight_decay,
         "self_only": self_only,
+        "ratio_mode": ratio_mode,
+        "shadow_total_budget": shadow_total_budget,
+        "rank_adaptive_global_cap": rank_adaptive_global_cap,
+        "max_total_condensed_ratio": max_total_condensed_ratio,
+        "assignment_chunk_size": assignment_chunk_size,
+        "inference_dst_chunk_size": inference_dst_chunk_size,
+        "block_norm": block_norm,
+        "block_gate": block_gate,
+        "block_dropout": block_dropout,
     }
     condensed_nodes_by_type = {k: int(v.shape[0]) for k, v in condensed.node_features.items()}
     condensed_edges_by_relation = {str(k): int(v.shape[1]) for k, v in condensed.edge_index.items()}
     condensed_nodes_total = int(sum(condensed_nodes_by_type.values()))
     condensed_edges_total = int(sum(condensed_edges_by_relation.values()))
     shadow_nodes_total = max(0, condensed_nodes_total - int(prototype_summary["effective_M_tau"]))
+    original_nodes_total = int(sum(graph.num_nodes.values()))
+    original_edges_total = int(sum(int(index.shape[1]) for index in graph.edge_index.values()))
+    original_bytes = _estimate_feature_bytes(phi) + _estimate_edge_bytes(graph.edge_index, {relation: alpha[relation] for relation in target_relations})
+    condensed_bytes = _estimate_feature_bytes(condensed.node_features) + _estimate_edge_bytes(condensed.edge_index, condensed.edge_weight)
+    requested_target_ratio = None if ratio is None else float(ratio)
+    effective_target_ratio = float(prototype_summary["effective_M_tau"] / max(1, int(graph.train_idx.numel())))
+    shadow_node_ratio = float(shadow_nodes_total / max(1, original_nodes_total))
+    total_condensed_node_ratio = float(condensed_nodes_total / max(1, original_nodes_total))
+    total_condensed_edge_ratio = float(condensed_edges_total / max(1, original_edges_total))
+    byte_size_compression = float(condensed_bytes / max(1, original_bytes))
     shadow_feature_norm_stats = {
         relation: values.get("shadow_norms", {})
         for relation, values in diagnostics.items()
@@ -1012,6 +1191,7 @@ def run_shadow_hgc_experiment(
     nonnegative_weights = all(bool(torch.all(w >= 0).item()) for w in condensed.edge_weight.values())
     summary = {
         "method": method_name,
+        "method_variant": method_name,
         "dataset": graph.dataset_name,
         "split": "processed_local",
         "target_type": graph.target_type,
@@ -1041,6 +1221,9 @@ def run_shadow_hgc_experiment(
         "shadow_ratio_non_target": shadow_non_target_ratio,
         "min_shadow_per_relation": min_shadows_per_relation,
         "shadow_budgets_by_relation": {str(relation): value for relation, value in resolved_M_r.items()},
+        "shadow_total_budget": shadow_total_budget,
+        "rank_adaptive_global_cap": rank_adaptive_global_cap,
+        "max_total_condensed_ratio": max_total_condensed_ratio,
         "shadow_nodes_total": shadow_nodes_total,
         "k_s": k_s,
         "feature_dim": feature_dim,
@@ -1055,10 +1238,15 @@ def run_shadow_hgc_experiment(
         "metapath_model_input": metapath_model_input,
         "multiscale_dim": multiscale_dim,
         "multiscale_metadata": multiscale_metadata,
+        "block_norm": block_norm,
+        "block_gate": block_gate,
+        "block_dropout": block_dropout,
+        "block_stats": multiscale_metadata.get("block_stats", {}),
         "target_base_dim": target_base_dim,
         "target_degree_dim": target_degree_dim,
         "target_input_dim": target_input_dim,
         "model": model_type,
+        "model_type": model_type,
         "relation_gate": relation_gate,
         "relation_gate_init": relation_gate_init,
         "relation_gate_values": train_metrics.get("relation_gate_values", {}),
@@ -1073,6 +1261,13 @@ def run_shadow_hgc_experiment(
         "condensed_edges_by_relation": condensed_edges_by_relation,
         "condensed_nodes_total": condensed_nodes_total,
         "condensed_edges_total": condensed_edges_total,
+        "ratio_mode": ratio_mode,
+        "requested_target_ratio": requested_target_ratio,
+        "effective_target_ratio": effective_target_ratio,
+        "shadow_node_ratio": shadow_node_ratio,
+        "total_condensed_node_ratio": total_condensed_node_ratio,
+        "total_condensed_edge_ratio": total_condensed_edge_ratio,
+        "byte_size_compression": byte_size_compression,
         "condensed_node_ratio_to_train_target": float(condensed_nodes_total / max(1, int(graph.train_idx.numel()))),
         "condensed_node_ratio_to_all_task_nodes": float(condensed_nodes_total / max(1, int(graph.num_nodes[graph.target_type]))),
         "condensation_time": max(0.0, condensation_time),
@@ -1087,6 +1282,8 @@ def run_shadow_hgc_experiment(
         "cache_all_targets": False,
         "demand_edge_chunk_size": demand_edge_chunk_size,
         "inference_edge_chunk_size": inference_edge_chunk_size,
+        "inference_dst_chunk_size": inference_dst_chunk_size,
+        "assignment_chunk_size": assignment_chunk_size,
         "accuracy": accuracy,
         "macro_f1": macro_f1,
         **class_metadata,
