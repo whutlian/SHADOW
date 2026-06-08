@@ -1,0 +1,21 @@
+{
+  "method": "K-Center-HG",
+  "dataset": "imdb",
+  "target_type": "movie",
+  "mode": "target_feature_coreset_baseline",
+  "requested_M_tau": 128,
+  "effective_M_tau": 128,
+  "feature_dim": 64,
+  "projection_type": "raw",
+  "seed": 1,
+  "epochs": 500,
+  "accuracy": "0.294503",
+  "training_time": "0.218003",
+  "condensation_time": 0.0,
+  "inference_time": 0.0,
+  "status": "completed",
+  "generated_at": "2026-06-07T08:02:07Z",
+  "git_commit": "9980773",
+  "config_hash": "09653ffb036b9685",
+  "run_id": "imdb-K-Center-HG-seed1-09653ffb"
+}

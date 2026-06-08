@@ -1,0 +1,16 @@
+dataset,status,accuracy,macro_f1,num_predicted_classes,ablation,setting,seed,skeleton_coverage_mean,residual_energy_mean,shadow_recon_err_mean,prototype_train_acc
+ogbn-arxiv,completed,0.356089,0.258831,40,target_target_skeleton,k_s=0,0,0.000000,1.000000,0.406012,1.000000
+ogbn-arxiv,completed,0.366829,0.264739,40,target_target_skeleton,k_s=1,0,0.313841,0.762888,0.433900,1.000000
+ogbn-arxiv,completed,0.386890,0.272673,40,target_target_skeleton,k_s=2,0,0.485268,0.661787,0.458387,1.000000
+ogbn-arxiv,completed,0.392136,0.278235,40,target_target_skeleton,k_s=4,0,0.645183,0.588843,0.500706,1.000000
+ogbn-arxiv,completed,0.378187,0.277102,40,target_target_skeleton,k_s=8,0,0.774097,0.549681,0.518841,1.000000
+ogbn-products,completed,0.354809,0.155421,42,target_target_skeleton,k_s=0,0,0.000000,1.000000,0.472418,1.000000
+ogbn-products,completed,0.394603,0.174985,42,target_target_skeleton,k_s=1,0,0.510830,0.853526,0.463782,1.000000
+ogbn-products,completed,0.401242,0.179311,42,target_target_skeleton,k_s=2,0,0.637999,0.799251,0.456568,0.994413
+ogbn-products,completed,0.404852,0.180029,42,target_target_skeleton,k_s=4,0,0.761022,0.779846,0.465549,1.000000
+ogbn-products,completed,0.408509,0.180729,42,target_target_skeleton,k_s=8,0,0.863375,0.762225,0.484206,1.000000
+ogbn-products,completed,0.379757,0.159755,35,target_target_skeleton,k_s=0,0,0.000000,1.000000,0.472418,0.837989
+ogbn-products,completed,0.421824,0.182486,35,target_target_skeleton,k_s=1,0,0.510830,0.853526,0.463782,0.793296
+ogbn-products,completed,0.425929,0.183441,34,target_target_skeleton,k_s=2,0,0.637999,0.799251,0.456568,0.837989
+ogbn-products,completed,0.428099,0.182072,35,target_target_skeleton,k_s=4,0,0.761022,0.779846,0.465549,0.815642
+ogbn-products,completed,0.436741,0.184493,35,target_target_skeleton,k_s=8,0,0.863375,0.762225,0.484206,0.821229

@@ -20,8 +20,11 @@ def build_target_signature(
     *,
     eta: float = 0.1,
     relation_order: list[DirectedRelation] | None = None,
+    extra_blocks: list[torch.Tensor] | None = None,
 ) -> torch.Tensor:
     if relation_order is None:
         relation_order = list(demand_by_relation)
     blocks = [psi_target] + [demand_by_relation[relation] for relation in relation_order] + [eta * degree_features]
+    if extra_blocks:
+        blocks.extend(extra_blocks)
     return block_normalize(blocks)

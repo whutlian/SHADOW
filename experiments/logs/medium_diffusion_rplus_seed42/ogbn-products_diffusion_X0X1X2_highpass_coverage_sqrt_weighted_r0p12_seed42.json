@@ -1,0 +1,14 @@
+{
+  "dataset": "ogbn-products",
+  "variant": "diffusion_X0X1X2_highpass_coverage",
+  "seed": 42,
+  "ratio": 0.12,
+  "loss_type": "sqrt_weighted",
+  "status": "oom",
+  "reason": "[enforce fail at alloc_cpu.cpp:121] data. DefaultCPUAllocator: not enough memory: you tried to allocate 126687518720 bytes.",
+  "traceback": "Traceback (most recent call last):\n  File \"D:\\Shadow-HGC\\scripts\\run_medium_diffusion.py\", line 166, in main\n    summary = run_shadow_hgc_experiment(\n  File \"D:\\Shadow-HGC\\shadow_hgc\\pipeline\\core.py\", line 773, in run_shadow_hgc_experiment\n    psi, phi, degree_features, target_relations, signature_extra, multiscale_metadata = prepare_model_features(\n  File \"D:\\Shadow-HGC\\shadow_hgc\\pipeline\\core.py\", line 219, in prepare_model_features\n    diffusion = diffusion_target_features(\n  File \"D:\\Shadow-HGC\\shadow_hgc\\features\\diffusion.py\", line 41, in diffusion_target_features\n    current = _diffuse_once(current, edge_index, num_nodes)\n  File \"D:\\Shadow-HGC\\shadow_hgc\\features\\diffusion.py\", line 23, in _diffuse_once\n    out.index_add_(0, dst, x[src] * alpha.unsqueeze(-1))\nRuntimeError: [enforce fail at alloc_cpu.cpp:121] data. DefaultCPUAllocator: not enough memory: you tried to allocate 126687518720 bytes.\n",
+  "generated_at": "2026-06-08T05:28:07Z",
+  "git_commit": "92a00a6",
+  "config_hash": "f9637014580cf37d",
+  "run_id": "ogbn-products-run-seed42-f9637014"
+}

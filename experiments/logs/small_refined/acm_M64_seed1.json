@@ -1,0 +1,205 @@
+{
+  "method": "Shadow-HGC-R-1",
+  "dataset": "acm",
+  "split": "processed_local",
+  "target_type": "paper",
+  "directed_relations": [
+    "paper--cite_ref-->paper",
+    "paper--cited_by-->paper",
+    "author--writes-->paper",
+    "subject--subject_of-->paper",
+    "term--term_in-->paper"
+  ],
+  "M_tau": 64,
+  "requested_M_tau": 64,
+  "effective_M_tau": 64,
+  "num_classes": 3,
+  "min_proto_per_class": 4,
+  "budget_alpha": 0.5,
+  "budget_upshifted": false,
+  "class_budget": {
+    "0": 21,
+    "1": 21,
+    "2": 22
+  },
+  "requested_M_r": null,
+  "resolved_M_r": {
+    "paper--cite_ref-->paper": 16,
+    "paper--cited_by-->paper": 16,
+    "author--writes-->paper": 22,
+    "subject--subject_of-->paper": 22,
+    "term--term_in-->paper": 22
+  },
+  "M_r": {
+    "paper--cite_ref-->paper": 16,
+    "paper--cited_by-->paper": 16,
+    "author--writes-->paper": 22,
+    "subject--subject_of-->paper": 22,
+    "term--term_in-->paper": 22
+  },
+  "k_s": 2,
+  "feature_dim": 64,
+  "projection_type": "raw",
+  "standardization_scope": "train_only",
+  "degree_scale": 0.1,
+  "signature_degree_eta": 0.1,
+  "target_base_dim": 1902,
+  "target_degree_dim": 55,
+  "target_input_dim": 1957,
+  "model": "relation_mlp",
+  "hidden_dim": 128,
+  "dropout": 0.3,
+  "seed": 1,
+  "condensed_nodes_by_type": {
+    "paper": 96,
+    "author": 22,
+    "subject": 22,
+    "term": 22
+  },
+  "condensed_edges_by_relation": {
+    "paper--cite_ref-->paper": 136,
+    "paper--cited_by-->paper": 138,
+    "author--writes-->paper": 64,
+    "subject--subject_of-->paper": 64,
+    "term--term_in-->paper": 64
+  },
+  "condensation_time": 3.70692310000004,
+  "training_time": 7.426980099999923,
+  "inference_time": 0.40036170000007587,
+  "peak_cpu_ram": 15982563328,
+  "peak_gpu_ram": 0,
+  "disk_bytes": 0,
+  "num_full_edge_scans": 0,
+  "edge_slice_cache_bytes": 0,
+  "demand_edge_chunk_size": 500000,
+  "inference_edge_chunk_size": 500000,
+  "accuracy": 0.7242681980133057,
+  "macro_f1": 0.7258774836858114,
+  "num_classes_global": 3,
+  "num_classes_train": 3,
+  "train_label_classes": [
+    0,
+    1,
+    2
+  ],
+  "test_label_classes": [
+    0,
+    1,
+    2
+  ],
+  "train_loss_start": 17.809051513671875,
+  "train_loss_end": 0.0,
+  "prototype_train_acc": 1.0,
+  "num_optimizer_steps": 500,
+  "num_epochs": 500,
+  "learning_rate": 0.03,
+  "weight_decay": 0.0001,
+  "predicted_class_histogram": {
+    "0": 826,
+    "1": 602,
+    "2": 690
+  },
+  "num_predicted_classes": 3,
+  "prediction_entropy": 1.0901541232613334,
+  "weighted_f1": 0.725273451890285,
+  "diagnostics": {
+    "paper--cite_ref-->paper": {
+      "SkeletonMassCoverage": 0.8510823921856875,
+      "ResidualEnergy": 1.0,
+      "ShadowReconErr": 0.5344617286665934,
+      "gamma": 1.964329481124878,
+      "shadow_norms": {
+        "min": 3.2160086631774902,
+        "median": 64.86027526855469,
+        "max": 168843.875
+      }
+    },
+    "paper--cited_by-->paper": {
+      "SkeletonMassCoverage": 0.8970606846513146,
+      "ResidualEnergy": 0.999999213822623,
+      "ShadowReconErr": 0.5927449922263375,
+      "gamma": 2.0,
+      "shadow_norms": {
+        "min": 2.4523513317108154,
+        "median": 64.77581787109375,
+        "max": 44419.2421875
+      }
+    },
+    "author--writes-->paper": {
+      "SkeletonMassCoverage": 0.0,
+      "ResidualEnergy": 1.0,
+      "ShadowReconErr": 0.8087065580218437,
+      "gamma": 1.7687759399414062,
+      "shadow_norms": {
+        "min": 7.54293155670166,
+        "median": 31.811168670654297,
+        "max": 82.8372802734375
+      },
+      "real_source_norms": {
+        "min": 18.699871063232422,
+        "median": 37.2899284362793,
+        "max": 177.3258056640625
+      }
+    },
+    "subject--subject_of-->paper": {
+      "SkeletonMassCoverage": 0.0,
+      "ResidualEnergy": 1.0,
+      "ShadowReconErr": 0.20012429470942117,
+      "gamma": 1.0000001192092896,
+      "shadow_norms": {
+        "min": 14.975738525390625,
+        "median": 74.09351348876953,
+        "max": 88.94955444335938
+      },
+      "real_source_norms": {
+        "min": 28.323759078979492,
+        "median": 34.31415557861328,
+        "max": 88.9495620727539
+      }
+    },
+    "term--term_in-->paper": {
+      "SkeletonMassCoverage": 0.0,
+      "ResidualEnergy": 1.0,
+      "ShadowReconErr": 0.07352917954053957,
+      "gamma": 1.001302719116211,
+      "shadow_norms": {
+        "min": 2437.9033203125,
+        "median": 3316.55029296875,
+        "max": 4231.41650390625
+      },
+      "real_source_norms": {
+        "min": 2.8965463638305664,
+        "median": 13.7271089553833,
+        "max": 1000000.0
+      }
+    }
+  },
+  "shadow_reconstruction_recommendations": {
+    "author--writes-->paper": "increase M_r or run b=2 ablation"
+  },
+  "target_prototypes_by_class": {
+    "0": 21,
+    "1": 21,
+    "2": 22
+  },
+  "cluster_size_distribution": {
+    "min": 1.0,
+    "median": 3.0,
+    "max": 118.0
+  },
+  "ablation": {
+    "include_degree_features": true,
+    "residual_shadow": true,
+    "shadow_mode": "virtual_demand_shadow",
+    "loss_type": "clipped",
+    "calibration_enabled": true,
+    "self_only": false
+  },
+  "schema_preserved": true,
+  "all_edge_weights_nonnegative": true,
+  "residual_shadows_signed": true,
+  "generated_at": "2026-06-07T04:40:34Z",
+  "git_commit": "9980773",
+  "config_hash": "7d4d9c86779bd298",
+  "run_id": "acm-Shadow-HGC-R-1-seed1-7d4d9c86"
+}

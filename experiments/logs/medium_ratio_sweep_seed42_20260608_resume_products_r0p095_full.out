@@ -1,0 +1,6 @@
+[dataset] loading ogbn-products
+[run] ogbn-products seed=42 ratio=0.0950
+[done] ogbn-products ratio=0.0950 acc=0.573153555393219 f1=0.2579316487932142 nodes=27383
+[summary] wrote experiments\tables\medium_ratio_sweep_seed42_20260608_resume_tmp.csv
+[summary] wrote experiments\reports\medium_ratio_sweep_seed42_20260608_resume_tmp.md
+[summary] elapsed_s=570.92

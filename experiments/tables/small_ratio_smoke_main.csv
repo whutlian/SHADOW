@@ -1,0 +1,10 @@
+generated_at,git_commit,config_hash,run_id,dataset,method,M_tau_requested,M_tau_effective,M_r_resolved_summary,feature_dim,projection_type,loss_type,model,accuracy_mean,accuracy_std,macro_f1_mean,macro_f1_std,condensation_time_mean,training_time_mean,inference_time_mean,status
+2026-06-07T13:01:46Z,92a00a6,304279988e7ee184,acm-Full-WRL-GNN-seedna-30427998,acm,Full-WRL-GNN,,,,4,raw,clipped,relation_mlp,0.355996,0.000000,0.204386,0.000000,0.000000,0.469164,0.000000,completed
+2026-06-07T13:02:39Z,92a00a6,e47fe4d033bf9094,acm-Herding-HG-seed0-e47fe4d0,acm,Herding-HG,637,637,,4,raw,,,0.773371,0.000000,,,0.000000,0.000894,0.000000,completed
+2026-06-07T13:02:39Z,92a00a6,db479afb70b267c1,acm-Herding-HG-seed0-db479afb,acm,Herding-HG,726,726,,4,raw,,,0.777620,0.000000,,,0.000000,0.000847,0.000000,completed
+2026-06-07T13:02:40Z,92a00a6,103b30def1d04cd0,acm-K-Center-HG-seed0-103b30de,acm,K-Center-HG,637,637,,4,raw,,,0.786119,0.000000,,,0.000000,0.000908,0.000000,completed
+2026-06-07T13:02:39Z,92a00a6,50d4cbb3a1364b58,acm-K-Center-HG-seed0-50d4cbb3,acm,K-Center-HG,726,726,,4,raw,,,0.784230,0.000000,,,0.000000,0.000988,0.000000,completed
+2026-06-07T13:02:39Z,92a00a6,a3d4164f4ec64b5f,acm-Random-HG-seed0-a3d4164f,acm,Random-HG,637,637,,4,raw,,,0.787063,0.000000,,,0.000000,0.000995,0.000000,completed
+2026-06-07T13:02:39Z,92a00a6,15082dce19d1f993,acm-Random-HG-seed0-15082dce,acm,Random-HG,726,726,,4,raw,,,0.793201,0.000000,,,0.000000,0.001172,0.000000,completed
+2026-06-07T13:02:39Z,92a00a6,4293ba2cc1c9b5e2,acm-Self-Only-MLP-seed0-4293ba2c,acm,Self-Only-MLP,726,726,paper--cite_ref-->paper=2;paper--cited_by-->paper=2;author--writes-->paper=2;subject--subject_of-->paper=2;term--term_in-->paper=2,4,raw,clipped,relation_mlp,0.761095,0.000000,0.760039,0.000000,24.299843,0.023473,0.035194,completed
+2026-06-07T13:02:14Z,92a00a6,a1679c544ce8954f,acm-Shadow-HGC-R-1-seed0-a1679c54,acm,Shadow-HGC-R-1,726,726,paper--cite_ref-->paper=2;paper--cited_by-->paper=2;author--writes-->paper=2;subject--subject_of-->paper=2;term--term_in-->paper=2,4,raw,clipped,relation_mlp,0.320585,0.000000,0.166630,0.000000,27.832494,0.042511,0.708176,completed

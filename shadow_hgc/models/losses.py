@@ -11,8 +11,17 @@ def prototype_cross_entropy(
     *,
     loss_type: str = "weighted",
     clip_value: float | None = None,
+    class_prior: torch.Tensor | None = None,
+    logit_adjustment_tau: float = 1.0,
 ) -> torch.Tensor:
     """Prototype CE variants, defaulting to the cell-weighted empirical risk."""
+
+    if loss_type == "sqrt_weighted_logit_adjusted":
+        if class_prior is None:
+            counts = torch.bincount(labels.to(torch.long), minlength=logits.shape[1]).to(logits.device, logits.dtype)
+            class_prior = counts / counts.sum().clamp_min(1e-12)
+        class_prior = class_prior.to(device=logits.device, dtype=logits.dtype).clamp_min(1e-12)
+        logits = logits - float(logit_adjustment_tau) * torch.log(class_prior).unsqueeze(0)
 
     ce = F.cross_entropy(logits, labels, reduction="none")
     if weights is None:
@@ -22,6 +31,8 @@ def prototype_cross_entropy(
     if loss_type == "weighted":
         effective = weights
     elif loss_type == "sqrt_weighted":
+        effective = torch.sqrt(weights.clamp_min(0.0))
+    elif loss_type == "sqrt_weighted_logit_adjusted":
         effective = torch.sqrt(weights.clamp_min(0.0))
     elif loss_type == "unweighted":
         effective = torch.ones_like(weights)

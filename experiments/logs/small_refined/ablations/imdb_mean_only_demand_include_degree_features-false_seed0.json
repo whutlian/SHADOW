@@ -1,0 +1,186 @@
+{
+  "method": "Shadow-HGC-R-1",
+  "dataset": "imdb",
+  "split": "processed_local",
+  "target_type": "movie",
+  "directed_relations": [
+    "director--directs-->movie",
+    "actor--acts_in-->movie",
+    "keyword--keyword_in-->movie"
+  ],
+  "M_tau": 32,
+  "requested_M_tau": 32,
+  "effective_M_tau": 32,
+  "num_classes": 5,
+  "min_proto_per_class": 4,
+  "budget_alpha": 0.5,
+  "budget_upshifted": false,
+  "class_budget": {
+    "0": 7,
+    "1": 8,
+    "2": 7,
+    "3": 4,
+    "4": 6
+  },
+  "requested_M_r": null,
+  "resolved_M_r": {
+    "director--directs-->movie": 11,
+    "actor--acts_in-->movie": 11,
+    "keyword--keyword_in-->movie": 11
+  },
+  "M_r": {
+    "director--directs-->movie": 11,
+    "actor--acts_in-->movie": 11,
+    "keyword--keyword_in-->movie": 11
+  },
+  "k_s": 2,
+  "feature_dim": 64,
+  "projection_type": "raw",
+  "standardization_scope": "train_only",
+  "degree_scale": 0.1,
+  "signature_degree_eta": 0.1,
+  "target_base_dim": 3489,
+  "target_degree_dim": 0,
+  "target_input_dim": 3489,
+  "model": "relation_mlp",
+  "hidden_dim": 128,
+  "dropout": 0.3,
+  "seed": 0,
+  "condensed_nodes_by_type": {
+    "movie": 32,
+    "director": 11,
+    "actor": 11,
+    "keyword": 11
+  },
+  "condensed_edges_by_relation": {
+    "director--directs-->movie": 32,
+    "actor--acts_in-->movie": 32,
+    "keyword--keyword_in-->movie": 32
+  },
+  "condensation_time": 2.576729699999987,
+  "training_time": 15.444684300000006,
+  "inference_time": 0.9122939000000088,
+  "peak_cpu_ram": 6411354112,
+  "peak_gpu_ram": 0,
+  "disk_bytes": 0,
+  "num_full_edge_scans": 0,
+  "edge_slice_cache_bytes": 0,
+  "demand_edge_chunk_size": 500000,
+  "inference_edge_chunk_size": 500000,
+  "accuracy": 0.2595252990722656,
+  "macro_f1": 0.2220674306154251,
+  "num_classes_global": 5,
+  "num_classes_train": 5,
+  "train_label_classes": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "test_label_classes": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "train_loss_start": 69.29019165039062,
+  "train_loss_end": 0.7725590467453003,
+  "prototype_train_acc": 0.40625,
+  "num_optimizer_steps": 500,
+  "num_epochs": 500,
+  "learning_rate": 0.03,
+  "weight_decay": 0.0001,
+  "predicted_class_histogram": {
+    "0": 912,
+    "2": 1502,
+    "3": 353,
+    "4": 435
+  },
+  "num_predicted_classes": 4,
+  "prediction_entropy": 1.2270709395530404,
+  "weighted_f1": 0.21041937376748696,
+  "diagnostics": {
+    "director--directs-->movie": {
+      "SkeletonMassCoverage": 0.0,
+      "ResidualEnergy": 1.0,
+      "ShadowReconErr": 0.9982884152041347,
+      "gamma": 2.0,
+      "shadow_norms": {
+        "min": 5.362209320068359,
+        "median": 22.59982681274414,
+        "max": 154.4081573486328
+      },
+      "real_source_norms": {
+        "min": 2.8850245475769043,
+        "median": 55.78649139404297,
+        "max": 116.49163055419922
+      }
+    },
+    "actor--acts_in-->movie": {
+      "SkeletonMassCoverage": 0.0,
+      "ResidualEnergy": 1.0,
+      "ShadowReconErr": 1.0022571086245948,
+      "gamma": 2.0,
+      "shadow_norms": {
+        "min": 4.566232681274414,
+        "median": 13.746439933776855,
+        "max": 25.300771713256836
+      },
+      "real_source_norms": {
+        "min": 2.8669281005859375,
+        "median": 52.64554214477539,
+        "max": 167.255615234375
+      }
+    },
+    "keyword--keyword_in-->movie": {
+      "SkeletonMassCoverage": 0.0,
+      "ResidualEnergy": 1.0,
+      "ShadowReconErr": 0.9893656901779105,
+      "gamma": 2.0,
+      "shadow_norms": {
+        "min": 22991.24609375,
+        "median": 34773.546875,
+        "max": 81937.9140625
+      },
+      "real_source_norms": {
+        "min": 5.2468414306640625,
+        "median": 250000.0,
+        "max": 3316624.75
+      }
+    }
+  },
+  "shadow_reconstruction_recommendations": {
+    "director--directs-->movie": "increase M_r or run b=2 ablation",
+    "actor--acts_in-->movie": "increase M_r or run b=2 ablation",
+    "keyword--keyword_in-->movie": "increase M_r or run b=2 ablation"
+  },
+  "target_prototypes_by_class": {
+    "0": 7,
+    "1": 8,
+    "2": 7,
+    "3": 4,
+    "4": 6
+  },
+  "cluster_size_distribution": {
+    "min": 1.0,
+    "median": 14.0,
+    "max": 372.0
+  },
+  "ablation": {
+    "include_degree_features": false,
+    "residual_shadow": true,
+    "shadow_mode": "virtual_demand_shadow",
+    "loss_type": "clipped",
+    "calibration_enabled": true,
+    "self_only": false
+  },
+  "schema_preserved": true,
+  "all_edge_weights_nonnegative": true,
+  "residual_shadows_signed": true,
+  "generated_at": "2026-06-07T08:05:40Z",
+  "git_commit": "9980773",
+  "config_hash": "1305fb9db10042ab",
+  "run_id": "imdb-Shadow-HGC-R-1-seed0-1305fb9d"
+}

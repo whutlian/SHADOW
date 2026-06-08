@@ -8,6 +8,12 @@ directed_relations:
 feature_dim: 4
 projection_type: random
 standardization_scope: train_only
+budget_mode: ratio
+ratio: 0.01
+ratio_base: train_target
+target_budget:
+max_target_budget:
+budget_rounding: nearest
 M_tau: 4
 M_r:
   paper--cite_ref-->paper: 3
@@ -23,6 +29,8 @@ min_proto_per_class: 1
 budget_alpha: 0.5
 strict_budget: false
 shadow_budget_policy: effective_budget_aware
+shadow_ratio_target_target: 0.5
+shadow_ratio_non_target: 1.0
 shadow_non_target_ratio: 1.0
 shadow_target_target_ratio: 0.5
 min_shadows_per_relation: 8

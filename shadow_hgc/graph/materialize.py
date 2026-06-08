@@ -12,6 +12,8 @@ from shadow_hgc.shadows.assign import build_b1_shadow_edges
 class RelationShadowPlan:
     shadow_features: torch.Tensor
     assignment: torch.Tensor
+    shadow_edge_index: torch.Tensor | None = None
+    shadow_edge_weight: torch.Tensor | None = None
     skeleton_edge_index: torch.Tensor | None = None
     skeleton_edge_weight: torch.Tensor | None = None
 
@@ -67,7 +69,13 @@ def materialize_condensed_graph(
             else:
                 node_features[source_type] = plan.shadow_features.clone()
 
-        shadow_edge_index, shadow_edge_weight = build_b1_shadow_edges(plan.assignment)
+        if plan.shadow_edge_index is None:
+            shadow_edge_index, shadow_edge_weight = build_b1_shadow_edges(plan.assignment)
+        else:
+            shadow_edge_index = plan.shadow_edge_index
+            shadow_edge_weight = plan.shadow_edge_weight
+            if shadow_edge_weight is None:
+                raise ValueError("shadow_edge_weight is required when shadow_edge_index is provided")
         shadow_edge_index = shadow_edge_index.clone()
         shadow_edge_index[0] += shadow_source_offset
 

@@ -1,0 +1,21 @@
+{
+  "method": "Random-HG",
+  "dataset": "dblp",
+  "target_type": "author",
+  "mode": "target_feature_coreset_baseline",
+  "requested_M_tau": 64,
+  "effective_M_tau": 64,
+  "feature_dim": 64,
+  "projection_type": "raw",
+  "seed": 0,
+  "epochs": 500,
+  "accuracy": "0.565141",
+  "training_time": "0.134545",
+  "condensation_time": 0.0,
+  "inference_time": 0.0,
+  "status": "completed",
+  "generated_at": "2026-06-07T05:05:01Z",
+  "git_commit": "9980773",
+  "config_hash": "3934a7852dcbfd0e",
+  "run_id": "dblp-Random-HG-seed0-3934a785"
+}

@@ -1,0 +1,21 @@
+{
+  "method": "Herding-HG",
+  "dataset": "imdb",
+  "target_type": "movie",
+  "mode": "target_feature_coreset_baseline",
+  "requested_M_tau": 64,
+  "effective_M_tau": 64,
+  "feature_dim": 64,
+  "projection_type": "raw",
+  "seed": 0,
+  "epochs": 500,
+  "accuracy": "0.216115",
+  "training_time": "0.170345",
+  "condensation_time": 0.0,
+  "inference_time": 0.0,
+  "status": "completed",
+  "generated_at": "2026-06-07T07:59:27Z",
+  "git_commit": "9980773",
+  "config_hash": "1eb3777c490ed04a",
+  "run_id": "imdb-Herding-HG-seed0-1eb3777c"
+}

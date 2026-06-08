@@ -1,0 +1,48 @@
+{
+  "method": "Full-WRL-GNN",
+  "baseline": "Full-WRL-GNN",
+  "dataset": "dblp",
+  "target_type": "author",
+  "directed_relations": [
+    "paper--written_by-->author"
+  ],
+  "feature_dim": 64,
+  "projection_type": "raw",
+  "degree_scale": 0.1,
+  "model": "relation_mlp",
+  "loss_type": "clipped",
+  "accuracy": 0.7492957711219788,
+  "macro_f1": 0.7418049424886703,
+  "training_time": 435.4425665000001,
+  "train_loss_start": 1.398437738418579,
+  "train_loss_end": 0.7054275274276733,
+  "num_optimizer_steps": 500,
+  "num_epochs": 500,
+  "num_classes_global": 4,
+  "num_classes_train": 4,
+  "train_label_classes": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "test_label_classes": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "predicted_class_histogram": {
+    "0": 904,
+    "1": 547,
+    "2": 742,
+    "3": 647
+  },
+  "num_predicted_classes": 4,
+  "prediction_entropy": 1.369287349573692,
+  "weighted_f1": 0.7492578266116579,
+  "generated_at": "2026-06-07T05:04:14Z",
+  "git_commit": "9980773",
+  "config_hash": "fe3c0f34fd6d5c75",
+  "run_id": "dblp-Full-WRL-GNN-seedna-fe3c0f34"
+}

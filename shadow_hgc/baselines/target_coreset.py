@@ -96,6 +96,11 @@ def run_target_coreset_baselines(
     feature_dim: int,
     projection_type: str = "random",
     log_dir: str | Path | None = None,
+    output_label: str | None = None,
+    baseline_match_mode: str = "target_ratio",
+    shadow_condensed_nodes_total: int | None = None,
+    ratio: float | None = None,
+    ratio_base: str = "train_target",
 ) -> list[dict]:
     x = _target_features(graph, feature_dim, seed, projection_type)
     budgets = class_wise_budget(graph.labels, graph.train_idx, M_tau)
@@ -122,6 +127,18 @@ def run_target_coreset_baselines(
             "mode": "target_feature_coreset_baseline",
             "requested_M_tau": M_tau,
             "effective_M_tau": int(selected.numel()),
+            "budget_mode": "count" if ratio is None else "ratio",
+            "ratio": ratio,
+            "ratio_base": ratio_base,
+            "requested_target_budget": M_tau,
+            "effective_target_prototypes": int(selected.numel()),
+            "baseline_match_mode": baseline_match_mode,
+            "baseline_budget": M_tau,
+            "shadow_condensed_nodes_total": shadow_condensed_nodes_total,
+            "condensed_nodes_total": int(selected.numel()),
+            "condensed_edges_total": 0,
+            "condensed_node_ratio_to_train_target": float(selected.numel() / max(1, int(graph.train_idx.numel()))),
+            "condensed_node_ratio_to_all_task_nodes": float(selected.numel() / max(1, int(graph.num_nodes[graph.target_type]))),
             "feature_dim": feature_dim,
             "projection_type": projection_type,
             "seed": seed,
@@ -143,7 +160,8 @@ def run_target_coreset_baselines(
         }
         row = attach_run_metadata(row, config=config_for_hash)
         if log_dir is not None:
-            output_path = Path(log_dir) / f"{graph.dataset_name}_{method.replace('-', '_')}_M{M_tau}_seed{seed}.json"
+            label = output_label or f"count{M_tau}"
+            output_path = Path(log_dir) / f"{graph.dataset_name}_{method.replace('-', '_')}_{baseline_match_mode}_{label}_seed{seed}.json"
             write_json_summary(output_path, row, config=config_for_hash)
         rows.append(
             {

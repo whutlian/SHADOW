@@ -16,6 +16,12 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--epochs", type=int, default=40)
     parser.add_argument("--M-tau", type=int, default=4)
+    parser.add_argument("--target-budget", type=int)
+    parser.add_argument("--ratio", type=float)
+    parser.add_argument("--budget-mode", choices=["ratio", "count"])
+    parser.add_argument("--ratio-base", choices=["train_target", "all_target"], default="train_target")
+    parser.add_argument("--max-target-budget", type=int)
+    parser.add_argument("--budget-rounding", choices=["nearest", "ceil", "floor"], default="nearest")
     parser.add_argument("--M-r", type=int)
     parser.add_argument("--k-s", type=int, default=2)
     parser.add_argument("--feature-dim", type=int, default=4)
@@ -36,6 +42,10 @@ def main() -> None:
     parser.add_argument("--self-only", action="store_true")
     parser.add_argument("--full-graph-same-backbone", action="store_true")
     args = parser.parse_args()
+    budget_mode = args.budget_mode
+    if budget_mode is None:
+        budget_mode = "ratio" if args.ratio is not None else "count"
+    target_budget = args.target_budget if args.target_budget is not None else args.M_tau
     if args.full_graph_same_backbone:
         graph = build_toy_graph(seed=args.seed)
         summary = run_full_graph_same_backbone(
@@ -61,6 +71,12 @@ def main() -> None:
         seed=args.seed,
         epochs=args.epochs,
         M_tau=args.M_tau,
+        budget_mode=budget_mode,
+        ratio=args.ratio,
+        ratio_base=args.ratio_base,
+        target_budget=target_budget,
+        max_target_budget=args.max_target_budget,
+        budget_rounding=args.budget_rounding,
         M_r=args.M_r,
         k_s=args.k_s,
         feature_dim=args.feature_dim,

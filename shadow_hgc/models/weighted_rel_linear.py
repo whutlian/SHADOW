@@ -21,11 +21,14 @@ class WeightedRelationLinearConv(nn.Module):
         relations: Iterable[DirectedRelation],
         activation: nn.Module | None = nn.ReLU(),
         bias: bool = True,
+        relation_gate: bool = False,
+        relation_gate_init: float = 1.0,
     ) -> None:
         super().__init__()
         self.node_types = list(node_types)
         self.relations = list(relations)
         self.activation = activation
+        self.relation_gate_enabled = bool(relation_gate)
         self.self_linears = nn.ModuleDict(
             {
                 node_type: nn.Linear(in_channels[node_type], out_channels, bias=bias)
@@ -38,6 +41,16 @@ class WeightedRelationLinearConv(nn.Module):
                 for relation in self.relations
             }
         )
+        init = torch.log(torch.expm1(torch.tensor(float(relation_gate_init)).clamp_min(1e-6)))
+        self.relation_gate_params = nn.ParameterDict(
+            {str(relation): nn.Parameter(init.clone()) for relation in self.relations}
+        )
+
+    def relation_gate_values(self) -> dict[str, float]:
+        return {
+            str(relation): float(F.softplus(self.relation_gate_params[str(relation)]).detach().cpu().item())
+            for relation in self.relations
+        }
 
     def forward(
         self,
@@ -60,8 +73,9 @@ class WeightedRelationLinearConv(nn.Module):
             src, dst = edge_index[0], edge_index[1]
             weight = edge_weight_dict[relation].to(x_dict[relation.source_type].device)
             projected = self.relation_linears[str(relation)](x_dict[relation.source_type])
+            gate = F.softplus(self.relation_gate_params[str(relation)]) if self.relation_gate_enabled else 1.0
             if edge_chunk_size is None:
-                message = projected[src] * weight.to(projected.dtype).unsqueeze(-1)
+                message = projected[src] * weight.to(projected.dtype).unsqueeze(-1) * gate
                 out[relation.destination_type].index_add_(0, dst, message)
             else:
                 if edge_chunk_size <= 0:
@@ -71,7 +85,7 @@ class WeightedRelationLinearConv(nn.Module):
                     chunk_src = src[start:end]
                     chunk_dst = dst[start:end]
                     chunk_weight = weight[start:end].to(projected.dtype).unsqueeze(-1)
-                    message = projected[chunk_src] * chunk_weight
+                    message = projected[chunk_src] * chunk_weight * gate
                     out[relation.destination_type].index_add_(0, chunk_dst, message)
 
         if self.activation is not None:

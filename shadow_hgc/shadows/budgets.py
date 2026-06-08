@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import math
-
 from shadow_hgc.data.schemas import DirectedRelation
+from shadow_hgc.prototype.budgets import allocate_shadow_budgets
 
 
 def resolve_shadow_budgets(
@@ -23,13 +22,12 @@ def resolve_shadow_budgets(
             }
         return {relation: int(requested_M_r) for relation in relations}
 
-    target_target = [relation for relation in relations if relation.source_type == target_type]
-    non_target = [relation for relation in relations if relation.source_type != target_type]
-    budgets: dict[DirectedRelation, int] = {}
-    if target_target:
-        value = max(min_shadows_per_relation, math.ceil(target_target_ratio * effective_M_tau / len(target_target)))
-        budgets.update({relation: int(value) for relation in target_target})
-    if non_target:
-        value = max(min_shadows_per_relation, math.ceil(non_target_ratio * effective_M_tau / len(non_target)))
-        budgets.update({relation: int(value) for relation in non_target})
-    return budgets
+    by_name = allocate_shadow_budgets(
+        effective_target_prototypes=effective_M_tau,
+        relations=relations,
+        shadow_ratio_target_target=target_target_ratio,
+        shadow_ratio_non_target=non_target_ratio,
+        min_shadow_per_relation=min_shadows_per_relation,
+        target_type=target_type,
+    )
+    return {relation: by_name[str(relation)] for relation in relations}

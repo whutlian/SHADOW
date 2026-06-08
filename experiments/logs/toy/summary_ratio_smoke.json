@@ -1,0 +1,222 @@
+{
+  "method": "Shadow-HGC-R-1",
+  "dataset": "toy",
+  "split": "processed_local",
+  "target_type": "paper",
+  "directed_relations": [
+    "paper--cite_ref-->paper",
+    "paper--cited_by-->paper",
+    "author--writes-->paper"
+  ],
+  "budget_mode": "ratio",
+  "ratio": 1.6,
+  "ratio_base": "train_target",
+  "num_train_target_nodes": 5,
+  "num_train_classes": 2,
+  "min_proto_per_class": 1,
+  "requested_target_budget": 8,
+  "min_required_target_budget": 2,
+  "effective_target_prototypes": 8,
+  "effective_target_ratio": 1.6,
+  "budget_rounding": "nearest",
+  "max_target_budget": null,
+  "budget_upshifted": false,
+  "class_budget_min": 4,
+  "class_budget_median": 4.0,
+  "class_budget_max": 4,
+  "M_tau": 8,
+  "requested_M_tau": 8,
+  "effective_M_tau": 8,
+  "num_classes": 2,
+  "budget_alpha": 0.5,
+  "class_budget": {
+    "0": 4,
+    "1": 4
+  },
+  "requested_M_r": 3,
+  "resolved_M_r": {
+    "paper--cite_ref-->paper": 3,
+    "paper--cited_by-->paper": 3,
+    "author--writes-->paper": 3
+  },
+  "M_r": {
+    "paper--cite_ref-->paper": 3,
+    "paper--cited_by-->paper": 3,
+    "author--writes-->paper": 3
+  },
+  "shadow_budget_policy": "explicit",
+  "shadow_ratio_target_target": 0.5,
+  "shadow_ratio_non_target": 1.0,
+  "min_shadow_per_relation": 8,
+  "shadow_budgets_by_relation": {
+    "paper--cite_ref-->paper": 3,
+    "paper--cited_by-->paper": 3,
+    "author--writes-->paper": 3
+  },
+  "shadow_nodes_total": 6,
+  "k_s": 2,
+  "feature_dim": 4,
+  "projection_type": "random",
+  "standardization_scope": "train_only",
+  "degree_scale": 0.1,
+  "signature_degree_eta": 0.1,
+  "target_base_dim": 4,
+  "target_degree_dim": 33,
+  "target_input_dim": 37,
+  "model": "relation_linear",
+  "hidden_dim": 128,
+  "dropout": 0.3,
+  "seed": 0,
+  "condensed_nodes_by_type": {
+    "paper": 11,
+    "author": 3
+  },
+  "condensed_edges_by_relation": {
+    "paper--cite_ref-->paper": 9,
+    "paper--cited_by-->paper": 9,
+    "author--writes-->paper": 5
+  },
+  "condensed_nodes_total": 14,
+  "condensed_edges_total": 23,
+  "condensed_node_ratio_to_train_target": 2.8,
+  "condensed_node_ratio_to_all_task_nodes": 1.75,
+  "condensation_time": 3.9240588000000005,
+  "training_time": 0.046261399999999675,
+  "inference_time": 0.0005573999999999302,
+  "peak_cpu_ram": 622264320,
+  "peak_gpu_ram": 0,
+  "disk_bytes": 0,
+  "num_full_edge_scans": 0,
+  "full_edge_scans": 0,
+  "edge_slice_cache_bytes": 0,
+  "cache_all_targets": false,
+  "demand_edge_chunk_size": 500000,
+  "inference_edge_chunk_size": 500000,
+  "accuracy": 1.0,
+  "macro_f1": 1.0,
+  "num_classes_global": 2,
+  "num_classes_train": 2,
+  "train_label_classes": [
+    0,
+    1
+  ],
+  "test_label_classes": [
+    1
+  ],
+  "train_loss_start": 1.1341221332550049,
+  "train_loss_end": 0.0027361693792045116,
+  "prototype_train_acc": 1.0,
+  "num_optimizer_steps": 40,
+  "num_epochs": 40,
+  "learning_rate": 0.03,
+  "weight_decay": 0.0001,
+  "predicted_class_histogram": {
+    "1": 1
+  },
+  "num_predicted_classes": 1,
+  "prediction_entropy": -0.0,
+  "weighted_f1": 1.0,
+  "predicted_classes": 1,
+  "diagnostics": {
+    "paper--cite_ref-->paper": {
+      "SkeletonMassCoverage": 0.9999999999996,
+      "ResidualEnergy": 0.9869232386007403,
+      "ShadowReconErr": 0.10389866933771078,
+      "gamma": 1.0188119411468506,
+      "shadow_norms": {
+        "min": 0.23548850417137146,
+        "median": 12.517717361450195,
+        "max": 12.517718315124512
+      }
+    },
+    "paper--cited_by-->paper": {
+      "SkeletonMassCoverage": 0.9999999999996666,
+      "ResidualEnergy": 0.31334077402819177,
+      "ShadowReconErr": 0.5099999830563934,
+      "gamma": 0.5,
+      "shadow_norms": {
+        "min": 0.0,
+        "median": 0.4481857120990753,
+        "max": 0.4481857120990753
+      }
+    },
+    "author--writes-->paper": {
+      "SkeletonMassCoverage": 0.0,
+      "ResidualEnergy": 1.0,
+      "ShadowReconErr": 0.17445296260052376,
+      "gamma": 1.0150889158248901,
+      "shadow_norms": {
+        "min": 1.2434265613555908,
+        "median": 1.7523669004440308,
+        "max": 2.2807717323303223
+      },
+      "real_source_norms": {
+        "min": 1.2434265613555908,
+        "median": 1.7263180017471313,
+        "max": 12.515735626220703
+      }
+    }
+  },
+  "shadow_recon_err_by_relation": {
+    "paper--cite_ref-->paper": 0.10389866933771078,
+    "paper--cited_by-->paper": 0.5099999830563934,
+    "author--writes-->paper": 0.17445296260052376
+  },
+  "skeleton_coverage_by_relation": {
+    "paper--cite_ref-->paper": 0.9999999999996,
+    "paper--cited_by-->paper": 0.9999999999996666,
+    "author--writes-->paper": 0.0
+  },
+  "residual_energy_by_relation": {
+    "paper--cite_ref-->paper": 0.9869232386007403,
+    "paper--cited_by-->paper": 0.31334077402819177,
+    "author--writes-->paper": 1.0
+  },
+  "shadow_feature_norm_stats": {
+    "paper--cite_ref-->paper": {
+      "min": 0.23548850417137146,
+      "median": 12.517717361450195,
+      "max": 12.517718315124512
+    },
+    "paper--cited_by-->paper": {
+      "min": 0.0,
+      "median": 0.4481857120990753,
+      "max": 0.4481857120990753
+    },
+    "author--writes-->paper": {
+      "min": 1.2434265613555908,
+      "median": 1.7523669004440308,
+      "max": 2.2807717323303223
+    }
+  },
+  "shadow_reconstruction_recommendations": {},
+  "target_prototypes_by_class": {
+    "0": 3,
+    "1": 2
+  },
+  "cluster_size_distribution": {
+    "min": 1.0,
+    "median": 1.0,
+    "max": 1.0
+  },
+  "ablation": {
+    "include_degree_features": true,
+    "residual_shadow": true,
+    "shadow_mode": "virtual_demand_shadow",
+    "loss_type": "weighted",
+    "calibration_enabled": true,
+    "self_only": false
+  },
+  "schema_preserved": true,
+  "nonnegative_weights": true,
+  "all_edge_weights_nonnegative": true,
+  "uses_custom_weighted_layer": true,
+  "uses_library_auto_normalization": false,
+  "alpha_normalization": "destination_row",
+  "residual_shadows_signed": true,
+  "status": "completed",
+  "generated_at": "2026-06-07T12:59:52Z",
+  "git_commit": "92a00a6",
+  "config_hash": "90139c1838d846b4",
+  "run_id": "toy-Shadow-HGC-R-1-seed0-90139c18"
+}

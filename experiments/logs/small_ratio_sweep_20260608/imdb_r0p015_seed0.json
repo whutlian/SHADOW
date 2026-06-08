@@ -1,0 +1,255 @@
+{
+  "method": "Shadow-HGC-R-1",
+  "dataset": "imdb",
+  "split": "processed_local",
+  "target_type": "movie",
+  "directed_relations": [
+    "director--directs-->movie",
+    "actor--acts_in-->movie",
+    "keyword--keyword_in-->movie"
+  ],
+  "budget_mode": "ratio",
+  "ratio": 0.015,
+  "ratio_base": "train_target",
+  "num_train_target_nodes": 1371,
+  "num_train_classes": 5,
+  "min_proto_per_class": 4,
+  "requested_target_budget": 21,
+  "min_required_target_budget": 20,
+  "effective_target_prototypes": 21,
+  "effective_target_ratio": 0.015317286652078774,
+  "budget_rounding": "nearest",
+  "max_target_budget": null,
+  "budget_upshifted": false,
+  "class_budget_min": 4,
+  "class_budget_median": 4.0,
+  "class_budget_max": 5,
+  "M_tau": 21,
+  "requested_M_tau": 21,
+  "effective_M_tau": 21,
+  "num_classes": 5,
+  "budget_alpha": 0.5,
+  "class_budget": {
+    "0": 4,
+    "1": 5,
+    "2": 4,
+    "3": 4,
+    "4": 4
+  },
+  "requested_M_r": null,
+  "resolved_M_r": {
+    "director--directs-->movie": 8,
+    "actor--acts_in-->movie": 8,
+    "keyword--keyword_in-->movie": 8
+  },
+  "M_r": {
+    "director--directs-->movie": 8,
+    "actor--acts_in-->movie": 8,
+    "keyword--keyword_in-->movie": 8
+  },
+  "shadow_budget_policy": "ratio_based",
+  "shadow_ratio_target_target": 0.5,
+  "shadow_ratio_non_target": 1.0,
+  "min_shadow_per_relation": 8,
+  "shadow_budgets_by_relation": {
+    "director--directs-->movie": 8,
+    "actor--acts_in-->movie": 8,
+    "keyword--keyword_in-->movie": 8
+  },
+  "shadow_nodes_total": 24,
+  "k_s": 2,
+  "feature_dim": 64,
+  "projection_type": "raw",
+  "standardization_scope": "train_only",
+  "degree_scale": 0.1,
+  "signature_degree_eta": 0.1,
+  "target_base_dim": 3489,
+  "target_degree_dim": 33,
+  "target_input_dim": 3522,
+  "model": "relation_linear",
+  "hidden_dim": 128,
+  "dropout": 0.3,
+  "seed": 0,
+  "condensed_nodes_by_type": {
+    "movie": 21,
+    "director": 8,
+    "actor": 8,
+    "keyword": 8
+  },
+  "condensed_edges_by_relation": {
+    "director--directs-->movie": 21,
+    "actor--acts_in-->movie": 21,
+    "keyword--keyword_in-->movie": 21
+  },
+  "condensed_nodes_total": 45,
+  "condensed_edges_total": 63,
+  "condensed_node_ratio_to_train_target": 0.03282275711159737,
+  "condensed_node_ratio_to_all_task_nodes": 0.009124087591240875,
+  "condensation_time": 2.4880363000000045,
+  "training_time": 0.5001286,
+  "inference_time": 0.02506339999999696,
+  "peak_cpu_ram": 2257367040,
+  "peak_gpu_ram": 0,
+  "disk_bytes": 0,
+  "num_full_edge_scans": 0,
+  "full_edge_scans": 0,
+  "edge_slice_cache_bytes": 0,
+  "cache_all_targets": false,
+  "demand_edge_chunk_size": 500000,
+  "inference_edge_chunk_size": 500000,
+  "accuracy": 0.3260462284088135,
+  "macro_f1": 0.2983205676078796,
+  "num_classes_global": 5,
+  "num_classes_train": 5,
+  "train_label_classes": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "test_label_classes": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "train_loss_start": 141.5377655029297,
+  "train_loss_end": 85.61190032958984,
+  "prototype_train_acc": 0.8095238208770752,
+  "num_optimizer_steps": 500,
+  "num_epochs": 500,
+  "learning_rate": 0.03,
+  "weight_decay": 0.0001,
+  "predicted_class_histogram": {
+    "0": 1114,
+    "1": 763,
+    "2": 600,
+    "3": 225,
+    "4": 500
+  },
+  "num_predicted_classes": 5,
+  "prediction_entropy": 1.49944596316016,
+  "weighted_f1": 0.3204048501446874,
+  "predicted_classes": 5,
+  "diagnostics": {
+    "director--directs-->movie": {
+      "SkeletonMassCoverage": 0.0,
+      "ResidualEnergy": 1.0,
+      "ShadowReconErr": 0.9919587639602232,
+      "gamma": 2.0,
+      "shadow_norms": {
+        "min": 5.8858537673950195,
+        "median": 13.620458602905273,
+        "max": 36.93729019165039
+      },
+      "real_source_norms": {
+        "min": 2.8850245475769043,
+        "median": 55.78649139404297,
+        "max": 116.49163055419922
+      }
+    },
+    "actor--acts_in-->movie": {
+      "SkeletonMassCoverage": 0.0,
+      "ResidualEnergy": 1.0,
+      "ShadowReconErr": 0.9995425337343685,
+      "gamma": 2.0,
+      "shadow_norms": {
+        "min": 4.255526542663574,
+        "median": 8.914246559143066,
+        "max": 23.378793716430664
+      },
+      "real_source_norms": {
+        "min": 2.8669281005859375,
+        "median": 52.64554214477539,
+        "max": 167.255615234375
+      }
+    },
+    "keyword--keyword_in-->movie": {
+      "SkeletonMassCoverage": 0.0,
+      "ResidualEnergy": 1.0,
+      "ShadowReconErr": 0.8004059249792166,
+      "gamma": 1.4474109411239624,
+      "shadow_norms": {
+        "min": 16492.517578125,
+        "median": 23792.498046875,
+        "max": 59167.25
+      },
+      "real_source_norms": {
+        "min": 5.2468414306640625,
+        "median": 250000.0,
+        "max": 3316624.75
+      }
+    }
+  },
+  "shadow_recon_err_by_relation": {
+    "director--directs-->movie": 0.9919587639602232,
+    "actor--acts_in-->movie": 0.9995425337343685,
+    "keyword--keyword_in-->movie": 0.8004059249792166
+  },
+  "skeleton_coverage_by_relation": {
+    "director--directs-->movie": 0.0,
+    "actor--acts_in-->movie": 0.0,
+    "keyword--keyword_in-->movie": 0.0
+  },
+  "residual_energy_by_relation": {
+    "director--directs-->movie": 1.0,
+    "actor--acts_in-->movie": 1.0,
+    "keyword--keyword_in-->movie": 1.0
+  },
+  "shadow_feature_norm_stats": {
+    "director--directs-->movie": {
+      "min": 5.8858537673950195,
+      "median": 13.620458602905273,
+      "max": 36.93729019165039
+    },
+    "actor--acts_in-->movie": {
+      "min": 4.255526542663574,
+      "median": 8.914246559143066,
+      "max": 23.378793716430664
+    },
+    "keyword--keyword_in-->movie": {
+      "min": 16492.517578125,
+      "median": 23792.498046875,
+      "max": 59167.25
+    }
+  },
+  "shadow_reconstruction_recommendations": {
+    "director--directs-->movie": "increase M_r or run b=2 ablation",
+    "actor--acts_in-->movie": "increase M_r or run b=2 ablation",
+    "keyword--keyword_in-->movie": "increase M_r or run b=2 ablation"
+  },
+  "target_prototypes_by_class": {
+    "0": 4,
+    "1": 5,
+    "2": 4,
+    "3": 4,
+    "4": 4
+  },
+  "cluster_size_distribution": {
+    "min": 6.0,
+    "median": 39.0,
+    "max": 246.0
+  },
+  "ablation": {
+    "include_degree_features": true,
+    "residual_shadow": true,
+    "shadow_mode": "virtual_demand_shadow",
+    "loss_type": "clipped",
+    "calibration_enabled": true,
+    "self_only": false
+  },
+  "schema_preserved": true,
+  "nonnegative_weights": true,
+  "all_edge_weights_nonnegative": true,
+  "uses_custom_weighted_layer": true,
+  "uses_library_auto_normalization": false,
+  "alpha_normalization": "destination_row",
+  "residual_shadows_signed": true,
+  "status": "completed",
+  "generated_at": "2026-06-07T17:44:40Z",
+  "git_commit": "92a00a6",
+  "config_hash": "529422428957ad70",
+  "run_id": "imdb-Shadow-HGC-R-1-seed0-52942242"
+}

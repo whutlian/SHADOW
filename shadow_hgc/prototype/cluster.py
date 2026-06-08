@@ -101,6 +101,7 @@ def class_wise_prototypes(
             prototype_weights.append(float(members.numel()))
             next_cell += 1
 
+    actual_num_prototypes = len(prototype_features)
     return PrototypeResult(
         prototype_features=torch.stack(prototype_features, dim=0),
         prototype_labels=torch.tensor(prototype_labels, dtype=torch.long),
@@ -108,7 +109,7 @@ def class_wise_prototypes(
         target_to_cell=target_to_cell,
         cell_members=cell_members,
         requested_M_tau=budget_result.requested_M_tau,
-        effective_M_tau=budget_result.effective_M_tau,
+        effective_M_tau=int(actual_num_prototypes),
         num_classes=budget_result.num_classes,
         min_proto_per_class=budget_result.min_proto_per_class,
         budget_alpha=budget_result.budget_alpha,

@@ -1,11 +1,6 @@
 dataset,k_s,skeleton_coverage,accuracy
-ogbn-arxiv,0,0.0,0.241446
-ogbn-arxiv,1,0.528638,0.243648
-ogbn-arxiv,2,0.648044,0.242927
-ogbn-arxiv,4,0.765925,0.244615
-ogbn-arxiv,8,0.878568,0.244244
-ogbn-products,0,0.0,0.053704
-ogbn-products,1,0.647667,0.053828
-ogbn-products,2,0.768536,0.054309
-ogbn-products,4,0.872468,0.055404
-ogbn-products,8,0.946826,0.05486
+ogbn-products,0,0.0,0.379757
+ogbn-products,1,0.51083,0.421824
+ogbn-products,2,0.637999,0.425929
+ogbn-products,4,0.761022,0.428099
+ogbn-products,8,0.863375,0.436741

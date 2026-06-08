@@ -1,0 +1,21 @@
+{
+  "method": "K-Center-HG",
+  "dataset": "dblp",
+  "target_type": "author",
+  "mode": "target_feature_coreset_baseline",
+  "requested_M_tau": 64,
+  "effective_M_tau": 64,
+  "feature_dim": 64,
+  "projection_type": "raw",
+  "seed": 1,
+  "epochs": 500,
+  "accuracy": "0.633099",
+  "training_time": "0.136001",
+  "condensation_time": 0.0,
+  "inference_time": 0.0,
+  "status": "completed",
+  "generated_at": "2026-06-07T05:05:02Z",
+  "git_commit": "9980773",
+  "config_hash": "0153ddbc6276ee74",
+  "run_id": "dblp-K-Center-HG-seed1-0153ddbc"
+}

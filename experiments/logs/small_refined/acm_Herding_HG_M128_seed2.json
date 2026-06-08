@@ -1,0 +1,21 @@
+{
+  "method": "Herding-HG",
+  "dataset": "acm",
+  "target_type": "paper",
+  "mode": "target_feature_coreset_baseline",
+  "requested_M_tau": 128,
+  "effective_M_tau": 128,
+  "feature_dim": 64,
+  "projection_type": "raw",
+  "seed": 2,
+  "epochs": 500,
+  "accuracy": "0.751180",
+  "training_time": "0.162275",
+  "condensation_time": 0.0,
+  "inference_time": 0.0,
+  "status": "completed",
+  "generated_at": "2026-06-07T04:42:26Z",
+  "git_commit": "9980773",
+  "config_hash": "8d6c1706de906afe",
+  "run_id": "acm-Herding-HG-seed2-8d6c1706"
+}

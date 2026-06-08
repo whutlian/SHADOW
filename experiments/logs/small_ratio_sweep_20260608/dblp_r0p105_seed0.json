@@ -1,0 +1,186 @@
+{
+  "method": "Shadow-HGC-R-1",
+  "dataset": "dblp",
+  "split": "processed_local",
+  "target_type": "author",
+  "directed_relations": [
+    "paper--written_by-->author"
+  ],
+  "budget_mode": "ratio",
+  "ratio": 0.105,
+  "ratio_base": "train_target",
+  "num_train_target_nodes": 1217,
+  "num_train_classes": 4,
+  "min_proto_per_class": 4,
+  "requested_target_budget": 128,
+  "min_required_target_budget": 16,
+  "effective_target_prototypes": 128,
+  "effective_target_ratio": 0.10517666392769104,
+  "budget_rounding": "nearest",
+  "max_target_budget": null,
+  "budget_upshifted": false,
+  "class_budget_min": 28,
+  "class_budget_median": 32.0,
+  "class_budget_max": 35,
+  "M_tau": 128,
+  "requested_M_tau": 128,
+  "effective_M_tau": 128,
+  "num_classes": 4,
+  "budget_alpha": 0.5,
+  "class_budget": {
+    "0": 35,
+    "1": 28,
+    "2": 33,
+    "3": 32
+  },
+  "requested_M_r": null,
+  "resolved_M_r": {
+    "paper--written_by-->author": 128
+  },
+  "M_r": {
+    "paper--written_by-->author": 128
+  },
+  "shadow_budget_policy": "ratio_based",
+  "shadow_ratio_target_target": 0.5,
+  "shadow_ratio_non_target": 1.0,
+  "min_shadow_per_relation": 8,
+  "shadow_budgets_by_relation": {
+    "paper--written_by-->author": 128
+  },
+  "shadow_nodes_total": 128,
+  "k_s": 2,
+  "feature_dim": 64,
+  "projection_type": "raw",
+  "standardization_scope": "train_only",
+  "degree_scale": 0.1,
+  "signature_degree_eta": 0.1,
+  "target_base_dim": 334,
+  "target_degree_dim": 11,
+  "target_input_dim": 345,
+  "model": "relation_linear",
+  "hidden_dim": 128,
+  "dropout": 0.3,
+  "seed": 0,
+  "condensed_nodes_by_type": {
+    "author": 128,
+    "paper": 128
+  },
+  "condensed_edges_by_relation": {
+    "paper--written_by-->author": 128
+  },
+  "condensed_nodes_total": 256,
+  "condensed_edges_total": 128,
+  "condensed_node_ratio_to_train_target": 0.21035332785538208,
+  "condensed_node_ratio_to_all_task_nodes": 0.06310081340892285,
+  "condensation_time": 2.951397499999999,
+  "training_time": 0.42938410000000715,
+  "inference_time": 0.019215199999990773,
+  "peak_cpu_ram": 2668625920,
+  "peak_gpu_ram": 0,
+  "disk_bytes": 0,
+  "num_full_edge_scans": 0,
+  "full_edge_scans": 0,
+  "edge_slice_cache_bytes": 0,
+  "cache_all_targets": false,
+  "demand_edge_chunk_size": 500000,
+  "inference_edge_chunk_size": 500000,
+  "accuracy": 0.824999988079071,
+  "macro_f1": 0.8169423788785934,
+  "num_classes_global": 4,
+  "num_classes_train": 4,
+  "train_label_classes": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "test_label_classes": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "train_loss_start": 1.3318063020706177,
+  "train_loss_end": 9.66516527114436e-05,
+  "prototype_train_acc": 1.0,
+  "num_optimizer_steps": 500,
+  "num_epochs": 500,
+  "learning_rate": 0.03,
+  "weight_decay": 0.0001,
+  "predicted_class_histogram": {
+    "0": 824,
+    "1": 526,
+    "2": 737,
+    "3": 753
+  },
+  "num_predicted_classes": 4,
+  "prediction_entropy": 1.373371532696695,
+  "weighted_f1": 0.8252767349819414,
+  "predicted_classes": 4,
+  "diagnostics": {
+    "paper--written_by-->author": {
+      "SkeletonMassCoverage": 0.0,
+      "ResidualEnergy": 1.0,
+      "ShadowReconErr": 0.006337848762015601,
+      "gamma": 1.0,
+      "shadow_norms": {
+        "min": 3.4822471141815186,
+        "median": 18.8170223236084,
+        "max": 68.6944808959961
+      },
+      "real_source_norms": {
+        "min": 2.3967461585998535,
+        "median": 53.7462043762207,
+        "max": 191.1404266357422
+      }
+    }
+  },
+  "shadow_recon_err_by_relation": {
+    "paper--written_by-->author": 0.006337848762015601
+  },
+  "skeleton_coverage_by_relation": {
+    "paper--written_by-->author": 0.0
+  },
+  "residual_energy_by_relation": {
+    "paper--written_by-->author": 1.0
+  },
+  "shadow_feature_norm_stats": {
+    "paper--written_by-->author": {
+      "min": 3.4822471141815186,
+      "median": 18.8170223236084,
+      "max": 68.6944808959961
+    }
+  },
+  "shadow_reconstruction_recommendations": {},
+  "target_prototypes_by_class": {
+    "0": 35,
+    "1": 28,
+    "2": 33,
+    "3": 32
+  },
+  "cluster_size_distribution": {
+    "min": 1.0,
+    "median": 5.0,
+    "max": 65.0
+  },
+  "ablation": {
+    "include_degree_features": true,
+    "residual_shadow": true,
+    "shadow_mode": "virtual_demand_shadow",
+    "loss_type": "clipped",
+    "calibration_enabled": true,
+    "self_only": false
+  },
+  "schema_preserved": true,
+  "nonnegative_weights": true,
+  "all_edge_weights_nonnegative": true,
+  "uses_custom_weighted_layer": true,
+  "uses_library_auto_normalization": false,
+  "alpha_normalization": "destination_row",
+  "residual_shadows_signed": true,
+  "status": "completed",
+  "generated_at": "2026-06-07T17:43:37Z",
+  "git_commit": "92a00a6",
+  "config_hash": "3c78ee29931a3d73",
+  "run_id": "dblp-Shadow-HGC-R-1-seed0-3c78ee29"
+}

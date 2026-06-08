@@ -1,4 +1,6 @@
 import json
+import subprocess
+import sys
 import pytest
 
 from shadow_hgc.config import load_experiment_config, validate_experiment_config
@@ -56,3 +58,38 @@ def test_synthetic_streaming_stress_uses_two_scans_without_memory_blowup(tmp_pat
     assert summary["full_edge_scans"] == 2
     assert summary["demand_shape"] == [50, 8]
     assert summary["edge_slice_cache_bytes"] > 0
+
+
+def test_dry_run_ultra_ratio_cli_logs_budget_estimates(tmp_path):
+    output = tmp_path / "dry_run_ratio.json"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/dry_run_ultra.py",
+            "--dataset",
+            "ogbn-papers100M",
+            "--ratios",
+            "0.0001",
+            "0.001",
+            "--feature-dim",
+            "8",
+            "--output",
+            str(output),
+        ],
+        cwd=".",
+        text=True,
+        capture_output=True,
+        timeout=60,
+    )
+
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(output.read_text())
+    assert payload["budget_mode"] == "ratio"
+    assert len(payload["ratio_estimates"]) == 2
+    first = payload["ratio_estimates"][0]
+    assert first["requested_target_budget"] > 0
+    assert first["effective_target_prototypes"] >= first["requested_target_budget"]
+    assert first["shadow_nodes_total"] > 0
+    assert first["condensed_nodes_total"] > first["effective_target_prototypes"]
+    assert first["full_edge_scans"] > 0
+    assert first["cache_all_targets"] is False

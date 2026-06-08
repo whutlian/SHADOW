@@ -1,0 +1,53 @@
+{
+  "method": "Full-WRL-GNN",
+  "baseline": "Full-WRL-GNN",
+  "dataset": "imdb",
+  "target_type": "movie",
+  "directed_relations": [
+    "director--directs-->movie",
+    "actor--acts_in-->movie",
+    "keyword--keyword_in-->movie"
+  ],
+  "feature_dim": 64,
+  "projection_type": "raw",
+  "degree_scale": 0.1,
+  "model": "relation_mlp",
+  "loss_type": "clipped",
+  "accuracy": 0.31823858618736267,
+  "macro_f1": 0.2525741308927536,
+  "training_time": 579.1681645999997,
+  "train_loss_start": 226.27308654785156,
+  "train_loss_end": 1.1801860332489014,
+  "num_optimizer_steps": 500,
+  "num_epochs": 500,
+  "num_classes_global": 5,
+  "num_classes_train": 5,
+  "train_label_classes": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "test_label_classes": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "predicted_class_histogram": {
+    "0": 602,
+    "1": 1746,
+    "2": 558,
+    "3": 148,
+    "4": 148
+  },
+  "num_predicted_classes": 5,
+  "prediction_entropy": 1.233568190910667,
+  "weighted_f1": 0.2876184277532688,
+  "generated_at": "2026-06-07T05:25:04Z",
+  "git_commit": "9980773",
+  "config_hash": "6214fe24373ad7df",
+  "run_id": "imdb-Full-WRL-GNN-seedna-6214fe24"
+}

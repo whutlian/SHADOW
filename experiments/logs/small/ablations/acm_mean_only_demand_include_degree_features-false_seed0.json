@@ -10,7 +10,40 @@
     "subject--subject_of-->paper",
     "term--term_in-->paper"
   ],
+  "budget_mode": "count",
+  "ratio": null,
+  "ratio_base": "train_target",
+  "num_train_target_nodes": 907,
+  "num_train_classes": 3,
+  "min_proto_per_class": 4,
+  "requested_target_budget": 4,
+  "min_required_target_budget": 12,
+  "effective_target_prototypes": 12,
+  "effective_target_ratio": 0.013230429988974642,
+  "budget_rounding": "nearest",
+  "max_target_budget": null,
+  "budget_upshifted": true,
+  "class_budget_min": 4,
+  "class_budget_median": 4.0,
+  "class_budget_max": 4,
   "M_tau": 4,
+  "requested_M_tau": 4,
+  "effective_M_tau": 12,
+  "num_classes": 3,
+  "budget_alpha": 0.5,
+  "class_budget": {
+    "0": 4,
+    "1": 4,
+    "2": 4
+  },
+  "requested_M_r": 2,
+  "resolved_M_r": {
+    "paper--cite_ref-->paper": 2,
+    "paper--cited_by-->paper": 2,
+    "author--writes-->paper": 2,
+    "subject--subject_of-->paper": 2,
+    "term--term_in-->paper": 2
+  },
   "M_r": {
     "paper--cite_ref-->paper": 2,
     "paper--cited_by-->paper": 2,
@@ -18,125 +51,448 @@
     "subject--subject_of-->paper": 2,
     "term--term_in-->paper": 2
   },
+  "shadow_budget_policy": "fixed",
+  "legacy_shadow_budget_policy": "explicit",
+  "shadow_policy": "fixed",
+  "shadow_min_per_relation": 8,
+  "shadow_max_multiplier": 2.0,
+  "adaptive_b_enabled": false,
+  "b_max": 4,
+  "b_by_relation": {
+    "paper--cite_ref-->paper": 1,
+    "paper--cited_by-->paper": 1,
+    "author--writes-->paper": 1,
+    "subject--subject_of-->paper": 1,
+    "term--term_in-->paper": 1
+  },
+  "rank_diagnostic_k": 64,
+  "shadow_ratio_target_target": 0.5,
+  "shadow_ratio_non_target": 1.0,
+  "min_shadow_per_relation": 8,
+  "shadow_budgets_by_relation": {
+    "paper--cite_ref-->paper": 2,
+    "paper--cited_by-->paper": 2,
+    "author--writes-->paper": 2,
+    "subject--subject_of-->paper": 2,
+    "term--term_in-->paper": 2
+  },
+  "shadow_nodes_total": 10,
   "k_s": 2,
   "feature_dim": 4,
-  "target_input_dim": 4,
+  "projection_type": "raw",
+  "standardization_scope": "train_only",
+  "degree_scale": 0.1,
+  "signature_degree_eta": 0.1,
+  "feature_mode": "base",
+  "diffusion_steps": [
+    1
+  ],
+  "include_highpass": false,
+  "metapath_signature": false,
+  "metapath_model_input": false,
+  "multiscale_dim": 128,
+  "multiscale_metadata": {
+    "feature_mode": "base",
+    "diffusion_steps": [
+      1
+    ],
+    "include_highpass": false,
+    "metapath_signature": false,
+    "metapath_model_input": false,
+    "multiscale_dim": 128,
+    "blocks": []
+  },
+  "target_base_dim": 1902,
+  "target_degree_dim": 0,
+  "target_input_dim": 1902,
+  "model": "relation_mlp",
+  "relation_gate": false,
+  "relation_gate_init": 1.0,
+  "relation_gate_values": {},
+  "logit_adjustment_tau": 1.0,
+  "skeleton_policy": "fixed_k",
+  "skeleton_coverage": 0.65,
+  "skeleton_k_max": 8,
+  "hidden_dim": 128,
+  "dropout": 0.3,
   "seed": 0,
   "condensed_nodes_by_type": {
-    "paper": 8,
+    "paper": 16,
     "author": 2,
     "subject": 2,
     "term": 2
   },
   "condensed_edges_by_relation": {
-    "paper--cite_ref-->paper": 12,
-    "paper--cited_by-->paper": 12,
-    "author--writes-->paper": 4,
-    "subject--subject_of-->paper": 4,
-    "term--term_in-->paper": 4
+    "paper--cite_ref-->paper": 31,
+    "paper--cited_by-->paper": 34,
+    "author--writes-->paper": 12,
+    "subject--subject_of-->paper": 12,
+    "term--term_in-->paper": 12
   },
-  "condensation_time": 0.6972508999999993,
-  "training_time": 0.001545899999999989,
-  "inference_time": 0.002950100000001399,
-  "peak_cpu_ram": 833429504,
+  "condensed_nodes_total": 22,
+  "condensed_edges_total": 101,
+  "condensed_node_ratio_to_train_target": 0.024255788313120176,
+  "condensed_node_ratio_to_all_task_nodes": 0.007272727272727273,
+  "condensation_time": 2.315058099999998,
+  "training_time": 0.013671900000002069,
+  "inference_time": 0.4067512000000022,
+  "peak_cpu_ram": 16405905408,
   "peak_gpu_ram": 0,
   "disk_bytes": 0,
   "num_full_edge_scans": 0,
+  "full_edge_scans": 0,
   "edge_slice_cache_bytes": 0,
+  "cache_all_targets": false,
   "demand_edge_chunk_size": 500000,
   "inference_edge_chunk_size": 500000,
-  "accuracy": 0.3550519347190857,
-  "macro_f1": 0.2745121568441391,
+  "accuracy": 0.3191690146923065,
+  "macro_f1": 0.16538064212848744,
+  "num_classes_global": 3,
+  "num_classes_train": 3,
+  "train_label_classes": [
+    0,
+    1,
+    2
+  ],
+  "test_label_classes": [
+    0,
+    1,
+    2
+  ],
+  "train_loss_start": 13.074374198913574,
+  "train_loss_end": 13.074374198913574,
+  "prototype_train_acc": 0.3333333432674408,
+  "num_optimizer_steps": 1,
+  "num_epochs": 1,
+  "learning_rate": 0.03,
+  "weight_decay": 0.0001,
+  "predicted_class_histogram": {
+    "0": 13,
+    "1": 2105
+  },
+  "num_predicted_classes": 2,
+  "prediction_entropy": 0.03738084900261985,
+  "weighted_f1": 0.15882768067027173,
+  "predicted_class_count": 2,
+  "top_predicted_classes": [
+    {
+      "class_id": 1,
+      "count": 2105
+    },
+    {
+      "class_id": 0,
+      "count": 13
+    }
+  ],
+  "per_class_accuracy": {
+    "0": 0.007002801168709993,
+    "1": 0.9911373853683472,
+    "2": 0.0
+  },
+  "per_class_support": {
+    "0": 714,
+    "1": 677,
+    "2": 727
+  },
+  "predicted_classes": 2,
   "diagnostics": {
     "paper--cite_ref-->paper": {
-      "SkeletonMassCoverage": 0.9623179174839754,
-      "ResidualEnergy": 0.8235278525036444,
-      "ShadowReconErr": 0.5531565799871069,
-      "gamma": 1.2063283920288086,
+      "SkeletonMassCoverage": 0.9112521988792126,
+      "ResidualEnergy": 1.0,
+      "ShadowReconErr": 0.5533108160866368,
+      "gamma": 0.5,
+      "realized_M_r": 2,
+      "adaptive_b": 1,
+      "mean_adaptive_k": 1.5833333730697632,
+      "median_adaptive_k": 2.0,
+      "max_adaptive_k": 2,
       "shadow_norms": {
-        "min": 0.03796852007508278,
-        "median": 0.03796852007508278,
-        "max": 0.16686944663524628
-      }
+        "min": 308.92852783203125,
+        "median": 308.92852783203125,
+        "max": 7506.6845703125
+      },
+      "shadow_feature_norm_mean": 3907.806640625,
+      "shadow_feature_norm_q995": 7470.69580078125,
+      "stable_rank": 1.0369529723327084,
+      "entropy_effective_rank": 1.1663365364074707,
+      "relation_demand_norm_mean": 2081.271240234375,
+      "relation_demand_norm_median": 9.839625358581543,
+      "relation_demand_norm_q95": 9508.7255859375,
+      "relation_demand_norm_q995": 15013.369140625
     },
     "paper--cited_by-->paper": {
-      "SkeletonMassCoverage": 0.90418690511938,
-      "ResidualEnergy": 0.906016810242137,
-      "ShadowReconErr": 0.6741853624186561,
-      "gamma": 1.6426945924758911,
+      "SkeletonMassCoverage": 0.9138869166495971,
+      "ResidualEnergy": 1.0,
+      "ShadowReconErr": 0.5573881453850772,
+      "gamma": 0.5,
+      "realized_M_r": 2,
+      "adaptive_b": 1,
+      "mean_adaptive_k": 1.8333333730697632,
+      "median_adaptive_k": 2.0,
+      "max_adaptive_k": 2,
       "shadow_norms": {
-        "min": 0.0722169578075409,
-        "median": 0.0722169578075409,
-        "max": 0.576161801815033
-      }
+        "min": 244.26527404785156,
+        "median": 244.26527404785156,
+        "max": 9545.486328125
+      },
+      "shadow_feature_norm_mean": 4894.8759765625,
+      "shadow_feature_norm_q995": 9498.98046875,
+      "stable_rank": 1.0315902273918942,
+      "entropy_effective_rank": 1.1468039751052856,
+      "relation_demand_norm_mean": 2330.939697265625,
+      "relation_demand_norm_median": 24.445920944213867,
+      "relation_demand_norm_q95": 10909.72265625,
+      "relation_demand_norm_q995": 19090.970703125
     },
     "author--writes-->paper": {
       "SkeletonMassCoverage": 0.0,
       "ResidualEnergy": 1.0,
-      "ShadowReconErr": 0.35081786165005235,
-      "gamma": 0.9765011072158813,
+      "ShadowReconErr": 0.8518194068948642,
+      "gamma": 1.6683391332626343,
+      "realized_M_r": 2,
+      "adaptive_b": 1,
       "shadow_norms": {
-        "min": 0.7836319804191589,
-        "median": 0.7836319804191589,
-        "max": 0.799659788608551
+        "min": 5.845251083374023,
+        "median": 5.845251083374023,
+        "max": 23.528261184692383
       },
+      "shadow_feature_norm_mean": 14.686756134033203,
+      "shadow_feature_norm_q995": 23.43984603881836,
       "real_source_norms": {
-        "min": 0.27699437737464905,
-        "median": 1.6718189716339111,
-        "max": 9.87015151977539
-      }
+        "min": 18.699871063232422,
+        "median": 37.2899284362793,
+        "max": 177.3258056640625
+      },
+      "stable_rank": 1.8446539838993437,
+      "entropy_effective_rank": 3.906982421875,
+      "relation_demand_norm_mean": 22.321517944335938,
+      "relation_demand_norm_median": 13.818930625915527,
+      "relation_demand_norm_q95": 58.11785888671875,
+      "relation_demand_norm_q995": 65.73329162597656
     },
     "subject--subject_of-->paper": {
       "SkeletonMassCoverage": 0.0,
       "ResidualEnergy": 1.0,
-      "ShadowReconErr": 0.06843454268363962,
-      "gamma": 0.9650448560714722,
+      "ShadowReconErr": 0.27623596435963704,
+      "gamma": 1.0183157920837402,
+      "realized_M_r": 2,
+      "adaptive_b": 1,
       "shadow_norms": {
-        "min": 3.501483917236328,
-        "median": 3.501483917236328,
-        "max": 3.742884635925293
+        "min": 28.85359764099121,
+        "median": 28.85359764099121,
+        "max": 85.44610595703125
       },
+      "shadow_feature_norm_mean": 57.14985275268555,
+      "shadow_feature_norm_q995": 85.16314697265625,
       "real_source_norms": {
-        "min": 0.32821765542030334,
-        "median": 1.5273665189743042,
-        "max": 4.823598384857178
-      }
+        "min": 28.323759078979492,
+        "median": 34.31415557861328,
+        "max": 88.9495620727539
+      },
+      "stable_rank": 1.0602043307667868,
+      "entropy_effective_rank": 1.3602479696273804,
+      "relation_demand_norm_mean": 68.48226165771484,
+      "relation_demand_norm_median": 83.91058349609375,
+      "relation_demand_norm_q95": 88.9495620727539,
+      "relation_demand_norm_q995": 88.9495620727539
     },
     "term--term_in-->paper": {
       "SkeletonMassCoverage": 0.0,
       "ResidualEnergy": 1.0,
-      "ShadowReconErr": 0.060612554734371334,
-      "gamma": 0.9952001571655273,
+      "ShadowReconErr": 0.06924173333064146,
+      "gamma": 0.9926141500473022,
+      "realized_M_r": 2,
+      "adaptive_b": 1,
       "shadow_norms": {
-        "min": 0.0934373065829277,
-        "median": 0.0934373065829277,
-        "max": 0.12336882203817368
+        "min": 3242.944580078125,
+        "median": 3242.944580078125,
+        "max": 3349.6787109375
       },
+      "shadow_feature_norm_mean": 3296.3115234375,
+      "shadow_feature_norm_q995": 3349.14501953125,
       "real_source_norms": {
-        "min": 0.02883344516158104,
-        "median": 0.3679675757884979,
-        "max": 1.7969526052474976
+        "min": 2.8965463638305664,
+        "median": 13.7271089553833,
+        "max": 1000000.0
+      },
+      "stable_rank": 1.0040207746952532,
+      "entropy_effective_rank": 1.028971552848816,
+      "relation_demand_norm_mean": 3304.025146484375,
+      "relation_demand_norm_median": 3283.963623046875,
+      "relation_demand_norm_q95": 3588.8388671875,
+      "relation_demand_norm_q995": 3798.1123046875
+    },
+    "rank": {
+      "paper--cite_ref-->paper": {
+        "stable_rank": 1.0369529723327084,
+        "entropy_effective_rank": 1.1663365364074707,
+        "relation_demand_norm_mean": 2081.271240234375,
+        "relation_demand_norm_median": 9.839625358581543,
+        "relation_demand_norm_q95": 9508.7255859375,
+        "relation_demand_norm_q995": 15013.369140625
+      },
+      "paper--cited_by-->paper": {
+        "stable_rank": 1.0315902273918942,
+        "entropy_effective_rank": 1.1468039751052856,
+        "relation_demand_norm_mean": 2330.939697265625,
+        "relation_demand_norm_median": 24.445920944213867,
+        "relation_demand_norm_q95": 10909.72265625,
+        "relation_demand_norm_q995": 19090.970703125
+      },
+      "author--writes-->paper": {
+        "stable_rank": 1.8446539838993437,
+        "entropy_effective_rank": 3.906982421875,
+        "relation_demand_norm_mean": 22.321517944335938,
+        "relation_demand_norm_median": 13.818930625915527,
+        "relation_demand_norm_q95": 58.11785888671875,
+        "relation_demand_norm_q995": 65.73329162597656
+      },
+      "subject--subject_of-->paper": {
+        "stable_rank": 1.0602043307667868,
+        "entropy_effective_rank": 1.3602479696273804,
+        "relation_demand_norm_mean": 68.48226165771484,
+        "relation_demand_norm_median": 83.91058349609375,
+        "relation_demand_norm_q95": 88.9495620727539,
+        "relation_demand_norm_q995": 88.9495620727539
+      },
+      "term--term_in-->paper": {
+        "stable_rank": 1.0040207746952532,
+        "entropy_effective_rank": 1.028971552848816,
+        "relation_demand_norm_mean": 3304.025146484375,
+        "relation_demand_norm_median": 3283.963623046875,
+        "relation_demand_norm_q95": 3588.8388671875,
+        "relation_demand_norm_q995": 3798.1123046875
       }
+    },
+    "adaptive_b": {
+      "paper--cite_ref-->paper": 1,
+      "paper--cited_by-->paper": 1,
+      "author--writes-->paper": 1,
+      "subject--subject_of-->paper": 1,
+      "term--term_in-->paper": 1
     }
   },
+  "rank_diagnostics_by_relation": {
+    "paper--cite_ref-->paper": {
+      "stable_rank": 1.0369529723327084,
+      "entropy_effective_rank": 1.1663365364074707,
+      "relation_demand_norm_mean": 2081.271240234375,
+      "relation_demand_norm_median": 9.839625358581543,
+      "relation_demand_norm_q95": 9508.7255859375,
+      "relation_demand_norm_q995": 15013.369140625
+    },
+    "paper--cited_by-->paper": {
+      "stable_rank": 1.0315902273918942,
+      "entropy_effective_rank": 1.1468039751052856,
+      "relation_demand_norm_mean": 2330.939697265625,
+      "relation_demand_norm_median": 24.445920944213867,
+      "relation_demand_norm_q95": 10909.72265625,
+      "relation_demand_norm_q995": 19090.970703125
+    },
+    "author--writes-->paper": {
+      "stable_rank": 1.8446539838993437,
+      "entropy_effective_rank": 3.906982421875,
+      "relation_demand_norm_mean": 22.321517944335938,
+      "relation_demand_norm_median": 13.818930625915527,
+      "relation_demand_norm_q95": 58.11785888671875,
+      "relation_demand_norm_q995": 65.73329162597656
+    },
+    "subject--subject_of-->paper": {
+      "stable_rank": 1.0602043307667868,
+      "entropy_effective_rank": 1.3602479696273804,
+      "relation_demand_norm_mean": 68.48226165771484,
+      "relation_demand_norm_median": 83.91058349609375,
+      "relation_demand_norm_q95": 88.9495620727539,
+      "relation_demand_norm_q995": 88.9495620727539
+    },
+    "term--term_in-->paper": {
+      "stable_rank": 1.0040207746952532,
+      "entropy_effective_rank": 1.028971552848816,
+      "relation_demand_norm_mean": 3304.025146484375,
+      "relation_demand_norm_median": 3283.963623046875,
+      "relation_demand_norm_q95": 3588.8388671875,
+      "relation_demand_norm_q995": 3798.1123046875
+    }
+  },
+  "shadow_recon_err_by_relation": {
+    "paper--cite_ref-->paper": 0.5533108160866368,
+    "paper--cited_by-->paper": 0.5573881453850772,
+    "author--writes-->paper": 0.8518194068948642,
+    "subject--subject_of-->paper": 0.27623596435963704,
+    "term--term_in-->paper": 0.06924173333064146
+  },
+  "skeleton_coverage_by_relation": {
+    "paper--cite_ref-->paper": 0.9112521988792126,
+    "paper--cited_by-->paper": 0.9138869166495971,
+    "author--writes-->paper": 0.0,
+    "subject--subject_of-->paper": 0.0,
+    "term--term_in-->paper": 0.0
+  },
+  "residual_energy_by_relation": {
+    "paper--cite_ref-->paper": 1.0,
+    "paper--cited_by-->paper": 1.0,
+    "author--writes-->paper": 1.0,
+    "subject--subject_of-->paper": 1.0,
+    "term--term_in-->paper": 1.0
+  },
+  "shadow_feature_norm_stats": {
+    "paper--cite_ref-->paper": {
+      "min": 308.92852783203125,
+      "median": 308.92852783203125,
+      "max": 7506.6845703125
+    },
+    "paper--cited_by-->paper": {
+      "min": 244.26527404785156,
+      "median": 244.26527404785156,
+      "max": 9545.486328125
+    },
+    "author--writes-->paper": {
+      "min": 5.845251083374023,
+      "median": 5.845251083374023,
+      "max": 23.528261184692383
+    },
+    "subject--subject_of-->paper": {
+      "min": 28.85359764099121,
+      "median": 28.85359764099121,
+      "max": 85.44610595703125
+    },
+    "term--term_in-->paper": {
+      "min": 3242.944580078125,
+      "median": 3242.944580078125,
+      "max": 3349.6787109375
+    }
+  },
+  "shadow_reconstruction_recommendations": {
+    "author--writes-->paper": "increase M_r or run b=2 ablation"
+  },
   "target_prototypes_by_class": {
-    "0": 1,
-    "1": 1,
-    "2": 2
+    "0": 4,
+    "1": 4,
+    "2": 4
   },
   "cluster_size_distribution": {
-    "min": 166.0,
-    "median": 168.0,
-    "max": 293.0
+    "min": 1.0,
+    "median": 38.0,
+    "max": 222.0
   },
   "ablation": {
     "include_degree_features": false,
     "residual_shadow": true,
     "shadow_mode": "virtual_demand_shadow",
-    "loss_type": "weighted",
-    "calibration_enabled": true
+    "loss_type": "clipped",
+    "calibration_enabled": true,
+    "self_only": false
   },
   "schema_preserved": true,
+  "nonnegative_weights": true,
   "all_edge_weights_nonnegative": true,
-  "residual_shadows_signed": true
+  "uses_custom_weighted_layer": true,
+  "uses_library_auto_normalization": false,
+  "alpha_normalization": "destination_row",
+  "residual_shadows_signed": true,
+  "status": "completed",
+  "generated_at": "2026-06-08T05:47:40Z",
+  "git_commit": "92a00a6",
+  "config_hash": "d28d37c9f65b1398",
+  "run_id": "acm-Shadow-HGC-R-1-seed0-d28d37c9"
 }

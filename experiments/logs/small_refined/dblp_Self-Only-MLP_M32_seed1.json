@@ -1,0 +1,116 @@
+{
+  "method": "Self-Only-MLP",
+  "dataset": "dblp",
+  "split": "processed_local",
+  "target_type": "author",
+  "directed_relations": [
+    "paper--written_by-->author"
+  ],
+  "M_tau": 32,
+  "requested_M_tau": 32,
+  "effective_M_tau": 32,
+  "num_classes": 4,
+  "min_proto_per_class": 4,
+  "budget_alpha": 0.5,
+  "budget_upshifted": false,
+  "class_budget": {
+    "0": 9,
+    "1": 7,
+    "2": 8,
+    "3": 8
+  },
+  "requested_M_r": null,
+  "resolved_M_r": {
+    "paper--written_by-->author": 32
+  },
+  "M_r": {
+    "paper--written_by-->author": 32
+  },
+  "k_s": 0,
+  "feature_dim": 64,
+  "projection_type": "raw",
+  "standardization_scope": "train_only",
+  "degree_scale": 0.1,
+  "signature_degree_eta": 0.1,
+  "target_base_dim": 334,
+  "target_degree_dim": 11,
+  "target_input_dim": 345,
+  "model": "relation_mlp",
+  "hidden_dim": 128,
+  "dropout": 0.3,
+  "seed": 1,
+  "condensed_nodes_by_type": {
+    "author": 32
+  },
+  "condensed_edges_by_relation": {},
+  "condensation_time": 1.159297300000162,
+  "training_time": 0.43699560000004567,
+  "inference_time": 0.0083345999996709,
+  "peak_cpu_ram": 15957196800,
+  "peak_gpu_ram": 0,
+  "disk_bytes": 0,
+  "num_full_edge_scans": 0,
+  "edge_slice_cache_bytes": 0,
+  "demand_edge_chunk_size": 500000,
+  "inference_edge_chunk_size": 500000,
+  "accuracy": 0.7176056504249573,
+  "macro_f1": 0.706848755478859,
+  "num_classes_global": 4,
+  "num_classes_train": 4,
+  "train_label_classes": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "test_label_classes": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "train_loss_start": 1.3994624614715576,
+  "train_loss_end": 0.0,
+  "prototype_train_acc": 1.0,
+  "num_optimizer_steps": 500,
+  "num_epochs": 500,
+  "learning_rate": 0.03,
+  "weight_decay": 0.0001,
+  "predicted_class_histogram": {
+    "0": 1056,
+    "1": 388,
+    "2": 745,
+    "3": 651
+  },
+  "num_predicted_classes": 4,
+  "prediction_entropy": 1.3285029262927535,
+  "weighted_f1": 0.7150343736501243,
+  "diagnostics": {},
+  "shadow_reconstruction_recommendations": {},
+  "target_prototypes_by_class": {
+    "0": 9,
+    "1": 7,
+    "2": 8,
+    "3": 8
+  },
+  "cluster_size_distribution": {
+    "min": 1.0,
+    "median": 35.0,
+    "max": 98.0
+  },
+  "ablation": {
+    "include_degree_features": true,
+    "residual_shadow": true,
+    "shadow_mode": "virtual_demand_shadow",
+    "loss_type": "clipped",
+    "calibration_enabled": true,
+    "self_only": true
+  },
+  "schema_preserved": true,
+  "all_edge_weights_nonnegative": true,
+  "residual_shadows_signed": false,
+  "generated_at": "2026-06-07T05:04:27Z",
+  "git_commit": "9980773",
+  "config_hash": "45f2b564658feede",
+  "run_id": "dblp-Self-Only-MLP-seed1-45f2b564"
+}

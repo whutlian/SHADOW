@@ -1,0 +1,21 @@
+{
+  "method": "Random-HG",
+  "dataset": "imdb",
+  "target_type": "movie",
+  "mode": "target_feature_coreset_baseline",
+  "requested_M_tau": 128,
+  "effective_M_tau": 128,
+  "feature_dim": 64,
+  "projection_type": "raw",
+  "seed": 1,
+  "epochs": 500,
+  "accuracy": "0.293879",
+  "training_time": "0.214481",
+  "condensation_time": 0.0,
+  "inference_time": 0.0,
+  "status": "completed",
+  "generated_at": "2026-06-07T08:02:07Z",
+  "git_commit": "9980773",
+  "config_hash": "512008177c1bec51",
+  "run_id": "imdb-Random-HG-seed1-51200817"
+}

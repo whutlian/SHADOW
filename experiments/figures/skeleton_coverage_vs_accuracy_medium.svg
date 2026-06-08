@@ -5,24 +5,14 @@
   <line x1="48" y1="48" x2="48" y2="312" stroke="#374151" />
   <text x="290.0" y="348" font-size="12" fill="#374151">k_s</text>
   <text x="8" y="180.0" font-size="12" fill="#374151">accuracy</text>
-  <circle cx="48.0" cy="51.4" r="4.0" fill="#2563eb" opacity="0.72" />
-  <circle cx="116.0" cy="49.0" r="9.3" fill="#2563eb" opacity="0.72" />
-  <circle cx="184.0" cy="49.8" r="10.5" fill="#2563eb" opacity="0.72" />
-  <circle cx="320.0" cy="48.0" r="11.7" fill="#2563eb" opacity="0.72" />
-  <circle cx="592.0" cy="48.4" r="12.8" fill="#2563eb" opacity="0.72" />
-  <circle cx="48.0" cy="254.0" r="4.0" fill="#2563eb" opacity="0.72" />
-  <circle cx="116.0" cy="253.9" r="10.5" fill="#2563eb" opacity="0.72" />
-  <circle cx="184.0" cy="253.4" r="11.7" fill="#2563eb" opacity="0.72" />
-  <circle cx="320.0" cy="252.2" r="12.7" fill="#2563eb" opacity="0.72" />
-  <circle cx="592.0" cy="252.8" r="13.5" fill="#2563eb" opacity="0.72" />
-  <text x="55.0" y="44.4" font-size="11" fill="#111827">ogbn-arxiv k=0</text>
-  <text x="123.0" y="42.0" font-size="11" fill="#111827">ogbn-arxiv k=1</text>
-  <text x="191.0" y="42.8" font-size="11" fill="#111827">ogbn-arxiv k=2</text>
-  <text x="327.0" y="41.0" font-size="11" fill="#111827">ogbn-arxiv k=4</text>
-  <text x="599.0" y="41.4" font-size="11" fill="#111827">ogbn-arxiv k=8</text>
-  <text x="55.0" y="247.0" font-size="11" fill="#111827">ogbn-products k=0</text>
-  <text x="123.0" y="246.9" font-size="11" fill="#111827">ogbn-products k=1</text>
-  <text x="191.0" y="246.4" font-size="11" fill="#111827">ogbn-products k=2</text>
-  <text x="327.0" y="245.2" font-size="11" fill="#111827">ogbn-products k=4</text>
-  <text x="599.0" y="245.8" font-size="11" fill="#111827">ogbn-products k=8</text>
+  <circle cx="48.0" cy="82.4" r="4.0" fill="#2563eb" opacity="0.72" />
+  <circle cx="116.0" cy="57.0" r="9.1" fill="#2563eb" opacity="0.72" />
+  <circle cx="184.0" cy="54.5" r="10.4" fill="#2563eb" opacity="0.72" />
+  <circle cx="320.0" cy="53.2" r="11.6" fill="#2563eb" opacity="0.72" />
+  <circle cx="592.0" cy="48.0" r="12.6" fill="#2563eb" opacity="0.72" />
+  <text x="55.0" y="75.4" font-size="11" fill="#111827">ogbn-products k=0</text>
+  <text x="123.0" y="50.0" font-size="11" fill="#111827">ogbn-products k=1</text>
+  <text x="191.0" y="47.5" font-size="11" fill="#111827">ogbn-products k=2</text>
+  <text x="327.0" y="46.2" font-size="11" fill="#111827">ogbn-products k=4</text>
+  <text x="599.0" y="41.0" font-size="11" fill="#111827">ogbn-products k=8</text>
 </svg>

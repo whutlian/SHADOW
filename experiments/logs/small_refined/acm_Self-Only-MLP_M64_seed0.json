@@ -1,0 +1,123 @@
+{
+  "method": "Self-Only-MLP",
+  "dataset": "acm",
+  "split": "processed_local",
+  "target_type": "paper",
+  "directed_relations": [
+    "paper--cite_ref-->paper",
+    "paper--cited_by-->paper",
+    "author--writes-->paper",
+    "subject--subject_of-->paper",
+    "term--term_in-->paper"
+  ],
+  "M_tau": 64,
+  "requested_M_tau": 64,
+  "effective_M_tau": 64,
+  "num_classes": 3,
+  "min_proto_per_class": 4,
+  "budget_alpha": 0.5,
+  "budget_upshifted": false,
+  "class_budget": {
+    "0": 21,
+    "1": 21,
+    "2": 22
+  },
+  "requested_M_r": null,
+  "resolved_M_r": {
+    "paper--cite_ref-->paper": 16,
+    "paper--cited_by-->paper": 16,
+    "author--writes-->paper": 22,
+    "subject--subject_of-->paper": 22,
+    "term--term_in-->paper": 22
+  },
+  "M_r": {
+    "paper--cite_ref-->paper": 16,
+    "paper--cited_by-->paper": 16,
+    "author--writes-->paper": 22,
+    "subject--subject_of-->paper": 22,
+    "term--term_in-->paper": 22
+  },
+  "k_s": 0,
+  "feature_dim": 64,
+  "projection_type": "raw",
+  "standardization_scope": "train_only",
+  "degree_scale": 0.1,
+  "signature_degree_eta": 0.1,
+  "target_base_dim": 1902,
+  "target_degree_dim": 55,
+  "target_input_dim": 1957,
+  "model": "relation_mlp",
+  "hidden_dim": 128,
+  "dropout": 0.3,
+  "seed": 0,
+  "condensed_nodes_by_type": {
+    "paper": 64
+  },
+  "condensed_edges_by_relation": {},
+  "condensation_time": 3.1342809000000216,
+  "training_time": 3.6086000999999897,
+  "inference_time": 0.03837190000001556,
+  "peak_cpu_ram": 15973859328,
+  "peak_gpu_ram": 0,
+  "disk_bytes": 0,
+  "num_full_edge_scans": 0,
+  "edge_slice_cache_bytes": 0,
+  "demand_edge_chunk_size": 500000,
+  "inference_edge_chunk_size": 500000,
+  "accuracy": 0.7115203142166138,
+  "macro_f1": 0.7097377181053162,
+  "num_classes_global": 3,
+  "num_classes_train": 3,
+  "train_label_classes": [
+    0,
+    1,
+    2
+  ],
+  "test_label_classes": [
+    0,
+    1,
+    2
+  ],
+  "train_loss_start": 1.1005432605743408,
+  "train_loss_end": 0.0,
+  "prototype_train_acc": 1.0,
+  "num_optimizer_steps": 500,
+  "num_epochs": 500,
+  "learning_rate": 0.03,
+  "weight_decay": 0.0001,
+  "predicted_class_histogram": {
+    "0": 605,
+    "1": 825,
+    "2": 688
+  },
+  "num_predicted_classes": 3,
+  "prediction_entropy": 1.0904271336528952,
+  "weighted_f1": 0.7084731542949051,
+  "diagnostics": {},
+  "shadow_reconstruction_recommendations": {},
+  "target_prototypes_by_class": {
+    "0": 21,
+    "1": 21,
+    "2": 22
+  },
+  "cluster_size_distribution": {
+    "min": 1.0,
+    "median": 4.0,
+    "max": 146.0
+  },
+  "ablation": {
+    "include_degree_features": true,
+    "residual_shadow": true,
+    "shadow_mode": "virtual_demand_shadow",
+    "loss_type": "clipped",
+    "calibration_enabled": true,
+    "self_only": true
+  },
+  "schema_preserved": true,
+  "all_edge_weights_nonnegative": true,
+  "residual_shadows_signed": false,
+  "generated_at": "2026-06-07T04:40:22Z",
+  "git_commit": "9980773",
+  "config_hash": "976ee13ecc493342",
+  "run_id": "acm-Self-Only-MLP-seed0-976ee13e"
+}

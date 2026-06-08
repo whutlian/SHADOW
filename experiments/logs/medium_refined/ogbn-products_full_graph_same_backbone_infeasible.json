@@ -1,0 +1,17 @@
+{
+  "method": "Full-WRL-GNN",
+  "baseline": "Full-WRL-GNN",
+  "dataset": "ogbn-products",
+  "target_type": "product",
+  "feature_dim": 128,
+  "projection_type": "random",
+  "degree_scale": 0.1,
+  "loss_type": "sqrt_weighted",
+  "model": "relation_mlp",
+  "status": "resource_guard_infeasible",
+  "reason": "Full-batch same-backbone training on ogbn-products was not run under the 24GiB private-memory guard; main/products inference already peaks near the guard and full-graph training would repeat full-edge aggregation for 500 epochs.",
+  "generated_at": "2026-06-07T08:58:29Z",
+  "git_commit": "9980773",
+  "config_hash": "dc312428e882bae1",
+  "run_id": "ogbn-products-Full-WRL-GNN-seedna-dc312428"
+}

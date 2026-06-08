@@ -1,0 +1,20 @@
+variant: Shadow-HGC-R+
+seed: 42
+ratio: 0.06
+feature_mode: diffusion
+diffusion_steps: [1, 2]
+include_highpass: true
+shadow_policy: fixed
+adaptive_b: false
+b_max: 4
+skeleton_policy: coverage
+skeleton_coverage: 0.65
+skeleton_k_max: 8
+loss_type: sqrt_weighted_logit_adjusted
+logit_adjustment_tau: 1.0
+model: relation_linear
+projection_type: random
+feature_dim: 128
+multiscale_dim: 128
+stage5_dataset: ogbn-papers100M
+stage5_requirement: chunked_or_memmap_diffusion_before_full_run

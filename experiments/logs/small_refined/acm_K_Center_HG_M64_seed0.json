@@ -1,0 +1,21 @@
+{
+  "method": "K-Center-HG",
+  "dataset": "acm",
+  "target_type": "paper",
+  "mode": "target_feature_coreset_baseline",
+  "requested_M_tau": 64,
+  "effective_M_tau": 64,
+  "feature_dim": 64,
+  "projection_type": "raw",
+  "seed": 0,
+  "epochs": 500,
+  "accuracy": "0.697828",
+  "training_time": "0.148385",
+  "condensation_time": 0.0,
+  "inference_time": 0.0,
+  "status": "completed",
+  "generated_at": "2026-06-07T04:41:01Z",
+  "git_commit": "9980773",
+  "config_hash": "825c6f7e1582519d",
+  "run_id": "acm-K-Center-HG-seed0-825c6f7e"
+}

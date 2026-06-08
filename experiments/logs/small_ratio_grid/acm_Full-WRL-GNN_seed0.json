@@ -1,0 +1,49 @@
+{
+  "method": "Full-WRL-GNN",
+  "baseline": "Full-WRL-GNN",
+  "dataset": "acm",
+  "target_type": "paper",
+  "directed_relations": [
+    "paper--cite_ref-->paper",
+    "paper--cited_by-->paper",
+    "author--writes-->paper",
+    "subject--subject_of-->paper",
+    "term--term_in-->paper"
+  ],
+  "feature_dim": 64,
+  "projection_type": "raw",
+  "degree_scale": 0.1,
+  "model": "relation_linear",
+  "loss_type": "clipped",
+  "accuracy": 0.794145405292511,
+  "macro_f1": 0.7991581757863363,
+  "training_time": 6.862165299999999,
+  "train_loss_start": 66.62725830078125,
+  "train_loss_end": 0.955974817276001,
+  "num_optimizer_steps": 500,
+  "num_epochs": 500,
+  "num_classes_global": 3,
+  "num_classes_train": 3,
+  "train_label_classes": [
+    0,
+    1,
+    2
+  ],
+  "test_label_classes": [
+    0,
+    1,
+    2
+  ],
+  "predicted_class_histogram": {
+    "0": 927,
+    "1": 525,
+    "2": 666
+  },
+  "num_predicted_classes": 3,
+  "prediction_entropy": 1.0711812732245958,
+  "weighted_f1": 0.7980003342215334,
+  "generated_at": "2026-06-07T13:28:24Z",
+  "git_commit": "92a00a6",
+  "config_hash": "15f8d611548d1c01",
+  "run_id": "acm-Full-WRL-GNN-seedna-15f8d611"
+}

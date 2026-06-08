@@ -1,0 +1,21 @@
+{
+  "method": "Random-HG",
+  "dataset": "acm",
+  "target_type": "paper",
+  "mode": "target_feature_coreset_baseline",
+  "requested_M_tau": 128,
+  "effective_M_tau": 128,
+  "feature_dim": 64,
+  "projection_type": "raw",
+  "seed": 1,
+  "epochs": 500,
+  "accuracy": "0.770066",
+  "training_time": "0.165463",
+  "condensation_time": 0.0,
+  "inference_time": 0.0,
+  "status": "completed",
+  "generated_at": "2026-06-07T04:42:25Z",
+  "git_commit": "9980773",
+  "config_hash": "1ec962e098a5c87c",
+  "run_id": "acm-Random-HG-seed1-1ec962e0"
+}

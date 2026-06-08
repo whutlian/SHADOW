@@ -1,0 +1,21 @@
+{
+  "method": "Herding-HG",
+  "dataset": "dblp",
+  "target_type": "author",
+  "mode": "target_feature_coreset_baseline",
+  "requested_M_tau": 64,
+  "effective_M_tau": 64,
+  "feature_dim": 64,
+  "projection_type": "raw",
+  "seed": 1,
+  "epochs": 500,
+  "accuracy": "0.598592",
+  "training_time": "0.122543",
+  "condensation_time": 0.0,
+  "inference_time": 0.0,
+  "status": "completed",
+  "generated_at": "2026-06-07T05:05:02Z",
+  "git_commit": "9980773",
+  "config_hash": "d2191672d5c4bdee",
+  "run_id": "dblp-Herding-HG-seed1-d2191672"
+}

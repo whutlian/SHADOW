@@ -1,7 +1,7 @@
 import csv
 import json
 
-from shadow_hgc.eval.tables import build_small_main_rows_from_logs, write_rows_csv
+from shadow_hgc.eval.tables import build_ratio_main_rows_from_logs, build_small_main_rows_from_logs, write_rows_csv
 
 
 def test_small_table_rows_are_built_from_json_logs(tmp_path):
@@ -10,6 +10,19 @@ def test_small_table_rows_are_built_from_json_logs(tmp_path):
     payload = {
         "dataset": "toyset",
         "method": "Shadow-HGC-R-1",
+        "budget_mode": "ratio",
+        "ratio": 0.01,
+        "ratio_base": "train_target",
+        "requested_target_budget": 8,
+        "effective_target_prototypes": 12,
+        "num_train_target_nodes": 800,
+        "num_train_classes": 3,
+        "shadow_nodes_total": 10,
+        "condensed_nodes_total": 22,
+        "condensed_edges_total": 44,
+        "effective_target_ratio": 0.015,
+        "condensed_node_ratio_to_train_target": 0.0275,
+        "condensed_node_ratio_to_all_task_nodes": 0.011,
         "requested_M_tau": 8,
         "effective_M_tau": 12,
         "resolved_M_r": {"a--r-->b": 8},
@@ -42,3 +55,10 @@ def test_small_table_rows_are_built_from_json_logs(tmp_path):
     out = tmp_path / "table.csv"
     write_rows_csv(out, rows)
     assert list(csv.DictReader(out.open()))[0]["config_hash"] == "def"
+
+    ratio_rows = build_ratio_main_rows_from_logs(log_dir)
+    assert ratio_rows[0]["ratio"] == "0.01"
+    assert ratio_rows[0]["requested_target_budget"] == 8
+    assert ratio_rows[0]["effective_target_prototypes"] == 12
+    assert ratio_rows[0]["shadow_nodes_total"] == 10
+    assert ratio_rows[0]["condensed_nodes_total"] == 22
