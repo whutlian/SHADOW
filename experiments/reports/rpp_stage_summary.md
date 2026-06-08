@@ -199,6 +199,3 @@ Do not promote:
 - products second-stage streaming diffusion chunk grid.
 - any products row whose diffusion blocks were only precomputed but not injected into `phi`.
 
-## Next Recommendation
-
-The next engineering step should be narrow: implement a true lazy feature-block provider so fp16 memmap diffusion blocks can be concatenated into model input without materializing all features in RAM. Only after that should products streaming diffusion be re-tested.

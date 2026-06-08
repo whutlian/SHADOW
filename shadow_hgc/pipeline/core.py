@@ -20,17 +20,26 @@ from shadow_hgc.eval.logging import attach_run_metadata, write_json_summary
 from shadow_hgc.eval.metrics import macro_f1_score
 from shadow_hgc.eval.resource import current_cpu_ram_bytes, current_gpu_ram_bytes
 from shadow_hgc.features.base import featureless_source_neighbor_mean
+from shadow_hgc.features.compiled_table import CompiledDemandBlock, compile_demand_table, schema_to_dict
 from shadow_hgc.features.degree import compute_degree_features
 from shadow_hgc.features.diffusion import diffusion_target_features
+from shadow_hgc.features.label_affinity import (
+    aggregate_non_target_label_affinity,
+    compute_source_label_counts,
+    compute_target_target_label_affinity,
+    normalize_label_affinity_block,
+)
 from shadow_hgc.features.block_norm import FeatureBlock, fit_transform_feature_blocks
 from shadow_hgc.features.metapath import metapath_target_features
 from shadow_hgc.features.multiscale import fixed_block_projection
 from shadow_hgc.features.projection import fit_standardizer, fixed_random_projection, standardize
 from shadow_hgc.graph.materialize import RelationShadowPlan, materialize_condensed_graph
 from shadow_hgc.models.losses import prototype_cross_entropy
+from shadow_hgc.models.compiled_demand import CompiledDemandMLP
 from shadow_hgc.models.factory import build_model
 from shadow_hgc.models.weighted_rel_linear import WeightedRelationLinearConv
 from shadow_hgc.prototype.budgets import compute_target_budget_from_ratio, validate_budget_mode_args
+from shadow_hgc.prototype.boundary import boundary_aware_prototypes, score_boundary_nodes
 from shadow_hgc.prototype.cluster import class_wise_prototypes
 from shadow_hgc.prototype.signatures import build_target_signature
 from shadow_hgc.shadows.assign import assign_nearest_shadow, assign_nearest_shadow_chunked
@@ -670,6 +679,272 @@ def _build_relation_plans(
     return plans, diagnostics, signed_any, realized_M_r, b_by_relation, rank_diagnostics
 
 
+def _train_label_mask_and_labels(graph: HeteroGraphData) -> tuple[torch.Tensor, torch.Tensor]:
+    mask = torch.zeros(graph.num_nodes[graph.target_type], dtype=torch.bool)
+    mask[graph.train_idx] = True
+    labels = torch.full_like(graph.labels, -1)
+    labels[graph.train_idx] = graph.labels[graph.train_idx]
+    return mask, labels
+
+
+def _cell_mean_rows(values: torch.Tensor, cell_members: list[torch.Tensor], *, row_by_target: torch.Tensor | None = None) -> torch.Tensor:
+    rows = []
+    for members in cell_members:
+        member_rows = members.to(torch.long)
+        if row_by_target is not None:
+            member_rows = row_by_target[member_rows]
+            member_rows = member_rows[member_rows >= 0]
+        rows.append(values[member_rows].mean(dim=0) if member_rows.numel() else torch.zeros(values.shape[1], dtype=values.dtype))
+    return torch.stack(rows, dim=0)
+
+
+def _reconstruct_plan_demand(plan: RelationShadowPlan, prototype_features: torch.Tensor) -> torch.Tensor:
+    out = torch.zeros(
+        prototype_features.shape[0],
+        plan.shadow_features.shape[1],
+        dtype=plan.shadow_features.dtype,
+        device=plan.shadow_features.device,
+    )
+    if plan.skeleton_edge_index is not None and plan.skeleton_edge_index.numel() > 0:
+        src = plan.skeleton_edge_index[0].to(torch.long)
+        dst = plan.skeleton_edge_index[1].to(torch.long)
+        weight = plan.skeleton_edge_weight.to(out.device, out.dtype).unsqueeze(1)
+        out.index_add_(0, dst, prototype_features[src].to(out.device, out.dtype) * weight)
+    if plan.shadow_edge_index is not None:
+        src = plan.shadow_edge_index[0].to(torch.long)
+        dst = plan.shadow_edge_index[1].to(torch.long)
+        if plan.shadow_edge_weight is None:
+            raise ValueError("shadow_edge_weight is required for explicit shadow edges")
+        weight = plan.shadow_edge_weight.to(out.device, out.dtype).unsqueeze(1)
+        out.index_add_(0, dst, plan.shadow_features[src].to(out.device, out.dtype) * weight)
+    else:
+        out += plan.shadow_features[plan.assignment.to(torch.long)].to(out.device, out.dtype)
+    return out
+
+
+def _build_lad_blocks(
+    graph: HeteroGraphData,
+    target_relations: list[DirectedRelation],
+    alpha: dict[DirectedRelation, torch.Tensor],
+    *,
+    target_nodes: torch.Tensor,
+    num_classes: int,
+    label_affinity_mode: str,
+    label_affinity_self_exclude: bool,
+    label_affinity_block_norm: str,
+) -> tuple[dict[DirectedRelation, torch.Tensor], dict[str, dict], dict]:
+    if label_affinity_mode not in {"none", "target_target", "non_target", "all"}:
+        raise ValueError("label_affinity_mode must be none, target_target, non_target, or all")
+    target_mask, train_only_labels = _train_label_mask_and_labels(graph)
+    blocks: dict[DirectedRelation, torch.Tensor] = {}
+    stats: dict[str, dict] = {}
+    active_source_total = 0
+    for relation in target_relations:
+        include_target_target = relation.is_target_target(graph.target_type) and label_affinity_mode in {"target_target", "all"}
+        include_non_target = (not relation.is_target_target(graph.target_type)) and label_affinity_mode in {"non_target", "all"}
+        if include_target_target:
+            raw = compute_target_target_label_affinity(
+                graph.edge_index[relation],
+                target_mask,
+                train_only_labels,
+                num_nodes=graph.num_nodes[graph.target_type],
+                num_classes=num_classes,
+                alpha=alpha[relation],
+                exclude_self=label_affinity_self_exclude,
+                target_nodes=target_nodes,
+            )
+        elif include_non_target:
+            source_affinity = compute_source_label_counts(
+                graph.edge_index[relation],
+                target_mask,
+                train_only_labels,
+                num_source_nodes=graph.num_nodes[relation.source_type],
+                num_classes=num_classes,
+            )
+            active_source_total += int((source_affinity.totals > 0).sum().item())
+            raw = aggregate_non_target_label_affinity(
+                graph.edge_index[relation],
+                source_affinity,
+                target_nodes=target_nodes,
+                target_train_labels=train_only_labels,
+                alpha=alpha[relation],
+                leave_one_out_for_train=True,
+            )
+        else:
+            continue
+        normalized, block_stats = normalize_label_affinity_block(raw, mode=label_affinity_block_norm)
+        blocks[relation] = normalized
+        stats[str(relation)] = {
+            "mean": float(raw.mean().item()) if raw.numel() else 0.0,
+            "std": float(raw.std(unbiased=False).item()) if raw.numel() else 0.0,
+            "l1_norm_mean": block_stats.l1_norm_mean,
+            "l2_norm_mean": block_stats.l2_norm_mean,
+            "zero_row_ratio": block_stats.zero_row_ratio,
+            "norm": label_affinity_block_norm,
+        }
+    metadata = {
+        "lad_num_classes": int(num_classes),
+        "lad_active_source_nodes": int(active_source_total),
+        "lad_self_exclusion": bool(label_affinity_self_exclude),
+        "lad_uses_train_labels_only": True,
+    }
+    return blocks, stats, metadata
+
+
+def _compiled_blocks_for_rows(
+    *,
+    self_features: torch.Tensor,
+    feature_demands: dict[DirectedRelation, torch.Tensor],
+    lad_blocks: dict[DirectedRelation, torch.Tensor] | None,
+    degree_block: torch.Tensor | None,
+    relation_order: list[DirectedRelation],
+    compiled_block_norm: str,
+) -> list[tuple[CompiledDemandBlock, torch.Tensor]]:
+    blocks: list[tuple[CompiledDemandBlock, torch.Tensor]] = [
+        (
+            CompiledDemandBlock("self", "self", None, int(self_features.shape[1]), compiled_block_norm),
+            self_features,
+        )
+    ]
+    for relation in relation_order:
+        demand = feature_demands[relation]
+        blocks.append(
+            (
+                CompiledDemandBlock(
+                    f"demand:{relation.source_type}:{relation.relation_name}:{relation.destination_type}",
+                    "feature_demand",
+                    relation,
+                    int(demand.shape[1]),
+                    compiled_block_norm,
+                ),
+                demand,
+            )
+        )
+    if lad_blocks:
+        for relation in relation_order:
+            if relation not in lad_blocks:
+                continue
+            lad = lad_blocks[relation]
+            blocks.append(
+                (
+                    CompiledDemandBlock(
+                        f"label_affinity:{relation.source_type}:{relation.relation_name}:{relation.destination_type}",
+                        "label_affinity",
+                        relation,
+                        int(lad.shape[1]),
+                        "row_l1",
+                    ),
+                    lad,
+                )
+            )
+    if degree_block is not None and degree_block.shape[1] > 0:
+        blocks.append(
+            (
+                CompiledDemandBlock("degree", "degree", None, int(degree_block.shape[1]), compiled_block_norm),
+                degree_block,
+            )
+        )
+    return blocks
+
+
+def _train_and_infer_compiled(
+    graph: HeteroGraphData,
+    *,
+    train_table: torch.Tensor,
+    train_labels: torch.Tensor,
+    train_weights: torch.Tensor,
+    test_table: torch.Tensor,
+    schema,
+    epochs: int,
+    seed: int,
+    loss_type: str,
+    hidden_dim: int,
+    dropout: float,
+    lr: float,
+    weight_decay: float,
+    compiled_head_fusion: str,
+    compiled_block_gate: bool,
+    compiled_block_norm: str,
+    logit_adjustment_tau: float,
+) -> tuple[float | None, float | None, float, float, dict, dict]:
+    torch.manual_seed(seed)
+    class_metadata = infer_class_metadata(graph.labels, graph.train_idx, graph.test_idx)
+    num_classes = class_metadata["num_classes_global"]
+    model = CompiledDemandMLP(
+        schema,
+        num_classes=num_classes,
+        hidden_dim=hidden_dim,
+        dropout=dropout,
+        block_norm=compiled_block_norm,
+        block_gate=compiled_block_gate,
+        fusion=compiled_head_fusion,
+    )
+    opt = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+    train_label_counts = torch.bincount(
+        graph.labels[graph.train_idx].clamp_min(0).to(torch.long),
+        minlength=num_classes,
+    ).to(torch.float32)
+    class_prior = train_label_counts / train_label_counts.sum().clamp_min(1.0)
+    train_start = time.perf_counter()
+    loss_start = None
+    loss_end = None
+    for _ in range(epochs):
+        opt.zero_grad()
+        logits = model(train_table)
+        loss = prototype_cross_entropy(
+            logits,
+            train_labels,
+            train_weights,
+            loss_type=loss_type,
+            class_prior=class_prior,
+            logit_adjustment_tau=logit_adjustment_tau,
+        )
+        if loss_start is None:
+            loss_start = float(loss.detach().item())
+        loss.backward()
+        opt.step()
+        loss_end = float(loss.detach().item())
+    train_time = time.perf_counter() - train_start
+    model.eval()
+    infer_start = time.perf_counter()
+    with torch.no_grad():
+        train_logits = model(train_table)
+        prototype_pred = train_logits.argmax(dim=1)
+        prototype_train_acc = float((prototype_pred == train_labels).to(torch.float32).mean().item())
+        test_logits = model(test_table)
+        pred = test_logits.argmax(dim=1)
+    infer_time = time.perf_counter() - infer_start
+    accuracy = None
+    macro_f1 = None
+    if graph.test_idx.numel() > 0:
+        test_label = graph.labels[graph.test_idx]
+        accuracy = float((pred == test_label).to(torch.float32).mean().item())
+        macro_f1 = macro_f1_score(pred, test_label, num_classes=num_classes)
+    pred_diag = prediction_diagnostics(
+        pred,
+        graph.labels[graph.test_idx],
+        torch.arange(graph.test_idx.numel(), dtype=torch.long),
+        num_classes=num_classes,
+    )
+    diagnostics = model.diagnostics()
+    train_metrics = {
+        "train_loss_start": loss_start,
+        "train_loss_end": loss_end,
+        "prototype_train_acc": prototype_train_acc,
+        "prototype_train_loss_start": loss_start,
+        "prototype_train_loss_end": loss_end,
+        "num_optimizer_steps": int(epochs),
+        "num_epochs": int(epochs),
+        "learning_rate": float(lr),
+        "weight_decay": float(weight_decay),
+        "final_logits_activation": "none",
+        "model_diagnostics": diagnostics,
+        "block_gate_values": diagnostics.get("block_gates", {}),
+        "block_norm_stats": diagnostics.get("block_norm_stats", {}),
+    }
+    return accuracy, macro_f1, train_time, infer_time, train_metrics, pred_diag
+
+
 def _train_and_infer(
     graph: HeteroGraphData,
     phi: dict[str, torch.Tensor],
@@ -867,6 +1142,28 @@ def run_shadow_hgc_experiment(
     block_gate: bool = False,
     block_dropout: float = 0.0,
     self_only: bool = False,
+    stage: str = "r1",
+    diffusion_enabled: bool | None = None,
+    diffusion_status: str = "active",
+    label_affinity: bool = False,
+    label_affinity_mode: str = "all",
+    label_affinity_self_exclude: bool = True,
+    label_affinity_block_norm: str = "row_l1",
+    compiled_head: bool = False,
+    compiled_head_fusion: str = "concat_mlp",
+    compiled_hidden_dim: int | None = None,
+    compiled_dropout: float | None = None,
+    compiled_block_gate: bool = True,
+    compiled_block_norm: str = "standardize",
+    compiled_demand_source: str = "shadow_reconstructed",
+    compiled_train_scope: str = "prototypes",
+    compiled_include_degree_block: bool = False,
+    boundary_prototypes: bool = False,
+    boundary_fraction: float = 0.3,
+    boundary_score: str = "entropy",
+    boundary_pool_quantile: float = 0.4,
+    boundary_cluster_method: str = "kmeans",
+    boundary_score_epochs: int = 80,
 ) -> dict:
     start = time.perf_counter()
     _trace_memory("pipeline:start")
@@ -874,8 +1171,16 @@ def run_shadow_hgc_experiment(
         raise ValueError(f"unknown shadow_mode: {shadow_mode}")
     if shadow_policy not in {"fixed", "rank_adaptive"}:
         raise ValueError("shadow_policy must be fixed or rank_adaptive")
-    if feature_mode not in {"base", "diffusion", "metapath", "diffusion_metapath"}:
-        raise ValueError("feature_mode must be base, diffusion, metapath, or diffusion_metapath")
+    if feature_mode not in {"base", "diffusion", "metapath", "diffusion_metapath", "label_affinity", "label_affinity_metapath"}:
+        raise ValueError("feature_mode must be base, diffusion, metapath, diffusion_metapath, label_affinity, or label_affinity_metapath")
+    if diffusion_enabled is False and "diffusion" in feature_mode:
+        raise ValueError("diffusion is disabled for this run")
+    if label_affinity_block_norm not in {"none", "row_l1", "standardize", "standardize_l2"}:
+        raise ValueError("invalid label_affinity_block_norm")
+    if compiled_demand_source not in {"shadow_reconstructed", "prototype_oracle", "exact"}:
+        raise ValueError("compiled_demand_source must be shadow_reconstructed, prototype_oracle, or exact")
+    if compiled_train_scope not in {"prototypes", "full_demand"}:
+        raise ValueError("compiled_train_scope must be prototypes or full_demand")
     if skeleton_policy not in {"fixed_k", "coverage"}:
         raise ValueError("skeleton_policy must be fixed_k or coverage")
     if ratio_base not in {"train_target", "all_target"}:
@@ -924,6 +1229,11 @@ def run_shadow_hgc_experiment(
         }
     M_tau = int(target_budget)
     diffusion_steps_tuple = tuple(int(step) for step in diffusion_steps)
+    base_feature_mode = feature_mode
+    if feature_mode == "label_affinity":
+        base_feature_mode = "base"
+    elif feature_mode == "label_affinity_metapath":
+        base_feature_mode = "metapath"
     psi, phi, degree_features, target_relations, signature_extra, multiscale_metadata = prepare_model_features(
         graph,
         feature_dim=feature_dim,
@@ -931,7 +1241,7 @@ def run_shadow_hgc_experiment(
         projection_type=projection_type,
         include_degree_features=include_degree_features,
         degree_scale=degree_scale,
-        feature_mode=feature_mode,
+        feature_mode=base_feature_mode,
         diffusion_steps=diffusion_steps_tuple,
         include_highpass=include_highpass,
         metapath_signature=metapath_signature,
@@ -958,18 +1268,78 @@ def run_shadow_hgc_experiment(
         extra_blocks=None if signature_extra is None else [signature_extra[graph.train_idx]],
     )
     _trace_memory("pipeline:after_signature")
-    prototypes = class_wise_prototypes(
-        phi_target=phi[graph.target_type],
-        signatures=signature,
-        labels=graph.labels,
-        train_idx=graph.train_idx,
-        M_tau=M_tau,
-        signature_idx=graph.train_idx,
-        min_proto_per_class=min_proto_per_class,
-        budget_alpha=budget_alpha,
-        strict_budget=strict_budget,
-        seed=seed,
-    )
+    boundary_diagnostics: dict = {}
+    if boundary_prototypes:
+        torch.manual_seed(seed + 173)
+        prelim_x = torch.cat([phi[graph.target_type][graph.train_idx]] + [demand[rel] for rel in target_relations], dim=1)
+        prelim_y = graph.labels[graph.train_idx].to(torch.long)
+        prelim_classes = infer_class_metadata(graph.labels, graph.train_idx, graph.test_idx)["num_classes_global"]
+        prelim = torch.nn.Sequential(
+            torch.nn.Linear(prelim_x.shape[1], max(32, min(hidden_dim, 256))),
+            torch.nn.ReLU(),
+            torch.nn.Linear(max(32, min(hidden_dim, 256)), prelim_classes),
+        )
+        opt = torch.optim.Adam(prelim.parameters(), lr=0.01, weight_decay=1e-4)
+        for _ in range(int(boundary_score_epochs)):
+            opt.zero_grad()
+            loss = torch.nn.functional.cross_entropy(prelim(prelim_x), prelim_y)
+            loss.backward()
+            opt.step()
+        with torch.no_grad():
+            train_boundary_logits = prelim(prelim_x)
+            train_boundary_scores = score_boundary_nodes(
+                logits=train_boundary_logits,
+                labels=prelim_y,
+                method=boundary_score,
+            )
+        boundary_scores_full = torch.zeros(graph.labels.numel(), dtype=torch.float32)
+        boundary_scores_full[graph.train_idx] = train_boundary_scores.cpu()
+        signature_full = torch.zeros(
+            graph.num_nodes[graph.target_type],
+            signature.shape[1],
+            dtype=signature.dtype,
+            device=signature.device,
+        )
+        signature_full[graph.train_idx] = signature
+        prototypes = boundary_aware_prototypes(
+            phi_target=phi[graph.target_type],
+            signatures=signature_full,
+            labels=graph.labels,
+            train_idx=graph.train_idx,
+            boundary_scores=boundary_scores_full,
+            M_tau=M_tau,
+            boundary_fraction=boundary_fraction,
+            boundary_pool_quantile=boundary_pool_quantile,
+            boundary_score=boundary_score,
+            clustering_method=boundary_cluster_method,
+            min_proto_per_class=min_proto_per_class,
+            budget_alpha=budget_alpha,
+            seed=seed,
+        )
+        boundary_diagnostics = {
+            "boundary_prototypes": True,
+            "boundary_fraction": float(boundary_fraction),
+            "boundary_score": boundary_score,
+            "boundary_pool_quantile": float(boundary_pool_quantile),
+            "boundary_cluster_method": boundary_cluster_method,
+            "boundary_pool_size_by_class": prototypes.boundary_pool_size_by_class,
+            "num_boundary_prototypes": prototypes.num_boundary_prototypes,
+            "num_base_prototypes": prototypes.num_base_prototypes,
+            "boundary_score_stats": prototypes.boundary_score_stats,
+        }
+    else:
+        prototypes = class_wise_prototypes(
+            phi_target=phi[graph.target_type],
+            signatures=signature,
+            labels=graph.labels,
+            train_idx=graph.train_idx,
+            M_tau=M_tau,
+            signature_idx=graph.train_idx,
+            min_proto_per_class=min_proto_per_class,
+            budget_alpha=budget_alpha,
+            strict_budget=strict_budget,
+            seed=seed,
+        )
     _trace_memory("pipeline:after_prototypes")
     resolved_M_r = resolve_shadow_budgets(
         relations=target_relations,
@@ -1064,30 +1434,149 @@ def run_shadow_hgc_experiment(
     target_base_dim = int(psi[graph.target_type].shape[1])
     target_degree_dim = int(degree_features.shape[1] if include_degree_features else 0)
     target_input_dim = int(phi[graph.target_type].shape[1])
-    del demand, signature, relation_plans, prototypes, psi, degree_features, demand_row_by_target
-    gc.collect()
-    _trace_memory("pipeline:after_condense_gc")
-    accuracy, macro_f1, train_time, infer_time, train_metrics, pred_diag = _train_and_infer(
-        graph,
-        phi,
-        alpha,
-        condensed,
-        model_relations,
-        epochs=epochs,
-        seed=seed,
-        loss_type=loss_type,
-        inference_edge_chunk_size=inference_edge_chunk_size,
-        inference_dst_chunk_size=inference_dst_chunk_size,
-        model_type=model_type,
-        hidden_dim=hidden_dim,
-        dropout=dropout,
-        lr=lr,
-        weight_decay=weight_decay,
-        relation_gate=relation_gate,
-        relation_gate_init=relation_gate_init,
-        block_gate=block_gate,
-        logit_adjustment_tau=logit_adjustment_tau,
-    )
+    lad_precompute_time = 0.0
+    lad_stats: dict[str, dict] = {}
+    lad_metadata: dict = {
+        "lad_num_classes": int(infer_class_metadata(graph.labels, graph.train_idx, graph.test_idx)["num_classes_global"]),
+        "lad_active_source_nodes": 0,
+        "lad_self_exclusion": bool(label_affinity_self_exclude),
+        "lad_uses_train_labels_only": True,
+    }
+    compiled_schema_dict: dict | None = None
+    if compiled_head:
+        compiled_start = time.perf_counter()
+        num_classes_for_lad = infer_class_metadata(graph.labels, graph.train_idx, graph.test_idx)["num_classes_global"]
+        train_lad_blocks: dict[DirectedRelation, torch.Tensor] = {}
+        test_lad_blocks: dict[DirectedRelation, torch.Tensor] = {}
+        if label_affinity:
+            train_lad_blocks, lad_stats, lad_metadata = _build_lad_blocks(
+                graph,
+                target_relations,
+                alpha,
+                target_nodes=graph.train_idx,
+                num_classes=num_classes_for_lad,
+                label_affinity_mode=label_affinity_mode,
+                label_affinity_self_exclude=label_affinity_self_exclude,
+                label_affinity_block_norm=label_affinity_block_norm,
+            )
+            test_lad_blocks, test_lad_stats, test_lad_meta = _build_lad_blocks(
+                graph,
+                target_relations,
+                alpha,
+                target_nodes=graph.test_idx,
+                num_classes=num_classes_for_lad,
+                label_affinity_mode=label_affinity_mode,
+                label_affinity_self_exclude=label_affinity_self_exclude,
+                label_affinity_block_norm=label_affinity_block_norm,
+            )
+            lad_stats.update({f"test:{key}": value for key, value in test_lad_stats.items()})
+            lad_metadata["lad_active_source_nodes"] = max(
+                int(lad_metadata.get("lad_active_source_nodes", 0)),
+                int(test_lad_meta.get("lad_active_source_nodes", 0)),
+            )
+        lad_precompute_time = time.perf_counter() - compiled_start
+        test_demand, _ = _relation_demand(
+            graph,
+            phi,
+            target_relations,
+            edge_chunk_size=inference_edge_chunk_size,
+            demand_dst_idx=graph.test_idx,
+        )
+        if compiled_train_scope == "full_demand":
+            train_feature_demands = {relation: demand[relation] for relation in target_relations}
+            train_lad = train_lad_blocks
+            train_self = phi[graph.target_type][graph.train_idx]
+            train_degree = degree_features[graph.train_idx] if compiled_include_degree_block else None
+            train_labels = graph.labels[graph.train_idx]
+            train_weights = torch.ones(graph.train_idx.numel(), dtype=torch.float32)
+        else:
+            train_feature_demands = {}
+            for relation in target_relations:
+                if compiled_demand_source == "shadow_reconstructed" and relation in relation_plans:
+                    train_feature_demands[relation] = _reconstruct_plan_demand(relation_plans[relation], prototypes.prototype_features)
+                else:
+                    train_feature_demands[relation] = _cell_mean_rows(
+                        demand[relation],
+                        prototypes.cell_members,
+                        row_by_target=demand_row_by_target,
+                    )
+            train_lad = {
+                relation: _cell_mean_rows(block, prototypes.cell_members, row_by_target=demand_row_by_target)
+                for relation, block in train_lad_blocks.items()
+            }
+            train_self = prototypes.prototype_features
+            train_degree = _cell_mean_rows(
+                degree_features[graph.train_idx],
+                prototypes.cell_members,
+                row_by_target=demand_row_by_target,
+            ) if compiled_include_degree_block else None
+            train_labels = prototypes.prototype_labels
+            train_weights = prototypes.prototype_weights
+        train_blocks = _compiled_blocks_for_rows(
+            self_features=train_self,
+            feature_demands=train_feature_demands,
+            lad_blocks=train_lad,
+            degree_block=train_degree,
+            relation_order=target_relations,
+            compiled_block_norm=compiled_block_norm,
+        )
+        train_table, compiled_schema = compile_demand_table(train_blocks)
+        test_blocks = _compiled_blocks_for_rows(
+            self_features=phi[graph.target_type][graph.test_idx],
+            feature_demands={relation: test_demand[relation] for relation in target_relations},
+            lad_blocks=test_lad_blocks,
+            degree_block=degree_features[graph.test_idx] if compiled_include_degree_block else None,
+            relation_order=target_relations,
+            compiled_block_norm=compiled_block_norm,
+        )
+        test_table, test_schema = compile_demand_table(test_blocks)
+        if compiled_schema != test_schema:
+            raise ValueError("compiled train/infer schema mismatch")
+        compiled_schema_dict = schema_to_dict(compiled_schema)
+        accuracy, macro_f1, train_time, infer_time, train_metrics, pred_diag = _train_and_infer_compiled(
+            graph,
+            train_table=train_table,
+            train_labels=train_labels,
+            train_weights=train_weights,
+            test_table=test_table,
+            schema=compiled_schema,
+            epochs=epochs,
+            seed=seed,
+            loss_type=loss_type,
+            hidden_dim=int(compiled_hidden_dim or hidden_dim),
+            dropout=float(compiled_dropout if compiled_dropout is not None else dropout),
+            lr=lr,
+            weight_decay=weight_decay,
+            compiled_head_fusion=compiled_head_fusion,
+            compiled_block_gate=compiled_block_gate,
+            compiled_block_norm=compiled_block_norm,
+            logit_adjustment_tau=logit_adjustment_tau,
+        )
+    else:
+        del demand, signature, relation_plans, prototypes, psi, degree_features, demand_row_by_target
+        gc.collect()
+        _trace_memory("pipeline:after_condense_gc")
+        accuracy, macro_f1, train_time, infer_time, train_metrics, pred_diag = _train_and_infer(
+            graph,
+            phi,
+            alpha,
+            condensed,
+            model_relations,
+            epochs=epochs,
+            seed=seed,
+            loss_type=loss_type,
+            inference_edge_chunk_size=inference_edge_chunk_size,
+            inference_dst_chunk_size=inference_dst_chunk_size,
+            model_type=model_type,
+            hidden_dim=hidden_dim,
+            dropout=dropout,
+            lr=lr,
+            weight_decay=weight_decay,
+            relation_gate=relation_gate,
+            relation_gate_init=relation_gate_init,
+            block_gate=block_gate,
+            logit_adjustment_tau=logit_adjustment_tau,
+        )
     condensation_time = time.perf_counter() - start - train_time - infer_time
     schema_preserved = ensure_schema_preserved(
         exposed_node_types=set(condensed.node_features),
@@ -1167,6 +1656,27 @@ def run_shadow_hgc_experiment(
         "block_norm": block_norm,
         "block_gate": block_gate,
         "block_dropout": block_dropout,
+        "stage": stage,
+        "diffusion_enabled": diffusion_enabled,
+        "diffusion_status": diffusion_status,
+        "label_affinity": label_affinity,
+        "label_affinity_mode": label_affinity_mode,
+        "label_affinity_self_exclude": label_affinity_self_exclude,
+        "label_affinity_block_norm": label_affinity_block_norm,
+        "compiled_head": compiled_head,
+        "compiled_head_fusion": compiled_head_fusion,
+        "compiled_hidden_dim": compiled_hidden_dim,
+        "compiled_dropout": compiled_dropout,
+        "compiled_block_gate": compiled_block_gate,
+        "compiled_block_norm": compiled_block_norm,
+        "compiled_demand_source": compiled_demand_source,
+        "compiled_train_scope": compiled_train_scope,
+        "compiled_include_degree_block": compiled_include_degree_block,
+        "boundary_prototypes": boundary_prototypes,
+        "boundary_fraction": boundary_fraction,
+        "boundary_score": boundary_score,
+        "boundary_pool_quantile": boundary_pool_quantile,
+        "boundary_cluster_method": boundary_cluster_method,
     }
     condensed_nodes_by_type = {k: int(v.shape[0]) for k, v in condensed.node_features.items()}
     condensed_edges_by_relation = {str(k): int(v.shape[1]) for k, v in condensed.edge_index.items()}
@@ -1232,6 +1742,9 @@ def run_shadow_hgc_experiment(
         "degree_scale": degree_scale,
         "signature_degree_eta": signature_degree_eta,
         "feature_mode": feature_mode,
+        "base_feature_mode": base_feature_mode,
+        "diffusion_enabled": diffusion_enabled if diffusion_enabled is not None else ("diffusion" in feature_mode),
+        "diffusion_status": diffusion_status,
         "diffusion_steps": list(diffusion_steps_tuple),
         "include_highpass": include_highpass,
         "metapath_signature": metapath_signature,
@@ -1246,7 +1759,30 @@ def run_shadow_hgc_experiment(
         "target_degree_dim": target_degree_dim,
         "target_input_dim": target_input_dim,
         "model": model_type,
-        "model_type": model_type,
+        "model_type": "compiled_demand_mlp" if compiled_head else model_type,
+        "graph_model_type": model_type,
+        "stage": stage,
+        "compiled_head": bool(compiled_head),
+        "compiled_head_fusion": compiled_head_fusion,
+        "compiled_hidden_dim": int(compiled_hidden_dim or hidden_dim),
+        "compiled_dropout": float(compiled_dropout if compiled_dropout is not None else dropout),
+        "compiled_block_gate": bool(compiled_block_gate),
+        "compiled_block_norm": compiled_block_norm,
+        "compiled_demand_source": compiled_demand_source,
+        "compiled_train_scope": compiled_train_scope,
+        "compiled_schema_total_dim": None if compiled_schema_dict is None else int(compiled_schema_dict["total_dim"]),
+        "compiled_blocks": [] if compiled_schema_dict is None else compiled_schema_dict["blocks"],
+        "compiled_schema": compiled_schema_dict,
+        "label_affinity": bool(label_affinity),
+        "label_affinity_mode": label_affinity_mode,
+        "label_affinity_block_norm": label_affinity_block_norm,
+        "boundary_prototypes": bool(boundary_prototypes),
+        "lad_precompute_time_s": lad_precompute_time,
+        "lad_peak_cpu_ram_mb": current_cpu_ram_bytes() / (1024 * 1024),
+        "lad_disk_bytes": 0,
+        "lad_block_stats": lad_stats,
+        **lad_metadata,
+        **boundary_diagnostics,
         "relation_gate": relation_gate,
         "relation_gate_init": relation_gate_init,
         "relation_gate_values": train_metrics.get("relation_gate_values", {}),
@@ -1285,10 +1821,12 @@ def run_shadow_hgc_experiment(
         "inference_dst_chunk_size": inference_dst_chunk_size,
         "assignment_chunk_size": assignment_chunk_size,
         "accuracy": accuracy,
+        "valid_or_test_accuracy": accuracy,
         "macro_f1": macro_f1,
         **class_metadata,
         **train_metrics,
         **pred_diag,
+        "predicted_class_count": pred_diag["num_predicted_classes"],
         "predicted_classes": pred_diag["num_predicted_classes"],
         "diagnostics": diagnostics,
         "rank_diagnostics_by_relation": rank_diagnostics,

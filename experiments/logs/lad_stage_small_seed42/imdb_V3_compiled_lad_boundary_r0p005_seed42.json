@@ -1,0 +1,872 @@
+{
+  "method": "Shadow-HGC-L",
+  "method_variant": "Shadow-HGC-L",
+  "dataset": "imdb",
+  "split": "processed_local",
+  "target_type": "movie",
+  "directed_relations": [
+    "director--directs-->movie",
+    "actor--acts_in-->movie",
+    "keyword--keyword_in-->movie"
+  ],
+  "budget_mode": "ratio",
+  "ratio": 0.005,
+  "ratio_base": "train_target",
+  "num_train_target_nodes": 1371,
+  "num_train_classes": 5,
+  "min_proto_per_class": 4,
+  "requested_target_budget": 20,
+  "min_required_target_budget": 20,
+  "effective_target_prototypes": 20,
+  "effective_target_ratio": 0.014587892049598834,
+  "budget_rounding": "nearest",
+  "max_target_budget": null,
+  "budget_upshifted": false,
+  "class_budget_min": 4,
+  "class_budget_median": 4.0,
+  "class_budget_max": 4,
+  "M_tau": 20,
+  "requested_M_tau": 20,
+  "effective_M_tau": 20,
+  "num_classes": 5,
+  "budget_alpha": 0.5,
+  "class_budget": {
+    "0": 4,
+    "1": 4,
+    "2": 4,
+    "3": 4,
+    "4": 4
+  },
+  "requested_M_r": null,
+  "resolved_M_r": {
+    "director--directs-->movie": 40,
+    "actor--acts_in-->movie": 40,
+    "keyword--keyword_in-->movie": 33
+  },
+  "M_r": {
+    "director--directs-->movie": 40,
+    "actor--acts_in-->movie": 40,
+    "keyword--keyword_in-->movie": 33
+  },
+  "shadow_budget_policy": "rank_adaptive",
+  "legacy_shadow_budget_policy": "ratio_based",
+  "shadow_policy": "rank_adaptive",
+  "shadow_min_per_relation": 8,
+  "shadow_max_multiplier": 2.0,
+  "adaptive_b_enabled": true,
+  "b_max": 4,
+  "b_by_relation": {
+    "director--directs-->movie": 1,
+    "actor--acts_in-->movie": 1,
+    "keyword--keyword_in-->movie": 1
+  },
+  "rank_diagnostic_k": 64,
+  "shadow_ratio_target_target": 0.5,
+  "shadow_ratio_non_target": 1.0,
+  "min_shadow_per_relation": 8,
+  "shadow_budgets_by_relation": {
+    "director--directs-->movie": 40,
+    "actor--acts_in-->movie": 40,
+    "keyword--keyword_in-->movie": 33
+  },
+  "shadow_total_budget": null,
+  "rank_adaptive_global_cap": false,
+  "max_total_condensed_ratio": null,
+  "shadow_nodes_total": 113,
+  "k_s": 2,
+  "feature_dim": 64,
+  "projection_type": "raw",
+  "standardization_scope": "train_only",
+  "degree_scale": 0.1,
+  "signature_degree_eta": 0.1,
+  "feature_mode": "label_affinity_metapath",
+  "base_feature_mode": "metapath",
+  "diffusion_enabled": false,
+  "diffusion_status": "diagnostic_only",
+  "diffusion_steps": [
+    1
+  ],
+  "include_highpass": false,
+  "metapath_signature": true,
+  "metapath_model_input": true,
+  "multiscale_dim": 128,
+  "multiscale_metadata": {
+    "feature_mode": "metapath",
+    "diffusion_steps": [
+      1
+    ],
+    "include_highpass": false,
+    "metapath_signature": true,
+    "metapath_model_input": true,
+    "multiscale_dim": 128,
+    "block_norm": "standardize",
+    "blocks": [
+      "movie-director-movie",
+      "movie-actor-movie",
+      "movie-keyword-movie"
+    ],
+    "block_stats": {
+      "metapath:movie-director-movie": {
+        "dim": 128,
+        "mean_abs": 158.6636199951172,
+        "std_mean": 3175.836669921875,
+        "norm_median": 26890.271484375,
+        "norm_p95": 64505.859375
+      }
+    }
+  },
+  "block_norm": "standardize",
+  "block_gate": false,
+  "block_dropout": 0.0,
+  "block_stats": {
+    "metapath:movie-director-movie": {
+      "dim": 128,
+      "mean_abs": 158.6636199951172,
+      "std_mean": 3175.836669921875,
+      "norm_median": 26890.271484375,
+      "norm_p95": 64505.859375
+    }
+  },
+  "target_base_dim": 3489,
+  "target_degree_dim": 33,
+  "target_input_dim": 3650,
+  "model": "shadow_fusion",
+  "model_type": "compiled_demand_mlp",
+  "graph_model_type": "shadow_fusion",
+  "stage": "lad",
+  "compiled_head": true,
+  "compiled_head_fusion": "concat_mlp",
+  "compiled_hidden_dim": 256,
+  "compiled_dropout": 0.3,
+  "compiled_block_gate": true,
+  "compiled_block_norm": "standardize",
+  "compiled_demand_source": "shadow_reconstructed",
+  "compiled_train_scope": "prototypes",
+  "compiled_schema_total_dim": 13836,
+  "compiled_blocks": [
+    {
+      "name": "self",
+      "kind": "self",
+      "relation": null,
+      "dim": 3650,
+      "normalize": "standardize"
+    },
+    {
+      "name": "demand:director:directs:movie",
+      "kind": "feature_demand",
+      "relation": {
+        "source_type": "director",
+        "relation_name": "directs",
+        "destination_type": "movie"
+      },
+      "dim": 3341,
+      "normalize": "standardize"
+    },
+    {
+      "name": "demand:actor:acts_in:movie",
+      "kind": "feature_demand",
+      "relation": {
+        "source_type": "actor",
+        "relation_name": "acts_in",
+        "destination_type": "movie"
+      },
+      "dim": 3341,
+      "normalize": "standardize"
+    },
+    {
+      "name": "demand:keyword:keyword_in:movie",
+      "kind": "feature_demand",
+      "relation": {
+        "source_type": "keyword",
+        "relation_name": "keyword_in",
+        "destination_type": "movie"
+      },
+      "dim": 3489,
+      "normalize": "standardize"
+    },
+    {
+      "name": "label_affinity:director:directs:movie",
+      "kind": "label_affinity",
+      "relation": {
+        "source_type": "director",
+        "relation_name": "directs",
+        "destination_type": "movie"
+      },
+      "dim": 5,
+      "normalize": "row_l1"
+    },
+    {
+      "name": "label_affinity:actor:acts_in:movie",
+      "kind": "label_affinity",
+      "relation": {
+        "source_type": "actor",
+        "relation_name": "acts_in",
+        "destination_type": "movie"
+      },
+      "dim": 5,
+      "normalize": "row_l1"
+    },
+    {
+      "name": "label_affinity:keyword:keyword_in:movie",
+      "kind": "label_affinity",
+      "relation": {
+        "source_type": "keyword",
+        "relation_name": "keyword_in",
+        "destination_type": "movie"
+      },
+      "dim": 5,
+      "normalize": "row_l1"
+    }
+  ],
+  "compiled_schema": {
+    "total_dim": 13836,
+    "blocks": [
+      {
+        "name": "self",
+        "kind": "self",
+        "relation": null,
+        "dim": 3650,
+        "normalize": "standardize"
+      },
+      {
+        "name": "demand:director:directs:movie",
+        "kind": "feature_demand",
+        "relation": {
+          "source_type": "director",
+          "relation_name": "directs",
+          "destination_type": "movie"
+        },
+        "dim": 3341,
+        "normalize": "standardize"
+      },
+      {
+        "name": "demand:actor:acts_in:movie",
+        "kind": "feature_demand",
+        "relation": {
+          "source_type": "actor",
+          "relation_name": "acts_in",
+          "destination_type": "movie"
+        },
+        "dim": 3341,
+        "normalize": "standardize"
+      },
+      {
+        "name": "demand:keyword:keyword_in:movie",
+        "kind": "feature_demand",
+        "relation": {
+          "source_type": "keyword",
+          "relation_name": "keyword_in",
+          "destination_type": "movie"
+        },
+        "dim": 3489,
+        "normalize": "standardize"
+      },
+      {
+        "name": "label_affinity:director:directs:movie",
+        "kind": "label_affinity",
+        "relation": {
+          "source_type": "director",
+          "relation_name": "directs",
+          "destination_type": "movie"
+        },
+        "dim": 5,
+        "normalize": "row_l1"
+      },
+      {
+        "name": "label_affinity:actor:acts_in:movie",
+        "kind": "label_affinity",
+        "relation": {
+          "source_type": "actor",
+          "relation_name": "acts_in",
+          "destination_type": "movie"
+        },
+        "dim": 5,
+        "normalize": "row_l1"
+      },
+      {
+        "name": "label_affinity:keyword:keyword_in:movie",
+        "kind": "label_affinity",
+        "relation": {
+          "source_type": "keyword",
+          "relation_name": "keyword_in",
+          "destination_type": "movie"
+        },
+        "dim": 5,
+        "normalize": "row_l1"
+      }
+    ]
+  },
+  "label_affinity": true,
+  "label_affinity_mode": "all",
+  "label_affinity_block_norm": "row_l1",
+  "boundary_prototypes": true,
+  "lad_precompute_time_s": 0.00790999999999542,
+  "lad_peak_cpu_ram_mb": 13458.765625,
+  "lad_disk_bytes": 0,
+  "lad_block_stats": {
+    "director--directs-->movie": {
+      "mean": 0.09102844446897507,
+      "std": 0.25799688696861267,
+      "l1_norm_mean": 0.45514222979545593,
+      "l2_norm_mean": 0.4072253704071045,
+      "zero_row_ratio": 0.5448577680525164,
+      "norm": "row_l1"
+    },
+    "actor--acts_in-->movie": {
+      "mean": 0.1152929812669754,
+      "std": 0.16864189505577087,
+      "l1_norm_mean": 0.5764648914337158,
+      "l2_norm_mean": 0.39430731534957886,
+      "zero_row_ratio": 0.17213712618526622,
+      "norm": "row_l1"
+    },
+    "keyword--keyword_in-->movie": {
+      "mean": 0.12541939318180084,
+      "std": 0.1350671797990799,
+      "l1_norm_mean": 0.6270970106124878,
+      "l2_norm_mean": 0.381632000207901,
+      "zero_row_ratio": 0.03938730853391685,
+      "norm": "row_l1"
+    },
+    "test:director--directs-->movie": {
+      "mean": 0.0955028086900711,
+      "std": 0.26103806495666504,
+      "l1_norm_mean": 0.4775140583515167,
+      "l2_norm_mean": 0.4233000576496124,
+      "zero_row_ratio": 0.5224859462835728,
+      "norm": "row_l1"
+    },
+    "test:actor--acts_in-->movie": {
+      "mean": 0.11221111565828323,
+      "std": 0.16209256649017334,
+      "l1_norm_mean": 0.561055600643158,
+      "l2_norm_mean": 0.37957820296287537,
+      "zero_row_ratio": 0.16614615865084323,
+      "norm": "row_l1"
+    },
+    "test:keyword--keyword_in-->movie": {
+      "mean": 0.12284718453884125,
+      "std": 0.13407835364341736,
+      "l1_norm_mean": 0.6142358779907227,
+      "l2_norm_mean": 0.373544305562973,
+      "zero_row_ratio": 0.047470331043098064,
+      "norm": "row_l1"
+    }
+  },
+  "lad_num_classes": 5,
+  "lad_active_source_nodes": 6909,
+  "lad_self_exclusion": true,
+  "lad_uses_train_labels_only": true,
+  "boundary_fraction": 0.3,
+  "boundary_score": "entropy",
+  "boundary_pool_quantile": 0.4,
+  "boundary_cluster_method": "kmeans",
+  "boundary_pool_size_by_class": {
+    "0": 214,
+    "1": 227,
+    "2": 196,
+    "3": 54,
+    "4": 131
+  },
+  "num_boundary_prototypes": 5,
+  "num_base_prototypes": 15,
+  "boundary_score_stats": {
+    "method": "precomputed",
+    "count": 1371,
+    "mean": 0.655738115310669,
+    "max": 1.5659611225128174,
+    "min": 1.1052408294132121e-10
+  },
+  "relation_gate": true,
+  "relation_gate_init": 1.0,
+  "relation_gate_values": {},
+  "logit_adjustment_tau": 1.0,
+  "skeleton_policy": "fixed_k",
+  "skeleton_coverage": 0.65,
+  "skeleton_k_max": 8,
+  "hidden_dim": 128,
+  "dropout": 0.3,
+  "seed": 42,
+  "condensed_nodes_by_type": {
+    "movie": 20,
+    "director": 40,
+    "actor": 40,
+    "keyword": 33
+  },
+  "condensed_edges_by_relation": {
+    "director--directs-->movie": 20,
+    "actor--acts_in-->movie": 20,
+    "keyword--keyword_in-->movie": 20
+  },
+  "condensed_nodes_total": 133,
+  "condensed_edges_total": 60,
+  "ratio_mode": "target_only",
+  "requested_target_ratio": 0.005,
+  "shadow_node_ratio": 0.005275443510737629,
+  "total_condensed_node_ratio": 0.006209150326797385,
+  "total_condensed_edge_ratio": 0.0013850095796495926,
+  "byte_size_compression": 0.006118277917099044,
+  "condensed_node_ratio_to_train_target": 0.09700948212983224,
+  "condensed_node_ratio_to_all_task_nodes": 0.02696674776966748,
+  "condensation_time": 4.320603700000007,
+  "training_time": 2.124848799999995,
+  "inference_time": 0.056549799999999095,
+  "peak_cpu_ram": 14112538624,
+  "peak_gpu_ram": 0,
+  "disk_bytes": 0,
+  "num_full_edge_scans": 0,
+  "full_edge_scans": 0,
+  "edge_slice_cache_bytes": 0,
+  "cache_all_targets": false,
+  "demand_edge_chunk_size": 500000,
+  "inference_edge_chunk_size": 500000,
+  "inference_dst_chunk_size": null,
+  "assignment_chunk_size": null,
+  "accuracy": 0.35227981209754944,
+  "valid_or_test_accuracy": 0.35227981209754944,
+  "macro_f1": 0.34780630469322205,
+  "num_classes_global": 5,
+  "num_classes_train": 5,
+  "train_label_classes": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "test_label_classes": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "train_loss_start": 1.6266647577285767,
+  "train_loss_end": 0.0,
+  "prototype_train_acc": 1.0,
+  "prototype_train_loss_start": 1.6266647577285767,
+  "prototype_train_loss_end": 0.0,
+  "num_optimizer_steps": 500,
+  "num_epochs": 500,
+  "learning_rate": 0.03,
+  "weight_decay": 0.0001,
+  "final_logits_activation": "none",
+  "model_diagnostics": {
+    "compiled_head": true,
+    "compiled_schema_total_dim": 13836,
+    "compiled_blocks": [
+      {
+        "name": "self",
+        "kind": "self",
+        "relation": null,
+        "dim": 3650,
+        "normalize": "standardize"
+      },
+      {
+        "name": "demand:director:directs:movie",
+        "kind": "feature_demand",
+        "relation": {
+          "source_type": "director",
+          "relation_name": "directs",
+          "destination_type": "movie"
+        },
+        "dim": 3341,
+        "normalize": "standardize"
+      },
+      {
+        "name": "demand:actor:acts_in:movie",
+        "kind": "feature_demand",
+        "relation": {
+          "source_type": "actor",
+          "relation_name": "acts_in",
+          "destination_type": "movie"
+        },
+        "dim": 3341,
+        "normalize": "standardize"
+      },
+      {
+        "name": "demand:keyword:keyword_in:movie",
+        "kind": "feature_demand",
+        "relation": {
+          "source_type": "keyword",
+          "relation_name": "keyword_in",
+          "destination_type": "movie"
+        },
+        "dim": 3489,
+        "normalize": "standardize"
+      },
+      {
+        "name": "label_affinity:director:directs:movie",
+        "kind": "label_affinity",
+        "relation": {
+          "source_type": "director",
+          "relation_name": "directs",
+          "destination_type": "movie"
+        },
+        "dim": 5,
+        "normalize": "row_l1"
+      },
+      {
+        "name": "label_affinity:actor:acts_in:movie",
+        "kind": "label_affinity",
+        "relation": {
+          "source_type": "actor",
+          "relation_name": "acts_in",
+          "destination_type": "movie"
+        },
+        "dim": 5,
+        "normalize": "row_l1"
+      },
+      {
+        "name": "label_affinity:keyword:keyword_in:movie",
+        "kind": "label_affinity",
+        "relation": {
+          "source_type": "keyword",
+          "relation_name": "keyword_in",
+          "destination_type": "movie"
+        },
+        "dim": 5,
+        "normalize": "row_l1"
+      }
+    ],
+    "final_logits_activation": "none",
+    "block_gates": {
+      "self": 0.2540702521800995,
+      "demand:director:directs:movie": 0.2173394113779068,
+      "demand:actor:acts_in:movie": 0.26056399941444397,
+      "demand:keyword:keyword_in:movie": 0.3790690302848816,
+      "label_affinity:director:directs:movie": 1.3909038305282593,
+      "label_affinity:actor:acts_in:movie": 1.6280622482299805,
+      "label_affinity:keyword:keyword_in:movie": 1.2262523174285889
+    },
+    "block_norm_stats": {
+      "self": {
+        "mean_abs": 0.012611552141606808,
+        "std_mean": 0.09849787503480911
+      },
+      "demand:director:directs:movie": {
+        "mean_abs": 0.02968714013695717,
+        "std_mean": 0.12886078655719757
+      },
+      "demand:actor:acts_in:movie": {
+        "mean_abs": 0.023730618879199028,
+        "std_mean": 0.08385257422924042
+      },
+      "demand:keyword:keyword_in:movie": {
+        "mean_abs": 82.24006652832031,
+        "std_mean": 114.76921844482422
+      },
+      "label_affinity:director:directs:movie": {
+        "mean_abs": 0.08994777500629425,
+        "std_mean": 0.07125788927078247
+      },
+      "label_affinity:actor:acts_in:movie": {
+        "mean_abs": 0.16400815546512604,
+        "std_mean": 0.05719194933772087
+      },
+      "label_affinity:keyword:keyword_in:movie": {
+        "mean_abs": 0.18977506458759308,
+        "std_mean": 0.05994778871536255
+      }
+    },
+    "fusion": "concat_mlp"
+  },
+  "block_gate_values": {
+    "self": 0.2540702521800995,
+    "demand:director:directs:movie": 0.2173394113779068,
+    "demand:actor:acts_in:movie": 0.26056399941444397,
+    "demand:keyword:keyword_in:movie": 0.3790690302848816,
+    "label_affinity:director:directs:movie": 1.3909038305282593,
+    "label_affinity:actor:acts_in:movie": 1.6280622482299805,
+    "label_affinity:keyword:keyword_in:movie": 1.2262523174285889
+  },
+  "block_norm_stats": {
+    "self": {
+      "mean_abs": 0.012611552141606808,
+      "std_mean": 0.09849787503480911
+    },
+    "demand:director:directs:movie": {
+      "mean_abs": 0.02968714013695717,
+      "std_mean": 0.12886078655719757
+    },
+    "demand:actor:acts_in:movie": {
+      "mean_abs": 0.023730618879199028,
+      "std_mean": 0.08385257422924042
+    },
+    "demand:keyword:keyword_in:movie": {
+      "mean_abs": 82.24006652832031,
+      "std_mean": 114.76921844482422
+    },
+    "label_affinity:director:directs:movie": {
+      "mean_abs": 0.08994777500629425,
+      "std_mean": 0.07125788927078247
+    },
+    "label_affinity:actor:acts_in:movie": {
+      "mean_abs": 0.16400815546512604,
+      "std_mean": 0.05719194933772087
+    },
+    "label_affinity:keyword:keyword_in:movie": {
+      "mean_abs": 0.18977506458759308,
+      "std_mean": 0.05994778871536255
+    }
+  },
+  "predicted_class_histogram": {
+    "0": 571,
+    "1": 484,
+    "2": 483,
+    "3": 752,
+    "4": 912
+  },
+  "num_predicted_classes": 5,
+  "prediction_entropy": 1.5763410859874238,
+  "weighted_f1": 0.36996607979064905,
+  "predicted_class_count": 5,
+  "top_predicted_classes": [
+    {
+      "class_id": 4,
+      "count": 912
+    },
+    {
+      "class_id": 3,
+      "count": 752
+    },
+    {
+      "class_id": 0,
+      "count": 571
+    },
+    {
+      "class_id": 1,
+      "count": 484
+    },
+    {
+      "class_id": 2,
+      "count": 483
+    }
+  ],
+  "per_class_accuracy": {
+    "0": 0.34106412529945374,
+    "1": 0.3452514111995697,
+    "2": 0.27723971009254456,
+    "3": 0.5714285969734192,
+    "4": 0.40458014607429504
+  },
+  "per_class_support": {
+    "0": 733,
+    "1": 895,
+    "2": 826,
+    "3": 224,
+    "4": 524
+  },
+  "predicted_classes": 5,
+  "diagnostics": {
+    "director--directs-->movie": {
+      "SkeletonMassCoverage": 0.0,
+      "ResidualEnergy": 1.0,
+      "ShadowReconErr": 0.004546497296388441,
+      "gamma": 1.0,
+      "realized_M_r": 40,
+      "adaptive_b": 1,
+      "shadow_norms": {
+        "min": 0.0,
+        "median": 0.0,
+        "max": 21.686298370361328
+      },
+      "shadow_feature_norm_mean": 5.055380344390869,
+      "shadow_feature_norm_q995": 21.269107818603516,
+      "real_source_norms": {
+        "min": 2.8850245475769043,
+        "median": 55.78649139404297,
+        "max": 116.49163055419922
+      },
+      "stable_rank": 5.003929084714761,
+      "entropy_effective_rank": 13.87480354309082,
+      "relation_demand_norm_mean": 10.121990203857422,
+      "relation_demand_norm_median": 8.120756149291992,
+      "relation_demand_norm_q95": 19.665058135986328,
+      "relation_demand_norm_q995": 21.686302185058594
+    },
+    "actor--acts_in-->movie": {
+      "SkeletonMassCoverage": 0.0,
+      "ResidualEnergy": 1.0,
+      "ShadowReconErr": 0.0063828942399380495,
+      "gamma": 1.0,
+      "realized_M_r": 40,
+      "adaptive_b": 1,
+      "shadow_norms": {
+        "min": 0.0,
+        "median": 0.0,
+        "max": 13.267434120178223
+      },
+      "shadow_feature_norm_mean": 3.3261101245880127,
+      "shadow_feature_norm_q995": 12.883746147155762,
+      "real_source_norms": {
+        "min": 2.8669281005859375,
+        "median": 52.64554214477539,
+        "max": 167.255615234375
+      },
+      "stable_rank": 5.5849085840509325,
+      "entropy_effective_rank": 14.022760391235352,
+      "relation_demand_norm_mean": 6.6625471115112305,
+      "relation_demand_norm_median": 5.445343494415283,
+      "relation_demand_norm_q95": 11.408507347106934,
+      "relation_demand_norm_q995": 13.267436981201172
+    },
+    "keyword--keyword_in-->movie": {
+      "SkeletonMassCoverage": 0.0,
+      "ResidualEnergy": 1.0,
+      "ShadowReconErr": 0.002735960003776959,
+      "gamma": 1.0,
+      "realized_M_r": 33,
+      "adaptive_b": 1,
+      "shadow_norms": {
+        "min": 0.0,
+        "median": 14491.7685546875,
+        "max": 33710.75390625
+      },
+      "shadow_feature_norm_mean": 11376.1845703125,
+      "shadow_feature_norm_q995": 33345.66015625,
+      "real_source_norms": {
+        "min": 5.2468414306640625,
+        "median": 250000.0,
+        "max": 3316624.75
+      },
+      "stable_rank": 2.9741176021821425,
+      "entropy_effective_rank": 10.68399715423584,
+      "relation_demand_norm_mean": 18782.681640625,
+      "relation_demand_norm_median": 16586.150390625,
+      "relation_demand_norm_q95": 31554.9765625,
+      "relation_demand_norm_q995": 33710.75390625
+    },
+    "rank": {
+      "director--directs-->movie": {
+        "stable_rank": 5.003929084714761,
+        "entropy_effective_rank": 13.87480354309082,
+        "relation_demand_norm_mean": 10.121990203857422,
+        "relation_demand_norm_median": 8.120756149291992,
+        "relation_demand_norm_q95": 19.665058135986328,
+        "relation_demand_norm_q995": 21.686302185058594
+      },
+      "actor--acts_in-->movie": {
+        "stable_rank": 5.5849085840509325,
+        "entropy_effective_rank": 14.022760391235352,
+        "relation_demand_norm_mean": 6.6625471115112305,
+        "relation_demand_norm_median": 5.445343494415283,
+        "relation_demand_norm_q95": 11.408507347106934,
+        "relation_demand_norm_q995": 13.267436981201172
+      },
+      "keyword--keyword_in-->movie": {
+        "stable_rank": 2.9741176021821425,
+        "entropy_effective_rank": 10.68399715423584,
+        "relation_demand_norm_mean": 18782.681640625,
+        "relation_demand_norm_median": 16586.150390625,
+        "relation_demand_norm_q95": 31554.9765625,
+        "relation_demand_norm_q995": 33710.75390625
+      }
+    },
+    "adaptive_b": {
+      "director--directs-->movie": 1,
+      "actor--acts_in-->movie": 1,
+      "keyword--keyword_in-->movie": 1
+    },
+    "block_gates": {
+      "self": 0.2540702521800995,
+      "demand:director:directs:movie": 0.2173394113779068,
+      "demand:actor:acts_in:movie": 0.26056399941444397,
+      "demand:keyword:keyword_in:movie": 0.3790690302848816,
+      "label_affinity:director:directs:movie": 1.3909038305282593,
+      "label_affinity:actor:acts_in:movie": 1.6280622482299805,
+      "label_affinity:keyword:keyword_in:movie": 1.2262523174285889
+    }
+  },
+  "rank_diagnostics_by_relation": {
+    "director--directs-->movie": {
+      "stable_rank": 5.003929084714761,
+      "entropy_effective_rank": 13.87480354309082,
+      "relation_demand_norm_mean": 10.121990203857422,
+      "relation_demand_norm_median": 8.120756149291992,
+      "relation_demand_norm_q95": 19.665058135986328,
+      "relation_demand_norm_q995": 21.686302185058594
+    },
+    "actor--acts_in-->movie": {
+      "stable_rank": 5.5849085840509325,
+      "entropy_effective_rank": 14.022760391235352,
+      "relation_demand_norm_mean": 6.6625471115112305,
+      "relation_demand_norm_median": 5.445343494415283,
+      "relation_demand_norm_q95": 11.408507347106934,
+      "relation_demand_norm_q995": 13.267436981201172
+    },
+    "keyword--keyword_in-->movie": {
+      "stable_rank": 2.9741176021821425,
+      "entropy_effective_rank": 10.68399715423584,
+      "relation_demand_norm_mean": 18782.681640625,
+      "relation_demand_norm_median": 16586.150390625,
+      "relation_demand_norm_q95": 31554.9765625,
+      "relation_demand_norm_q995": 33710.75390625
+    }
+  },
+  "shadow_recon_err_by_relation": {
+    "director--directs-->movie": 0.004546497296388441,
+    "actor--acts_in-->movie": 0.0063828942399380495,
+    "keyword--keyword_in-->movie": 0.002735960003776959
+  },
+  "skeleton_coverage_by_relation": {
+    "director--directs-->movie": 0.0,
+    "actor--acts_in-->movie": 0.0,
+    "keyword--keyword_in-->movie": 0.0
+  },
+  "residual_energy_by_relation": {
+    "director--directs-->movie": 1.0,
+    "actor--acts_in-->movie": 1.0,
+    "keyword--keyword_in-->movie": 1.0
+  },
+  "shadow_feature_norm_stats": {
+    "director--directs-->movie": {
+      "min": 0.0,
+      "median": 0.0,
+      "max": 21.686298370361328
+    },
+    "actor--acts_in-->movie": {
+      "min": 0.0,
+      "median": 0.0,
+      "max": 13.267434120178223
+    },
+    "keyword--keyword_in-->movie": {
+      "min": 0.0,
+      "median": 14491.7685546875,
+      "max": 33710.75390625
+    }
+  },
+  "shadow_reconstruction_recommendations": {},
+  "target_prototypes_by_class": {
+    "0": 4,
+    "1": 4,
+    "2": 4,
+    "3": 4,
+    "4": 4
+  },
+  "cluster_size_distribution": {
+    "min": 9.0,
+    "median": 57.0,
+    "max": 171.0
+  },
+  "ablation": {
+    "include_degree_features": true,
+    "residual_shadow": true,
+    "shadow_mode": "virtual_demand_shadow",
+    "loss_type": "class_balanced",
+    "calibration_enabled": true,
+    "self_only": false
+  },
+  "schema_preserved": true,
+  "nonnegative_weights": true,
+  "all_edge_weights_nonnegative": true,
+  "uses_custom_weighted_layer": true,
+  "uses_library_auto_normalization": false,
+  "alpha_normalization": "destination_row",
+  "residual_shadows_signed": true,
+  "status": "completed",
+  "generated_at": "2026-06-08T14:36:32Z",
+  "git_commit": "411ff01",
+  "config_hash": "1a8a2c3c5737ccbc",
+  "run_id": "imdb-Shadow-HGC-L-seed42-1a8a2c3c"
+}

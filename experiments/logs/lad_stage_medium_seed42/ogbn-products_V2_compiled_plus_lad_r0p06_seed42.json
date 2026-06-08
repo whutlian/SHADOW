@@ -1,0 +1,931 @@
+{
+  "method": "Shadow-HGC-L",
+  "method_variant": "Shadow-HGC-L",
+  "dataset": "ogbn-products",
+  "split": "processed_local",
+  "target_type": "product",
+  "directed_relations": [
+    "product--co_purchase-->product",
+    "product--co_purchased_by-->product"
+  ],
+  "budget_mode": "ratio",
+  "ratio": 0.06,
+  "ratio_base": "train_target",
+  "num_train_target_nodes": 196615,
+  "num_train_classes": 42,
+  "min_proto_per_class": 4,
+  "requested_target_budget": 11797,
+  "min_required_target_budget": 168,
+  "effective_target_prototypes": 11636,
+  "effective_target_ratio": 0.0591816494163721,
+  "budget_rounding": "nearest",
+  "max_target_budget": null,
+  "budget_upshifted": false,
+  "class_budget_min": 6,
+  "class_budget_median": 135.0,
+  "class_budget_max": 1552,
+  "M_tau": 11797,
+  "requested_M_tau": 11797,
+  "effective_M_tau": 11636,
+  "num_classes": 42,
+  "budget_alpha": 0.5,
+  "class_budget": {
+    "0": 671,
+    "1": 699,
+    "2": 659,
+    "3": 723,
+    "4": 1552,
+    "5": 395,
+    "6": 780,
+    "7": 813,
+    "8": 659,
+    "9": 499,
+    "10": 414,
+    "11": 365,
+    "12": 331,
+    "13": 654,
+    "14": 107,
+    "15": 316,
+    "16": 135,
+    "17": 411,
+    "18": 162,
+    "19": 222,
+    "20": 285,
+    "21": 228,
+    "22": 50,
+    "23": 145,
+    "24": 89,
+    "25": 61,
+    "26": 55,
+    "27": 13,
+    "28": 58,
+    "29": 78,
+    "30": 19,
+    "31": 31,
+    "32": 36,
+    "33": 11,
+    "34": 9,
+    "35": 18,
+    "36": 9,
+    "37": 11,
+    "38": 6,
+    "39": 6,
+    "40": 6,
+    "41": 6
+  },
+  "requested_M_r": null,
+  "resolved_M_r": {
+    "product--co_purchase-->product": 332,
+    "product--co_purchased_by-->product": 332
+  },
+  "M_r": {
+    "product--co_purchase-->product": 332,
+    "product--co_purchased_by-->product": 332
+  },
+  "shadow_budget_policy": "rank_adaptive",
+  "legacy_shadow_budget_policy": "ratio_based",
+  "shadow_policy": "rank_adaptive",
+  "shadow_min_per_relation": 8,
+  "shadow_max_multiplier": 2.0,
+  "adaptive_b_enabled": false,
+  "b_max": 4,
+  "b_by_relation": {
+    "product--co_purchase-->product": 1,
+    "product--co_purchased_by-->product": 1
+  },
+  "rank_diagnostic_k": 64,
+  "shadow_ratio_target_target": 0.5,
+  "shadow_ratio_non_target": 1.0,
+  "min_shadow_per_relation": 8,
+  "shadow_budgets_by_relation": {
+    "product--co_purchase-->product": 332,
+    "product--co_purchased_by-->product": 332
+  },
+  "shadow_total_budget": null,
+  "rank_adaptive_global_cap": true,
+  "max_total_condensed_ratio": 0.12,
+  "shadow_nodes_total": 664,
+  "k_s": 2,
+  "feature_dim": 128,
+  "projection_type": "random",
+  "standardization_scope": "train_only",
+  "degree_scale": 0.1,
+  "signature_degree_eta": 0.1,
+  "feature_mode": "label_affinity",
+  "base_feature_mode": "base",
+  "diffusion_enabled": false,
+  "diffusion_status": "diagnostic_only",
+  "diffusion_steps": [
+    1
+  ],
+  "include_highpass": false,
+  "metapath_signature": false,
+  "metapath_model_input": false,
+  "multiscale_dim": 128,
+  "multiscale_metadata": {
+    "feature_mode": "base",
+    "diffusion_steps": [
+      1
+    ],
+    "include_highpass": false,
+    "metapath_signature": false,
+    "metapath_model_input": false,
+    "multiscale_dim": 128,
+    "block_norm": "none",
+    "blocks": [],
+    "block_stats": {}
+  },
+  "block_norm": "none",
+  "block_gate": false,
+  "block_dropout": 0.0,
+  "block_stats": {},
+  "target_base_dim": 128,
+  "target_degree_dim": 22,
+  "target_input_dim": 150,
+  "model": "shadow_fusion",
+  "model_type": "compiled_demand_mlp",
+  "graph_model_type": "shadow_fusion",
+  "stage": "lad",
+  "compiled_head": true,
+  "compiled_head_fusion": "concat_mlp",
+  "compiled_hidden_dim": 256,
+  "compiled_dropout": 0.3,
+  "compiled_block_gate": true,
+  "compiled_block_norm": "standardize",
+  "compiled_demand_source": "shadow_reconstructed",
+  "compiled_train_scope": "prototypes",
+  "compiled_schema_total_dim": 544,
+  "compiled_blocks": [
+    {
+      "name": "self",
+      "kind": "self",
+      "relation": null,
+      "dim": 150,
+      "normalize": "standardize"
+    },
+    {
+      "name": "demand:product:co_purchase:product",
+      "kind": "feature_demand",
+      "relation": {
+        "source_type": "product",
+        "relation_name": "co_purchase",
+        "destination_type": "product"
+      },
+      "dim": 150,
+      "normalize": "standardize"
+    },
+    {
+      "name": "demand:product:co_purchased_by:product",
+      "kind": "feature_demand",
+      "relation": {
+        "source_type": "product",
+        "relation_name": "co_purchased_by",
+        "destination_type": "product"
+      },
+      "dim": 150,
+      "normalize": "standardize"
+    },
+    {
+      "name": "label_affinity:product:co_purchase:product",
+      "kind": "label_affinity",
+      "relation": {
+        "source_type": "product",
+        "relation_name": "co_purchase",
+        "destination_type": "product"
+      },
+      "dim": 47,
+      "normalize": "row_l1"
+    },
+    {
+      "name": "label_affinity:product:co_purchased_by:product",
+      "kind": "label_affinity",
+      "relation": {
+        "source_type": "product",
+        "relation_name": "co_purchased_by",
+        "destination_type": "product"
+      },
+      "dim": 47,
+      "normalize": "row_l1"
+    }
+  ],
+  "compiled_schema": {
+    "total_dim": 544,
+    "blocks": [
+      {
+        "name": "self",
+        "kind": "self",
+        "relation": null,
+        "dim": 150,
+        "normalize": "standardize"
+      },
+      {
+        "name": "demand:product:co_purchase:product",
+        "kind": "feature_demand",
+        "relation": {
+          "source_type": "product",
+          "relation_name": "co_purchase",
+          "destination_type": "product"
+        },
+        "dim": 150,
+        "normalize": "standardize"
+      },
+      {
+        "name": "demand:product:co_purchased_by:product",
+        "kind": "feature_demand",
+        "relation": {
+          "source_type": "product",
+          "relation_name": "co_purchased_by",
+          "destination_type": "product"
+        },
+        "dim": 150,
+        "normalize": "standardize"
+      },
+      {
+        "name": "label_affinity:product:co_purchase:product",
+        "kind": "label_affinity",
+        "relation": {
+          "source_type": "product",
+          "relation_name": "co_purchase",
+          "destination_type": "product"
+        },
+        "dim": 47,
+        "normalize": "row_l1"
+      },
+      {
+        "name": "label_affinity:product:co_purchased_by:product",
+        "kind": "label_affinity",
+        "relation": {
+          "source_type": "product",
+          "relation_name": "co_purchased_by",
+          "destination_type": "product"
+        },
+        "dim": 47,
+        "normalize": "row_l1"
+      }
+    ]
+  },
+  "label_affinity": true,
+  "label_affinity_mode": "target_target",
+  "label_affinity_block_norm": "row_l1",
+  "boundary_prototypes": false,
+  "lad_precompute_time_s": 4.422587700000122,
+  "lad_peak_cpu_ram_mb": 9045.8515625,
+  "lad_disk_bytes": 0,
+  "lad_block_stats": {
+    "product--co_purchase-->product": {
+      "mean": 0.00854997243732214,
+      "std": 0.05749136582016945,
+      "l1_norm_mean": 0.40184876322746277,
+      "l2_norm_mean": 0.3546030521392822,
+      "zero_row_ratio": 0.004964015970297281,
+      "norm": "row_l1"
+    },
+    "product--co_purchased_by-->product": {
+      "mean": 0.00854997243732214,
+      "std": 0.05749136582016945,
+      "l1_norm_mean": 0.40184876322746277,
+      "l2_norm_mean": 0.3546030521392822,
+      "zero_row_ratio": 0.004964015970297281,
+      "norm": "row_l1"
+    },
+    "test:product--co_purchase-->product": {
+      "mean": 0.00509226880967617,
+      "std": 0.045263029634952545,
+      "l1_norm_mean": 0.23933663964271545,
+      "l2_norm_mean": 0.21771948039531708,
+      "zero_row_ratio": 0.2603516981452638,
+      "norm": "row_l1"
+    },
+    "test:product--co_purchased_by-->product": {
+      "mean": 0.00509226880967617,
+      "std": 0.045263029634952545,
+      "l1_norm_mean": 0.23933663964271545,
+      "l2_norm_mean": 0.21771948039531708,
+      "zero_row_ratio": 0.2603516981452638,
+      "norm": "row_l1"
+    }
+  },
+  "lad_num_classes": 47,
+  "lad_active_source_nodes": 0,
+  "lad_self_exclusion": true,
+  "lad_uses_train_labels_only": true,
+  "relation_gate": false,
+  "relation_gate_init": 1.0,
+  "relation_gate_values": {},
+  "logit_adjustment_tau": 1.0,
+  "skeleton_policy": "fixed_k",
+  "skeleton_coverage": 0.65,
+  "skeleton_k_max": 8,
+  "hidden_dim": 128,
+  "dropout": 0.3,
+  "seed": 42,
+  "condensed_nodes_by_type": {
+    "product": 12300
+  },
+  "condensed_edges_by_relation": {
+    "product--co_purchase-->product": 34772,
+    "product--co_purchased_by-->product": 34772
+  },
+  "condensed_nodes_total": 12300,
+  "condensed_edges_total": 69544,
+  "ratio_mode": "target_only",
+  "requested_target_ratio": 0.06,
+  "shadow_node_ratio": 0.0002711278633286907,
+  "total_condensed_node_ratio": 0.00502239867310677,
+  "total_condensed_edge_ratio": 0.00028105790025532203,
+  "byte_size_compression": 0.00136657477827796,
+  "condensed_node_ratio_to_train_target": 0.06255880782239402,
+  "condensed_node_ratio_to_all_task_nodes": 0.00502239867310677,
+  "condensation_time": 233.56194489999984,
+  "training_time": 98.77729880000015,
+  "inference_time": 59.68646169999988,
+  "peak_cpu_ram": 9485344768,
+  "peak_gpu_ram": 0,
+  "disk_bytes": 0,
+  "num_full_edge_scans": 0,
+  "full_edge_scans": 0,
+  "edge_slice_cache_bytes": 0,
+  "cache_all_targets": false,
+  "demand_edge_chunk_size": 250000,
+  "inference_edge_chunk_size": 250000,
+  "inference_dst_chunk_size": 250000,
+  "assignment_chunk_size": 8192,
+  "accuracy": 0.6223331689834595,
+  "valid_or_test_accuracy": 0.6223331689834595,
+  "macro_f1": 0.3307438173598828,
+  "num_classes_global": 47,
+  "num_classes_train": 42,
+  "train_label_classes": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41
+  ],
+  "test_label_classes": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "train_loss_start": 26.32901382446289,
+  "train_loss_end": 0.08819230645895004,
+  "prototype_train_acc": 0.9486077427864075,
+  "prototype_train_loss_start": 26.32901382446289,
+  "prototype_train_loss_end": 0.08819230645895004,
+  "num_optimizer_steps": 500,
+  "num_epochs": 500,
+  "learning_rate": 0.03,
+  "weight_decay": 0.0001,
+  "final_logits_activation": "none",
+  "model_diagnostics": {
+    "compiled_head": true,
+    "compiled_schema_total_dim": 544,
+    "compiled_blocks": [
+      {
+        "name": "self",
+        "kind": "self",
+        "relation": null,
+        "dim": 150,
+        "normalize": "standardize"
+      },
+      {
+        "name": "demand:product:co_purchase:product",
+        "kind": "feature_demand",
+        "relation": {
+          "source_type": "product",
+          "relation_name": "co_purchase",
+          "destination_type": "product"
+        },
+        "dim": 150,
+        "normalize": "standardize"
+      },
+      {
+        "name": "demand:product:co_purchased_by:product",
+        "kind": "feature_demand",
+        "relation": {
+          "source_type": "product",
+          "relation_name": "co_purchased_by",
+          "destination_type": "product"
+        },
+        "dim": 150,
+        "normalize": "standardize"
+      },
+      {
+        "name": "label_affinity:product:co_purchase:product",
+        "kind": "label_affinity",
+        "relation": {
+          "source_type": "product",
+          "relation_name": "co_purchase",
+          "destination_type": "product"
+        },
+        "dim": 47,
+        "normalize": "row_l1"
+      },
+      {
+        "name": "label_affinity:product:co_purchased_by:product",
+        "kind": "label_affinity",
+        "relation": {
+          "source_type": "product",
+          "relation_name": "co_purchased_by",
+          "destination_type": "product"
+        },
+        "dim": 47,
+        "normalize": "row_l1"
+      }
+    ],
+    "final_logits_activation": "none",
+    "block_gates": {
+      "self": 0.8182728290557861,
+      "demand:product:co_purchase:product": 0.5427200794219971,
+      "demand:product:co_purchased_by:product": 0.542924702167511,
+      "label_affinity:product:co_purchase:product": 0.7493230104446411,
+      "label_affinity:product:co_purchased_by:product": 0.7524297833442688
+    },
+    "block_norm_stats": {
+      "self": {
+        "mean_abs": 0.02704503759741783,
+        "std_mean": 0.6552703380584717
+      },
+      "demand:product:co_purchase:product": {
+        "mean_abs": 0.03152850270271301,
+        "std_mean": 0.2729625999927521
+      },
+      "demand:product:co_purchased_by:product": {
+        "mean_abs": 0.03179972991347313,
+        "std_mean": 0.27265289425849915
+      },
+      "label_affinity:product:co_purchase:product": {
+        "mean_abs": 0.021157272160053253,
+        "std_mean": 0.07439162582159042
+      },
+      "label_affinity:product:co_purchased_by:product": {
+        "mean_abs": 0.021157272160053253,
+        "std_mean": 0.07439162582159042
+      }
+    },
+    "fusion": "concat_mlp"
+  },
+  "block_gate_values": {
+    "self": 0.8182728290557861,
+    "demand:product:co_purchase:product": 0.5427200794219971,
+    "demand:product:co_purchased_by:product": 0.542924702167511,
+    "label_affinity:product:co_purchase:product": 0.7493230104446411,
+    "label_affinity:product:co_purchased_by:product": 0.7524297833442688
+  },
+  "block_norm_stats": {
+    "self": {
+      "mean_abs": 0.02704503759741783,
+      "std_mean": 0.6552703380584717
+    },
+    "demand:product:co_purchase:product": {
+      "mean_abs": 0.03152850270271301,
+      "std_mean": 0.2729625999927521
+    },
+    "demand:product:co_purchased_by:product": {
+      "mean_abs": 0.03179972991347313,
+      "std_mean": 0.27265289425849915
+    },
+    "label_affinity:product:co_purchase:product": {
+      "mean_abs": 0.021157272160053253,
+      "std_mean": 0.07439162582159042
+    },
+    "label_affinity:product:co_purchased_by:product": {
+      "mean_abs": 0.021157272160053253,
+      "std_mean": 0.07439162582159042
+    }
+  },
+  "predicted_class_histogram": {
+    "0": 83196,
+    "1": 82602,
+    "2": 87913,
+    "3": 172016,
+    "4": 611212,
+    "5": 32343,
+    "6": 162461,
+    "7": 234092,
+    "8": 124893,
+    "9": 44621,
+    "10": 82331,
+    "11": 155746,
+    "12": 84131,
+    "13": 67478,
+    "14": 3051,
+    "15": 18184,
+    "16": 30644,
+    "17": 30909,
+    "18": 13166,
+    "19": 16108,
+    "20": 16834,
+    "21": 36945,
+    "22": 528,
+    "23": 17816,
+    "24": 630,
+    "25": 1536,
+    "26": 83,
+    "28": 14,
+    "29": 983,
+    "31": 292,
+    "32": 270,
+    "35": 63
+  },
+  "num_predicted_classes": 32,
+  "prediction_entropy": 2.5939438364411784,
+  "weighted_f1": 0.6198897517860501,
+  "predicted_class_count": 32,
+  "top_predicted_classes": [
+    {
+      "class_id": 4,
+      "count": 611212
+    },
+    {
+      "class_id": 7,
+      "count": 234092
+    },
+    {
+      "class_id": 3,
+      "count": 172016
+    },
+    {
+      "class_id": 6,
+      "count": 162461
+    },
+    {
+      "class_id": 11,
+      "count": 155746
+    }
+  ],
+  "per_class_accuracy": {
+    "0": 0.6200357675552368,
+    "1": 0.6114494800567627,
+    "2": 0.7047827243804932,
+    "3": 0.6652693152427673,
+    "4": 0.7685036063194275,
+    "5": 0.6940947771072388,
+    "6": 0.7382014393806458,
+    "7": 0.7653841376304626,
+    "8": 0.8522199988365173,
+    "9": 0.6704872250556946,
+    "10": 0.6946040391921997,
+    "11": 0.3602115213871002,
+    "12": 0.411981463432312,
+    "13": 0.6033778786659241,
+    "14": 0.4140453636646271,
+    "15": 0.6040383577346802,
+    "16": 0.261482298374176,
+    "17": 0.7524377703666687,
+    "18": 0.198515385389328,
+    "19": 0.37450647354125977,
+    "20": 0.6632652878761292,
+    "21": 0.24636529386043549,
+    "22": 0.6197007298469543,
+    "23": 0.43977683782577515,
+    "24": 0.011229981668293476,
+    "25": 0.2747252881526947,
+    "26": 0.0021186440717428923,
+    "27": 0.0,
+    "28": 0.0,
+    "29": 0.7093954682350159,
+    "30": 0.0,
+    "31": 0.002577319508418441,
+    "32": 0.006382978521287441,
+    "33": 0.0,
+    "34": 0.0,
+    "35": 0.8888888955116272,
+    "36": 0.0,
+    "37": 0.0,
+    "38": 0.0,
+    "39": 0.0,
+    "40": 0.0,
+    "41": 0.0,
+    "42": 0.0,
+    "43": 0.0,
+    "44": 0.0,
+    "45": 0.0,
+    "46": 0.0
+  },
+  "per_class_support": {
+    "0": 100670,
+    "1": 95236,
+    "2": 102870,
+    "3": 135255,
+    "4": 596195,
+    "5": 35985,
+    "6": 140356,
+    "7": 152202,
+    "8": 97679,
+    "9": 59852,
+    "10": 47165,
+    "11": 28933,
+    "12": 128632,
+    "13": 88694,
+    "14": 2734,
+    "15": 23871,
+    "16": 83019,
+    "17": 37227,
+    "18": 48228,
+    "19": 15957,
+    "20": 20090,
+    "21": 79236,
+    "22": 802,
+    "23": 3047,
+    "24": 45147,
+    "25": 2912,
+    "26": 472,
+    "27": 254,
+    "28": 1865,
+    "29": 1373,
+    "30": 257,
+    "31": 388,
+    "32": 470,
+    "33": 25,
+    "34": 152,
+    "35": 36,
+    "36": 628,
+    "37": 511,
+    "38": 90,
+    "39": 36,
+    "40": 5,
+    "41": 60,
+    "42": 32500,
+    "43": 1399,
+    "44": 566,
+    "45": 9,
+    "46": 1
+  },
+  "predicted_classes": 32,
+  "diagnostics": {
+    "product--co_purchase-->product": {
+      "SkeletonMassCoverage": 0.33797999645326365,
+      "ResidualEnergy": 0.8829518235062127,
+      "ShadowReconErr": 0.6392858213640644,
+      "gamma": 1.1981494426727295,
+      "realized_M_r": 332,
+      "adaptive_b": 1,
+      "mean_adaptive_k": 1.9883121252059937,
+      "median_adaptive_k": 2.0,
+      "max_adaptive_k": 2,
+      "shadow_norms": {
+        "min": 0.8060562610626221,
+        "median": 3.448122501373291,
+        "max": 12.587013244628906
+      },
+      "shadow_feature_norm_mean": 4.102941989898682,
+      "shadow_feature_norm_q995": 12.587010383605957,
+      "stable_rank": 6.700778425416267,
+      "entropy_effective_rank": 35.36762619018555,
+      "relation_demand_norm_mean": 3.0435423851013184,
+      "relation_demand_norm_median": 2.566089153289795,
+      "relation_demand_norm_q95": 6.129937171936035,
+      "relation_demand_norm_q995": 10.505376815795898
+    },
+    "product--co_purchased_by-->product": {
+      "SkeletonMassCoverage": 0.33797999658785505,
+      "ResidualEnergy": 0.882952019116611,
+      "ShadowReconErr": 0.6363276593881204,
+      "gamma": 1.1940722465515137,
+      "realized_M_r": 332,
+      "adaptive_b": 1,
+      "mean_adaptive_k": 1.9883121252059937,
+      "median_adaptive_k": 2.0,
+      "max_adaptive_k": 2,
+      "shadow_norms": {
+        "min": 0.7895181775093079,
+        "median": 3.208357334136963,
+        "max": 12.54417896270752
+      },
+      "shadow_feature_norm_mean": 3.930736541748047,
+      "shadow_feature_norm_q995": 12.54417896270752,
+      "stable_rank": 6.700748728926291,
+      "entropy_effective_rank": 35.36763381958008,
+      "relation_demand_norm_mean": 3.043543577194214,
+      "relation_demand_norm_median": 2.5657894611358643,
+      "relation_demand_norm_q95": 6.129937171936035,
+      "relation_demand_norm_q995": 10.505376815795898
+    },
+    "rank": {
+      "product--co_purchase-->product": {
+        "stable_rank": 6.700778425416267,
+        "entropy_effective_rank": 35.36762619018555,
+        "relation_demand_norm_mean": 3.0435423851013184,
+        "relation_demand_norm_median": 2.566089153289795,
+        "relation_demand_norm_q95": 6.129937171936035,
+        "relation_demand_norm_q995": 10.505376815795898
+      },
+      "product--co_purchased_by-->product": {
+        "stable_rank": 6.700748728926291,
+        "entropy_effective_rank": 35.36763381958008,
+        "relation_demand_norm_mean": 3.043543577194214,
+        "relation_demand_norm_median": 2.5657894611358643,
+        "relation_demand_norm_q95": 6.129937171936035,
+        "relation_demand_norm_q995": 10.505376815795898
+      }
+    },
+    "adaptive_b": {
+      "product--co_purchase-->product": 1,
+      "product--co_purchased_by-->product": 1
+    },
+    "block_gates": {
+      "self": 0.8182728290557861,
+      "demand:product:co_purchase:product": 0.5427200794219971,
+      "demand:product:co_purchased_by:product": 0.542924702167511,
+      "label_affinity:product:co_purchase:product": 0.7493230104446411,
+      "label_affinity:product:co_purchased_by:product": 0.7524297833442688
+    }
+  },
+  "rank_diagnostics_by_relation": {
+    "product--co_purchase-->product": {
+      "stable_rank": 6.700778425416267,
+      "entropy_effective_rank": 35.36762619018555,
+      "relation_demand_norm_mean": 3.0435423851013184,
+      "relation_demand_norm_median": 2.566089153289795,
+      "relation_demand_norm_q95": 6.129937171936035,
+      "relation_demand_norm_q995": 10.505376815795898
+    },
+    "product--co_purchased_by-->product": {
+      "stable_rank": 6.700748728926291,
+      "entropy_effective_rank": 35.36763381958008,
+      "relation_demand_norm_mean": 3.043543577194214,
+      "relation_demand_norm_median": 2.5657894611358643,
+      "relation_demand_norm_q95": 6.129937171936035,
+      "relation_demand_norm_q995": 10.505376815795898
+    }
+  },
+  "shadow_recon_err_by_relation": {
+    "product--co_purchase-->product": 0.6392858213640644,
+    "product--co_purchased_by-->product": 0.6363276593881204
+  },
+  "skeleton_coverage_by_relation": {
+    "product--co_purchase-->product": 0.33797999645326365,
+    "product--co_purchased_by-->product": 0.33797999658785505
+  },
+  "residual_energy_by_relation": {
+    "product--co_purchase-->product": 0.8829518235062127,
+    "product--co_purchased_by-->product": 0.882952019116611
+  },
+  "shadow_feature_norm_stats": {
+    "product--co_purchase-->product": {
+      "min": 0.8060562610626221,
+      "median": 3.448122501373291,
+      "max": 12.587013244628906
+    },
+    "product--co_purchased_by-->product": {
+      "min": 0.7895181775093079,
+      "median": 3.208357334136963,
+      "max": 12.54417896270752
+    }
+  },
+  "shadow_reconstruction_recommendations": {
+    "product--co_purchase-->product": "increase M_r or run b=2 ablation",
+    "product--co_purchased_by-->product": "increase M_r or run b=2 ablation"
+  },
+  "target_prototypes_by_class": {
+    "0": 671,
+    "1": 697,
+    "2": 659,
+    "3": 721,
+    "4": 1550,
+    "5": 395,
+    "6": 780,
+    "7": 809,
+    "8": 659,
+    "9": 498,
+    "10": 413,
+    "11": 352,
+    "12": 331,
+    "13": 652,
+    "14": 103,
+    "15": 316,
+    "16": 133,
+    "17": 410,
+    "18": 161,
+    "19": 222,
+    "20": 285,
+    "21": 227,
+    "22": 39,
+    "23": 144,
+    "24": 85,
+    "25": 57,
+    "26": 49,
+    "27": 4,
+    "28": 50,
+    "29": 75,
+    "30": 9,
+    "31": 25,
+    "32": 33,
+    "33": 3,
+    "34": 2,
+    "35": 8,
+    "36": 2,
+    "37": 3,
+    "38": 1,
+    "39": 1,
+    "40": 1,
+    "41": 1
+  },
+  "cluster_size_distribution": {
+    "min": 1.0,
+    "median": 7.0,
+    "max": 388.0
+  },
+  "ablation": {
+    "include_degree_features": true,
+    "residual_shadow": true,
+    "shadow_mode": "virtual_demand_shadow",
+    "loss_type": "sqrt_weighted_logit_adjusted",
+    "calibration_enabled": true,
+    "self_only": false
+  },
+  "schema_preserved": true,
+  "nonnegative_weights": true,
+  "all_edge_weights_nonnegative": true,
+  "uses_custom_weighted_layer": true,
+  "uses_library_auto_normalization": false,
+  "alpha_normalization": "destination_row",
+  "residual_shadows_signed": true,
+  "status": "completed",
+  "generated_at": "2026-06-08T12:38:35Z",
+  "git_commit": "411ff01",
+  "config_hash": "c51c092d87042e73",
+  "run_id": "ogbn-products-Shadow-HGC-L-seed42-c51c092d"
+}

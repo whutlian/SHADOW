@@ -17,7 +17,7 @@
   "loss_type": "clipped",
   "accuracy": 0.3559962213039398,
   "macro_f1": 0.20438572764396667,
-  "training_time": 0.4749470999999996,
+  "training_time": 0.4481150999999999,
   "train_loss_start": 16.128053665161133,
   "train_loss_end": 16.128053665161133,
   "num_optimizer_steps": 1,
@@ -62,8 +62,8 @@
     "1": 677,
     "2": 727
   },
-  "generated_at": "2026-06-08T09:51:39Z",
-  "git_commit": "457395c",
+  "generated_at": "2026-06-08T14:38:56Z",
+  "git_commit": "411ff01",
   "config_hash": "304279988e7ee184",
   "run_id": "acm-Full-WRL-GNN-seedna-30427998"
 }

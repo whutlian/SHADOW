@@ -13,6 +13,7 @@ def prototype_cross_entropy(
     clip_value: float | None = None,
     class_prior: torch.Tensor | None = None,
     logit_adjustment_tau: float = 1.0,
+    focal_gamma: float = 2.0,
 ) -> torch.Tensor:
     """Prototype CE variants, defaulting to the cell-weighted empirical risk."""
 
@@ -24,6 +25,9 @@ def prototype_cross_entropy(
         logits = logits - float(logit_adjustment_tau) * torch.log(class_prior).unsqueeze(0)
 
     ce = F.cross_entropy(logits, labels, reduction="none")
+    if loss_type == "focal":
+        pt = torch.exp(-ce)
+        ce = (1.0 - pt).pow(float(focal_gamma)) * ce
     if weights is None:
         weights = torch.ones_like(ce)
     weights = weights.to(dtype=ce.dtype, device=ce.device)
@@ -45,6 +49,8 @@ def prototype_cross_entropy(
         for label in labels.unique():
             mask = labels == label
             effective[mask] = weights[mask] / weights[mask].sum().clamp_min(1e-12)
+    elif loss_type == "focal":
+        effective = weights
     else:
         raise ValueError(f"unknown prototype loss type: {loss_type}")
 
