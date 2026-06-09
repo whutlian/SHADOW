@@ -32,3 +32,30 @@ def ce_kd_loss(
     ce = F.cross_entropy(student_logits, hard_labels.to(torch.long))
     kd = kd_kl_loss(student_logits, teacher_logits, temperature=temperature, weight=kd_weight)
     return float(ce_weight) * ce + kd
+
+
+def kd_v2_loss(
+    student_logits: torch.Tensor,
+    hard_labels: torch.Tensor,
+    teacher_logits: torch.Tensor,
+    *,
+    temperature: float = 2.0,
+    lambda_kd: float = 0.1,
+    label_smoothing: float = 0.0,
+) -> dict[str, torch.Tensor]:
+    """KD v2 loss with hard CE kept separate from the KL term."""
+
+    ce = F.cross_entropy(
+        student_logits,
+        hard_labels.to(torch.long),
+        label_smoothing=float(label_smoothing),
+    )
+    kd_unweighted = kd_kl_loss(student_logits, teacher_logits, temperature=temperature, weight=1.0)
+    kd = float(lambda_kd) * kd_unweighted
+    ratio = kd.detach() / ce.detach().clamp_min(1e-12)
+    return {
+        "loss": ce + kd,
+        "ce_loss": ce,
+        "kd_loss": kd,
+        "kd_to_ce_ratio": ratio,
+    }

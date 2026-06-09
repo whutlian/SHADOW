@@ -2,5 +2,4 @@ dataset: dblp
 target_type: author
 directed_relations:
   - [paper, written_by, author]
-  - [venue, publishes, author]
 standardization_scope: documented_small_transductive_or_train_only

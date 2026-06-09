@@ -1,0 +1,57 @@
+{
+  "dataset": "dblp",
+  "variant": "fullgraph_sehgnn_lite",
+  "seed": 42,
+  "status": "completed",
+  "target_type": "author",
+  "use_diffusion": false,
+  "blocked_by_fullgraph_backbone": true,
+  "model_type": "sehgnn_lite",
+  "block_dims": {
+    "self": 334,
+    "APA": 334
+  },
+  "feature_blocks": [
+    "self",
+    "APA"
+  ],
+  "block_norm_stats_source": "train_full_target_rows",
+  "final_logits_activation": "none",
+  "block_gates": {
+    "self": 0.7453727126121521,
+    "APA": 0.6790888905525208
+  },
+  "num_classes": 4,
+  "train_time": 0.7915646000000001,
+  "infer_time": 0.0027505999999997144,
+  "loss_type": "weighted",
+  "label_smoothing": 0.0,
+  "metapath_blocks": [
+    "APA"
+  ],
+  "metapath_skipped_blocks": [
+    "APVPA",
+    "APTPA",
+    "APCPA"
+  ],
+  "path_lad_blocks": [],
+  "metapath_required_blocks": [
+    "APA"
+  ],
+  "accuracy": 0.7880281805992126,
+  "macro_f1": 0.7809299379587173,
+  "weighted_f1": 0.7878702421590769,
+  "predicted_class_count": 4,
+  "prediction_entropy": 1.3676367201218538,
+  "predicted_class_histogram": {
+    "0": 795,
+    "1": 488,
+    "2": 824,
+    "3": 733
+  },
+  "train_accuracy": 0.9934264421463013,
+  "generated_at": "2026-06-09T05:35:10Z",
+  "git_commit": "e479c88",
+  "config_hash": "cdb2e4a20bcaf137",
+  "run_id": "dblp-run-seed42-cdb2e4a2"
+}

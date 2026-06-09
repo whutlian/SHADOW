@@ -1,0 +1,64 @@
+{
+  "dataset": "imdb",
+  "variant": "fullgraph_sehgnn_lite",
+  "seed": 42,
+  "status": "completed",
+  "target_type": "movie",
+  "use_diffusion": false,
+  "blocked_by_fullgraph_backbone": true,
+  "model_type": "sehgnn_lite",
+  "block_dims": {
+    "self": 3489,
+    "MDM": 3489,
+    "MAM": 3489,
+    "MKM": 3489
+  },
+  "feature_blocks": [
+    "self",
+    "MDM",
+    "MAM",
+    "MKM"
+  ],
+  "block_norm_stats_source": "train_full_target_rows",
+  "final_logits_activation": "none",
+  "block_gates": {
+    "self": 0.7336499094963074,
+    "MDM": 0.6785889863967896,
+    "MAM": 0.695541501045227,
+    "MKM": 0.6858032941818237
+  },
+  "num_classes": 5,
+  "train_time": 5.0655627,
+  "infer_time": 0.06589680000000087,
+  "loss_type": "weighted",
+  "label_smoothing": 0.0,
+  "metapath_blocks": [
+    "MDM",
+    "MAM",
+    "MKM"
+  ],
+  "metapath_skipped_blocks": [],
+  "path_lad_blocks": [],
+  "metapath_required_blocks": [
+    "MAM",
+    "MDM",
+    "MKM"
+  ],
+  "accuracy": 0.40818238258361816,
+  "macro_f1": 0.36262465715408326,
+  "weighted_f1": 0.4045208359339382,
+  "predicted_class_count": 5,
+  "prediction_entropy": 1.4933907744582842,
+  "predicted_class_histogram": {
+    "0": 881,
+    "1": 979,
+    "2": 708,
+    "3": 193,
+    "4": 441
+  },
+  "train_accuracy": 1.0,
+  "generated_at": "2026-06-09T05:35:16Z",
+  "git_commit": "e479c88",
+  "config_hash": "795d7feb6550338a",
+  "run_id": "imdb-run-seed42-795d7feb"
+}

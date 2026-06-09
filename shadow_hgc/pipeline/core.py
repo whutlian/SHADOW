@@ -816,27 +816,35 @@ def _build_path_lad_blocks(
             continue
         if relation.source_type == graph.target_type:
             name = f"{_type_name_letter(graph.target_type)}1"
+            candidates = [(name, [relation])]
+            p2_name = f"{_type_name_letter(graph.target_type)}2"
+            candidates.append((p2_name, [relation, relation]))
         else:
             name = two_hop_block_name(graph.target_type, relation.source_type)
-        available.add(name)
-        if requested is not None and name not in requested:
-            continue
-        block = compute_path_label_affinity(
-            graph,
-            target_type=graph.target_type,
-            path=[relation],
-            train_target_mask=train_mask,
-            train_labels=train_only_labels,
-            num_classes=num_classes,
-            target_nodes=target_nodes,
-            leave_one_out_for_train=leave_one_out_for_train,
-            normalize=normalize,
-        )
-        blocks[name] = block
-        diag = path_lad_diagnostics(block, leave_one_out_for_train=leave_one_out_for_train).to_json()
-        diag["relation"] = str(relation)
-        diag["normalize"] = normalize
-        stats[name] = diag
+            candidates = [(name, [relation])]
+        for candidate_name, path in candidates:
+            available.add(candidate_name)
+            if requested is not None and candidate_name not in requested:
+                continue
+            if requested is None and len(path) > 1:
+                continue
+            block = compute_path_label_affinity(
+                graph,
+                target_type=graph.target_type,
+                path=path,
+                train_target_mask=train_mask,
+                train_labels=train_only_labels,
+                num_classes=num_classes,
+                target_nodes=target_nodes,
+                leave_one_out_for_train=leave_one_out_for_train,
+                normalize=normalize,
+            )
+            blocks[candidate_name] = block
+            diag = path_lad_diagnostics(block, leave_one_out_for_train=leave_one_out_for_train).to_json()
+            diag["relation"] = str(relation)
+            diag["path_length"] = int(len(path))
+            diag["normalize"] = normalize
+            stats[candidate_name] = diag
     if requested is not None:
         skipped = [name for name in requested if name not in available]
     metadata = {
@@ -844,6 +852,7 @@ def _build_path_lad_blocks(
         "path_lad_skipped_blocks": skipped,
         "path_lad_uses_train_labels_only": True,
         "path_lad_leave_one_out_for_train": bool(leave_one_out_for_train),
+        "path_lad_row_normalize": normalize,
     }
     return blocks, stats, metadata
 

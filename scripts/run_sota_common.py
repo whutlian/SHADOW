@@ -136,7 +136,11 @@ def summary_to_sota_row(
         "prediction_entropy": summary.get("prediction_entropy", ""),
         "prototype_mode": summary.get("prototype_mode", ""),
         "model_type": summary.get("model_type", summary.get("model", "")),
-        "metapath_blocks": json.dumps(summary.get("multiscale_metadata", {}).get("metapath_names", [])),
+        "metapath_blocks": json.dumps(
+            summary.get("metapath_blocks")
+            or summary.get("multiscale_metadata", {}).get("metapath_names")
+            or summary.get("multiscale_metadata", {}).get("blocks", [])
+        ),
         "path_lad_blocks": json.dumps(summary.get("path_lad_blocks", [])),
         "source_anchor_mode": summary.get("source_anchor_mode", ""),
         "teacher_type": summary.get("teacher_type", summary.get("teacher", {}).get("type", "")),

@@ -14,3 +14,32 @@ def test_cell_weighted_loss_matches_empirical_risk_formula():
     ce = F.cross_entropy(logits, labels, reduction="none")
     expected = (weights * ce).sum() / weights.sum()
     assert torch.allclose(loss, expected)
+
+
+def test_balanced_softmax_uses_sample_count_logits():
+    logits = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
+    labels = torch.tensor([0, 1])
+    weights = torch.tensor([4.0, 1.0])
+
+    loss = prototype_cross_entropy(logits, labels, weights, loss_type="balanced_softmax")
+
+    counts = torch.tensor([4.0, 1.0])
+    expected = F.cross_entropy(logits + torch.log(counts).unsqueeze(0), labels, reduction="none")
+    assert torch.allclose(loss, (weights * expected).sum() / weights.sum())
+
+
+def test_class_balanced_focal_is_finite_with_label_smoothing():
+    logits = torch.tensor([[2.0, 0.0], [0.0, 2.0], [0.5, 0.1]])
+    labels = torch.tensor([0, 1, 1])
+    weights = torch.tensor([1.0, 3.0, 3.0])
+
+    loss = prototype_cross_entropy(
+        logits,
+        labels,
+        weights,
+        loss_type="class_balanced_focal",
+        label_smoothing=0.05,
+    )
+
+    assert torch.isfinite(loss)
+    assert loss.item() > 0.0

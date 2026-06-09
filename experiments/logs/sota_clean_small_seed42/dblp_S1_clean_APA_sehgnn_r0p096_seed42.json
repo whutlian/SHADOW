@@ -1,0 +1,65 @@
+{
+  "dataset": "dblp",
+  "variant": "S1_clean_APA_sehgnn",
+  "seed": 42,
+  "status": "completed",
+  "target_type": "author",
+  "teacher_type": "none",
+  "use_kd": false,
+  "use_diffusion": false,
+  "use_source_anchors": false,
+  "use_coverage_medoid": false,
+  "model_type": "sehgnn_lite",
+  "block_dims": {
+    "self": 334,
+    "APA": 334
+  },
+  "feature_blocks": [
+    "self",
+    "APA"
+  ],
+  "block_norm_stats_source": "train_full_target_rows",
+  "final_logits_activation": "none",
+  "block_gates": {
+    "self": 0.8015095591545105,
+    "APA": 0.6430454254150391
+  },
+  "num_classes": 4,
+  "requested_ratio": 0.096,
+  "ratio_mode": "train_target",
+  "effective_M_tau": 117,
+  "condensed_nodes_total": 117,
+  "total_condensed_node_ratio": 0.004477954684629516,
+  "effective_target_ratio": 0.0961380443714051,
+  "prototype_mode": "class_wise_kmeans_mean",
+  "train_time": 0.23735010000000045,
+  "infer_time": 0.0033722000000011576,
+  "loss_type": "clipped",
+  "metapath_blocks": [
+    "APA"
+  ],
+  "metapath_skipped_blocks": [
+    "APVPA",
+    "APTPA",
+    "APCPA"
+  ],
+  "path_lad_blocks": [],
+  "metapath_required_blocks": [
+    "APA"
+  ],
+  "accuracy": 0.7644366025924683,
+  "macro_f1": 0.7589197754859924,
+  "weighted_f1": 0.766229963824423,
+  "predicted_class_count": 4,
+  "prediction_entropy": 1.3588470611197643,
+  "predicted_class_histogram": {
+    "0": 783,
+    "1": 540,
+    "2": 950,
+    "3": 567
+  },
+  "generated_at": "2026-06-09T05:35:59Z",
+  "git_commit": "e479c88",
+  "config_hash": "6d2f41a474f85a58",
+  "run_id": "dblp-run-seed42-6d2f41a4"
+}

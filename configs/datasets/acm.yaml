@@ -4,4 +4,6 @@ directed_relations:
   - [paper, cite_ref, paper]
   - [paper, cited_by, paper]
   - [author, writes, paper]
+  - [subject, subject_of, paper]
+  - [term, term_in, paper]
 standardization_scope: documented_small_transductive_or_train_only

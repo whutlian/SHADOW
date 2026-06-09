@@ -14,8 +14,14 @@ def prototype_cross_entropy(
     class_prior: torch.Tensor | None = None,
     logit_adjustment_tau: float = 1.0,
     focal_gamma: float = 2.0,
+    label_smoothing: float = 0.0,
 ) -> torch.Tensor:
     """Prototype CE variants, defaulting to the cell-weighted empirical risk."""
+
+    if weights is None:
+        sample_weights = torch.ones(labels.shape[0], dtype=logits.dtype, device=logits.device)
+    else:
+        sample_weights = weights.to(dtype=logits.dtype, device=logits.device)
 
     if loss_type == "sqrt_weighted_logit_adjusted":
         if class_prior is None:
@@ -24,13 +30,21 @@ def prototype_cross_entropy(
         class_prior = class_prior.to(device=logits.device, dtype=logits.dtype).clamp_min(1e-12)
         logits = logits - float(logit_adjustment_tau) * torch.log(class_prior).unsqueeze(0)
 
-    ce = F.cross_entropy(logits, labels, reduction="none")
-    if loss_type == "focal":
+    if loss_type == "balanced_softmax":
+        counts = torch.zeros(logits.shape[1], dtype=logits.dtype, device=logits.device)
+        counts.index_add_(0, labels.to(device=logits.device, dtype=torch.long), sample_weights)
+        logits = logits + torch.log(counts.clamp_min(1e-12)).unsqueeze(0)
+
+    ce = F.cross_entropy(
+        logits,
+        labels,
+        reduction="none",
+        label_smoothing=float(label_smoothing),
+    )
+    if loss_type in {"focal", "class_balanced_focal"}:
         pt = torch.exp(-ce)
         ce = (1.0 - pt).pow(float(focal_gamma)) * ce
-    if weights is None:
-        weights = torch.ones_like(ce)
-    weights = weights.to(dtype=ce.dtype, device=ce.device)
+    weights = sample_weights.to(dtype=ce.dtype, device=ce.device)
 
     if loss_type == "weighted":
         effective = weights
@@ -51,6 +65,13 @@ def prototype_cross_entropy(
             effective[mask] = weights[mask] / weights[mask].sum().clamp_min(1e-12)
     elif loss_type == "focal":
         effective = weights
+    elif loss_type == "balanced_softmax":
+        effective = weights
+    elif loss_type == "class_balanced_focal":
+        effective = torch.zeros_like(weights)
+        for label in labels.unique():
+            mask = labels == label
+            effective[mask] = weights[mask] / weights[mask].sum().clamp_min(1e-12)
     else:
         raise ValueError(f"unknown prototype loss type: {loss_type}")
 

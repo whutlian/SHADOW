@@ -1,0 +1,72 @@
+{
+  "dataset": "imdb",
+  "variant": "S1_clean_MAM_MDM_MKM",
+  "seed": 42,
+  "status": "completed",
+  "target_type": "movie",
+  "teacher_type": "none",
+  "use_kd": false,
+  "use_diffusion": false,
+  "use_source_anchors": false,
+  "use_coverage_medoid": false,
+  "model_type": "sehgnn_lite",
+  "block_dims": {
+    "self": 3489,
+    "MDM": 3489,
+    "MAM": 3489,
+    "MKM": 3489
+  },
+  "feature_blocks": [
+    "self",
+    "MDM",
+    "MAM",
+    "MKM"
+  ],
+  "block_norm_stats_source": "train_full_target_rows",
+  "final_logits_activation": "none",
+  "block_gates": {
+    "self": 0.7780329585075378,
+    "MDM": 0.5737106204032898,
+    "MAM": 0.5665826201438904,
+    "MKM": 0.8310326337814331
+  },
+  "num_classes": 5,
+  "requested_ratio": 0.05,
+  "ratio_mode": "train_target",
+  "effective_M_tau": 69,
+  "condensed_nodes_total": 69,
+  "total_condensed_node_ratio": 0.0032212885154061623,
+  "effective_target_ratio": 0.05032822757111598,
+  "prototype_mode": "class_wise_kmeans_mean",
+  "train_time": 0.5122259999999983,
+  "infer_time": 0.058681299999996384,
+  "loss_type": "class_balanced",
+  "metapath_blocks": [
+    "MDM",
+    "MAM",
+    "MKM"
+  ],
+  "metapath_skipped_blocks": [],
+  "path_lad_blocks": [],
+  "metapath_required_blocks": [
+    "MAM",
+    "MDM",
+    "MKM"
+  ],
+  "accuracy": 0.42410993576049805,
+  "macro_f1": 0.35393159091472626,
+  "weighted_f1": 0.39334208523542763,
+  "predicted_class_count": 5,
+  "prediction_entropy": 1.2677452556803226,
+  "predicted_class_histogram": {
+    "0": 615,
+    "1": 1730,
+    "2": 479,
+    "3": 184,
+    "4": 194
+  },
+  "generated_at": "2026-06-09T05:36:24Z",
+  "git_commit": "e479c88",
+  "config_hash": "097aec83bd571141",
+  "run_id": "imdb-run-seed42-097aec83"
+}
