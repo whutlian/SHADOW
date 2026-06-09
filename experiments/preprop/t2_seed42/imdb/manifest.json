@@ -1,0 +1,203 @@
+{
+  "block_dim": 128,
+  "blocks": [
+    {
+      "cache_bytes": 1262592,
+      "diagnostics": {
+        "edge_scans": 0,
+        "full_edge_scans": 0,
+        "uses_e_by_d_materialization": false
+      },
+      "dtype": "float16",
+      "edge_scans": 0,
+      "kind": "self",
+      "name": "X0",
+      "path": "block_X0.memmap",
+      "shape": [
+        4932,
+        128
+      ],
+      "spec_hash": "2286c052468a8925",
+      "stats_fit_scope": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_logits": false
+    },
+    {
+      "cache_bytes": 1262592,
+      "diagnostics": {
+        "edge_chunk_size": 65536,
+        "edge_scans": 1,
+        "full_edge_scans": 1,
+        "materialized_full_e_by_d": false,
+        "max_edge_chunk_size": 4932,
+        "normalization": "destination_row",
+        "uses_e_by_d_materialization": false,
+        "wall_time_s": 0.0006553999999994176
+      },
+      "dtype": "float16",
+      "edge_scans": 1,
+      "kind": "typed_feature",
+      "name": "X1_directs",
+      "path": "block_X1_directs.memmap",
+      "shape": [
+        4932,
+        128
+      ],
+      "spec_hash": "2dcff53c55e547c1",
+      "stats_fit_scope": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_logits": false
+    },
+    {
+      "cache_bytes": 1262592,
+      "diagnostics": {
+        "edge_chunk_size": 65536,
+        "edge_scans": 1,
+        "full_edge_scans": 1,
+        "materialized_full_e_by_d": false,
+        "max_edge_chunk_size": 14779,
+        "normalization": "destination_row",
+        "uses_e_by_d_materialization": false,
+        "wall_time_s": 0.0011477000000006399
+      },
+      "dtype": "float16",
+      "edge_scans": 1,
+      "kind": "typed_feature",
+      "name": "X1_acts_in",
+      "path": "block_X1_acts_in.memmap",
+      "shape": [
+        4932,
+        128
+      ],
+      "spec_hash": "015e755376f96d88",
+      "stats_fit_scope": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_logits": false
+    },
+    {
+      "cache_bytes": 1262592,
+      "diagnostics": {
+        "edge_scans": 2,
+        "full_edge_scans": 2,
+        "materialized_dense_adjacency": false,
+        "max_edge_chunk_size": 14779,
+        "metapath_block_dim": 3489,
+        "metapath_cache_bytes": 68830992,
+        "metapath_precompute_time_s": 0.06066470000000024,
+        "no_dense_adjacency": true,
+        "normalization": "destination_row",
+        "path": "movie->actor->movie",
+        "path_length": 2,
+        "uses_e_by_d_materialization": false
+      },
+      "dtype": "float16",
+      "edge_scans": 2,
+      "kind": "metapath_feature",
+      "name": "metapath_MAM",
+      "path": "block_metapath_MAM.memmap",
+      "shape": [
+        4932,
+        128
+      ],
+      "spec_hash": "8ad64c90f48c87a3",
+      "stats_fit_scope": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_logits": false
+    },
+    {
+      "cache_bytes": 1262592,
+      "diagnostics": {
+        "edge_scans": 2,
+        "full_edge_scans": 2,
+        "materialized_dense_adjacency": false,
+        "max_edge_chunk_size": 4932,
+        "metapath_block_dim": 3489,
+        "metapath_cache_bytes": 68830992,
+        "metapath_precompute_time_s": 0.023899000000000115,
+        "no_dense_adjacency": true,
+        "normalization": "destination_row",
+        "path": "movie->director->movie",
+        "path_length": 2,
+        "uses_e_by_d_materialization": false
+      },
+      "dtype": "float16",
+      "edge_scans": 2,
+      "kind": "metapath_feature",
+      "name": "metapath_MDM",
+      "path": "block_metapath_MDM.memmap",
+      "shape": [
+        4932,
+        128
+      ],
+      "spec_hash": "29c70983cbe5e178",
+      "stats_fit_scope": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_logits": false
+    },
+    {
+      "cache_bytes": 1262592,
+      "diagnostics": {
+        "edge_scans": 2,
+        "full_edge_scans": 2,
+        "materialized_dense_adjacency": false,
+        "max_edge_chunk_size": 23610,
+        "metapath_block_dim": 3489,
+        "metapath_cache_bytes": 68830992,
+        "metapath_precompute_time_s": 0.09325069999999958,
+        "no_dense_adjacency": true,
+        "normalization": "destination_row",
+        "path": "movie->keyword->movie",
+        "path_length": 2,
+        "uses_e_by_d_materialization": false
+      },
+      "dtype": "float16",
+      "edge_scans": 2,
+      "kind": "metapath_feature",
+      "name": "metapath_MKM",
+      "path": "block_metapath_MKM.memmap",
+      "shape": [
+        4932,
+        128
+      ],
+      "spec_hash": "48ab8dc639f56c1c",
+      "stats_fit_scope": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_logits": false
+    }
+  ],
+  "dataset": "imdb",
+  "dst_chunk_size": 200000,
+  "edge_chunk_size": 65536,
+  "feature_hash": "11dc03dc71815fc0",
+  "full_edge_scans": 8,
+  "peak_cpu_ram_gb": 3.3330039978027344,
+  "peak_gpu_ram_gb": 0.0,
+  "seed": 42,
+  "split_hash": "895761aebbbf4c80",
+  "target_type": "movie",
+  "total_cache_bytes": 7575552,
+  "uses_bounded_edges": false,
+  "uses_dense_p2": false,
+  "uses_e_by_d_materialization": false,
+  "uses_logits_as_input": false,
+  "uses_memmap": true,
+  "wall_time_s": 0.39179239999999993
+}
