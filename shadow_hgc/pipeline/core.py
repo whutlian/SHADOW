@@ -1797,6 +1797,8 @@ def run_shadow_hgc_experiment(
         "condensed_edges_by_relation": condensed_edges_by_relation,
         "condensed_nodes_total": condensed_nodes_total,
         "condensed_edges_total": condensed_edges_total,
+        "original_nodes_total": original_nodes_total,
+        "original_edges_total": original_edges_total,
         "ratio_mode": ratio_mode,
         "requested_target_ratio": requested_target_ratio,
         "effective_target_ratio": effective_target_ratio,

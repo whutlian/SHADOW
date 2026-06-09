@@ -120,6 +120,57 @@ Diagnostic interpretation:
 
 - Tables include target ratio, total condensed node ratio, byte-size compression, LAD precompute time, CPU RAM, and GPU RAM fields.
 - FullDemandTable diagnostics are upper bounds and should not be read as condensation compression results.
+- `Full-graph condensed node ratio` is `condensed_nodes_total / original_nodes_total`, so it can differ sharply from the requested target prototype ratio.
+
+### Small Full-Graph Condensed Node Ratio
+
+| Dataset | Requested target ratio | Variant | Full-graph condensed node ratio | Condensed nodes |
+|---|---:|---|---:|---:|
+| acm | 9.6% | `V0_current_best` | 2.458% | 269 |
+| acm | 9.6% | `V1_compiled_demand_head` | 2.458% | 269 |
+| acm | 9.6% | `V2_compiled_plus_lad` | 2.458% | 269 |
+| acm | 9.6% | `V3_compiled_lad_boundary` | 2.248% | 246 |
+| dblp | 0.5% | `V0_current_best` | 0.184% | 48 |
+| dblp | 0.5% | `V1_compiled_demand_head` | 0.184% | 48 |
+| dblp | 0.5% | `V2_compiled_plus_lad` | 0.184% | 48 |
+| dblp | 0.5% | `V3_compiled_lad_boundary` | 0.092% | 24 |
+| dblp | 6.5% | `V0_current_best` | 0.907% | 237 |
+| dblp | 6.5% | `V1_compiled_demand_head` | 0.907% | 237 |
+| dblp | 6.5% | `V2_compiled_plus_lad` | 0.907% | 237 |
+| dblp | 6.5% | `V3_compiled_lad_boundary` | 0.700% | 183 |
+| imdb | 0.5% | `V0_current_best` | 0.593% | 127 |
+| imdb | 0.5% | `V1_compiled_demand_head` | 0.593% | 127 |
+| imdb | 0.5% | `V2_compiled_plus_lad` | 0.593% | 127 |
+| imdb | 0.5% | `V3_compiled_lad_boundary` | 0.621% | 133 |
+| imdb | 2.5% | `V0_current_best` | 1.106% | 237 |
+| imdb | 2.5% | `V1_compiled_demand_head` | 1.106% | 237 |
+| imdb | 2.5% | `V2_compiled_plus_lad` | 1.106% | 237 |
+| imdb | 2.5% | `V3_compiled_lad_boundary` | 1.111% | 238 |
+| imdb | 5.0% | `V0_current_best` | 2.255% | 483 |
+| imdb | 5.0% | `V1_compiled_demand_head` | 2.255% | 483 |
+| imdb | 5.0% | `V2_compiled_plus_lad` | 2.255% | 483 |
+| imdb | 5.0% | `V3_compiled_lad_boundary` | 2.255% | 483 |
+
+### Medium Full-Graph Condensed Node Ratio
+
+| Dataset | Requested target ratio | Variant | Full-graph condensed node ratio | Condensed nodes |
+|---|---:|---|---:|---:|
+| ogbn-arxiv | 6.0% | `V0_current_best` | 3.664% | 6204 |
+| ogbn-arxiv | 6.0% | `V1_compiled_demand_head` | 3.664% | 6204 |
+| ogbn-arxiv | 6.0% | `V2_compiled_plus_lad` | 3.664% | 6204 |
+| ogbn-arxiv | 6.0% | `V3_compiled_lad_boundary` | 3.603% | 6101 |
+| ogbn-arxiv | 12.0% | `V0_current_best` | 6.942% | 11755 |
+| ogbn-arxiv | 12.0% | `V1_compiled_demand_head` | 6.942% | 11755 |
+| ogbn-arxiv | 12.0% | `V2_compiled_plus_lad` | 6.942% | 11755 |
+| ogbn-arxiv | 12.0% | `V3_compiled_lad_boundary` | 6.951% | 11771 |
+| ogbn-products | 6.0% | `V0_current_best` | 0.502% | 12300 |
+| ogbn-products | 6.0% | `V1_compiled_demand_head` | 0.502% | 12300 |
+| ogbn-products | 6.0% | `V2_compiled_plus_lad` | 0.502% | 12300 |
+| ogbn-products | 6.0% | `V3_compiled_lad_boundary` | 0.508% | 12453 |
+| ogbn-products | 12.0% | `V0_current_best` | 0.960% | 23500 |
+| ogbn-products | 12.0% | `V1_compiled_demand_head` | 0.960% | 23500 |
+| ogbn-products | 12.0% | `V2_compiled_plus_lad` | 0.960% | 23501 |
+| ogbn-products | 12.0% | `V3_compiled_lad_boundary` | 0.978% | 23960 |
 
 ## 8. Decision
 
