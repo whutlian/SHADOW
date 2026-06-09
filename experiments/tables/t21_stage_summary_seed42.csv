@@ -1,0 +1,6 @@
+dataset,status,accuracy,macro_f1,predicted_class_count,target_accuracy,target_passed,safe_baseline,delta_acc_vs_safe,selected_blocks,recovery_status,forbidden_flags_clear,reason
+acm,promoted,0.9206798672676086,0.9211405118306478,3,0.93,False,SFB-v2 B3_scap_v2 retained,0.005193867267608621,"[""B0_self"", ""B1_typed"", ""B2_metapath"", ""B3_lad_scap""]",completed_diagnostic,True,validation_selected_and_safe_improved
+dblp,promoted,0.9426056146621704,0.9387593418359756,4,0.85,True,R+ relation-linear current-best,0.10563361466217036,"[""B0_self"", ""B1_typed"", ""B2_metapath"", ""B3_lad_scap""]",started_diagnostic,True,validation_selected_and_safe_improved
+imdb,promoted,0.47158026695251465,0.3900045245885849,5,0.5,False,clean S1 MAM/MDM/MKM,0.04747026695251466,"[""B0_self"", ""B1_typed"", ""B2_metapath"", ""B4_structure""]",completed_diagnostic,True,validation_selected_and_safe_improved
+ogbn-arxiv,blocked_class_collapse,0.6105796098709106,0.32606273433193567,27,0.64,False,LAD_reference,0.013805609870910618,"[""B0_self"", ""B1_typed"", ""B3_lad_scap""]",blocked_by_t21_fullgraph_gate,True,predicted_class_count<35
+ogbn-products,preprop_completed,,,,0.7,False,R++ base shadow-fusion / LAD_reference,,[],blocked_by_t21_fullgraph_gate,True,full_edge_products_preprop_completed

@@ -1,0 +1,287 @@
+{
+  "block_dim": 128,
+  "blocks": [
+    {
+      "cache_bytes": 774400,
+      "diagnostics": {
+        "full_edge_scans": 0,
+        "normalization": "none"
+      },
+      "disk_bytes": 774400,
+      "dtype": "float16",
+      "edge_scans": 0,
+      "kind": "self",
+      "name": "X0",
+      "normalization": "none",
+      "path": "block_X0.memmap",
+      "shape": [
+        3025,
+        128
+      ],
+      "source_relations": [],
+      "spec_hash": "47d4f03c0fdcbc14",
+      "stats_fit_scope": "train_target_rows",
+      "stats_fit_source": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_kd": false,
+      "uses_logits": false,
+      "uses_teacher_logits": false
+    },
+    {
+      "cache_bytes": 774400,
+      "diagnostics": {
+        "edge_scans": 1,
+        "full_edge_scans": 1,
+        "materialized_full_e_by_d": false,
+        "max_edge_chunk_size": 5343,
+        "normalization": "destination_row",
+        "uses_e_by_d_materialization": false
+      },
+      "disk_bytes": 774400,
+      "dtype": "float16",
+      "edge_scans": 1,
+      "kind": "preprop_one_hop",
+      "name": "X1_cite_ref",
+      "normalization": "destination_row",
+      "path": "block_X1_cite_ref.memmap",
+      "shape": [
+        3025,
+        128
+      ],
+      "source_relations": [
+        "paper--cite_ref-->paper"
+      ],
+      "spec_hash": "02f427c7066ad1e3",
+      "stats_fit_scope": "train_target_rows",
+      "stats_fit_source": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_kd": false,
+      "uses_logits": false,
+      "uses_teacher_logits": false
+    },
+    {
+      "cache_bytes": 774400,
+      "diagnostics": {
+        "edge_scans": 1,
+        "full_edge_scans": 1,
+        "materialized_full_e_by_d": false,
+        "max_edge_chunk_size": 5343,
+        "normalization": "destination_row",
+        "uses_e_by_d_materialization": false
+      },
+      "disk_bytes": 774400,
+      "dtype": "float16",
+      "edge_scans": 1,
+      "kind": "preprop_one_hop",
+      "name": "X1_cited_by",
+      "normalization": "destination_row",
+      "path": "block_X1_cited_by.memmap",
+      "shape": [
+        3025,
+        128
+      ],
+      "source_relations": [
+        "paper--cited_by-->paper"
+      ],
+      "spec_hash": "693af4ea64376545",
+      "stats_fit_scope": "train_target_rows",
+      "stats_fit_source": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_kd": false,
+      "uses_logits": false,
+      "uses_teacher_logits": false
+    },
+    {
+      "cache_bytes": 774400,
+      "diagnostics": {
+        "full_edge_scans": 0,
+        "normalization": "none"
+      },
+      "disk_bytes": 774400,
+      "dtype": "float16",
+      "edge_scans": 0,
+      "kind": "residual",
+      "name": "Xres",
+      "normalization": "none",
+      "path": "block_Xres.memmap",
+      "shape": [
+        3025,
+        128
+      ],
+      "source_relations": [],
+      "spec_hash": "e1fa3c08e0e17d78",
+      "stats_fit_scope": "train_target_rows",
+      "stats_fit_source": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_kd": false,
+      "uses_logits": false,
+      "uses_teacher_logits": false
+    },
+    {
+      "cache_bytes": 774400,
+      "diagnostics": {
+        "edge_scans": 3,
+        "full_edge_scans": 3,
+        "materialized_full_e_by_d": false,
+        "max_edge_chunk_size": 65536,
+        "normalization": "destination_row",
+        "uses_e_by_d_materialization": false
+      },
+      "disk_bytes": 774400,
+      "dtype": "float16",
+      "edge_scans": 3,
+      "kind": "typed_demand",
+      "name": "typed_demand",
+      "normalization": "destination_row",
+      "path": "block_typed_demand.memmap",
+      "shape": [
+        3025,
+        128
+      ],
+      "source_relations": [
+        "author--writes-->paper",
+        "subject--subject_of-->paper",
+        "term--term_in-->paper"
+      ],
+      "spec_hash": "c1e243860dcaf8db",
+      "stats_fit_scope": "train_target_rows",
+      "stats_fit_source": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_kd": false,
+      "uses_logits": false,
+      "uses_teacher_logits": false
+    },
+    {
+      "cache_bytes": 60500,
+      "diagnostics": {
+        "edge_scans": 5,
+        "full_edge_scans": 5,
+        "materialized_full_e_by_d": false,
+        "normalization": "none",
+        "uses_e_by_d_materialization": false
+      },
+      "disk_bytes": 60500,
+      "dtype": "float16",
+      "edge_scans": 5,
+      "kind": "structure",
+      "name": "structure",
+      "normalization": "none",
+      "path": "block_structure.memmap",
+      "shape": [
+        3025,
+        10
+      ],
+      "source_relations": [
+        "author--writes-->paper",
+        "paper--cite_ref-->paper",
+        "paper--cited_by-->paper",
+        "subject--subject_of-->paper",
+        "term--term_in-->paper"
+      ],
+      "spec_hash": "cfff74d8ea0f73f3",
+      "stats_fit_scope": "train_target_rows",
+      "stats_fit_source": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_kd": false,
+      "uses_logits": false,
+      "uses_teacher_logits": false
+    },
+    {
+      "cache_bytes": 6050,
+      "diagnostics": {
+        "full_edge_scans": 0,
+        "normalization": "none"
+      },
+      "disk_bytes": 6050,
+      "dtype": "float16",
+      "edge_scans": 0,
+      "kind": "metapath",
+      "name": "metapath",
+      "normalization": "none",
+      "path": "block_metapath.memmap",
+      "shape": [
+        3025,
+        1
+      ],
+      "source_relations": [],
+      "spec_hash": "d9d53405988d4272",
+      "stats_fit_scope": "train_target_rows",
+      "stats_fit_source": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_kd": false,
+      "uses_logits": false,
+      "uses_teacher_logits": false
+    },
+    {
+      "cache_bytes": 6050,
+      "diagnostics": {
+        "full_edge_scans": 0,
+        "normalization": "none"
+      },
+      "disk_bytes": 6050,
+      "dtype": "float16",
+      "edge_scans": 0,
+      "kind": "lad_scap",
+      "name": "lad_scap",
+      "normalization": "none",
+      "path": "block_lad_scap.memmap",
+      "shape": [
+        3025,
+        1
+      ],
+      "source_relations": [],
+      "spec_hash": "db0f510587f3071a",
+      "stats_fit_scope": "train_target_rows",
+      "stats_fit_source": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_kd": false,
+      "uses_logits": false,
+      "uses_teacher_logits": false
+    }
+  ],
+  "dataset": "acm",
+  "dst_chunk_size": 200000,
+  "edge_chunk_size": 65536,
+  "feature_dim": 128,
+  "feature_hash": "cc3a47cf47bd8ede",
+  "full_edge_scans": 10,
+  "peak_cpu_ram_gb": 0.7421188354492188,
+  "peak_gpu_ram_gb": 0.0,
+  "seed": 42,
+  "split_hash": "985ad3b200fc93cb",
+  "target_type": "paper",
+  "total_cache_bytes": 3944600,
+  "uses_bounded_edges": false,
+  "uses_dense_p2": false,
+  "uses_diffusion_legacy": false,
+  "uses_e_by_d_materialization": false,
+  "uses_kd": false,
+  "uses_logits_as_input": false,
+  "uses_memmap": true,
+  "uses_teacher_logits": false,
+  "wall_time_s": 0.3203431000000001
+}

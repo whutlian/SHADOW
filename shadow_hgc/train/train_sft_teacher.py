@@ -8,7 +8,7 @@ import torch
 import torch.nn.functional as F
 
 from shadow_hgc.eval.sft_eval import predict_sft_logits, sft_metrics
-from shadow_hgc.models.sft_teacher import SFTTableTeacher
+from shadow_hgc.models.sft_table_teacher import SFTTableTeacherV2 as SFTTableTeacher
 
 
 @dataclass
@@ -18,7 +18,7 @@ class SFTTeacherTrainResult:
     summary: dict[str, Any]
 
 
-def _loss(logits: torch.Tensor, labels: torch.Tensor, *, loss_type: str, train_labels: torch.Tensor, label_smoothing: float = 0.0) -> torch.Tensor:
+def sft_loss(logits: torch.Tensor, labels: torch.Tensor, *, loss_type: str, train_labels: torch.Tensor, label_smoothing: float = 0.0) -> torch.Tensor:
     loss_type = str(loss_type)
     if loss_type == "cross_entropy":
         return F.cross_entropy(logits, labels, label_smoothing=float(label_smoothing))
@@ -30,14 +30,28 @@ def _loss(logits: torch.Tensor, labels: torch.Tensor, *, loss_type: str, train_l
     if loss_type == "balanced_softmax":
         counts = torch.bincount(train_labels, minlength=logits.shape[1]).to(logits.device, logits.dtype).clamp_min(1.0)
         return F.cross_entropy(logits + counts.log().unsqueeze(0), labels, label_smoothing=float(label_smoothing))
-    if loss_type == "logit_adjusted_ce":
+    if loss_type in {"logit_adjusted_ce", "logit_adjusted_ce_as_training_loss_only"}:
         counts = torch.bincount(train_labels, minlength=logits.shape[1]).to(logits.device, logits.dtype).clamp_min(1.0)
         prior = counts / counts.sum()
         return F.cross_entropy(logits - prior.log().unsqueeze(0), labels, label_smoothing=float(label_smoothing))
     if loss_type == "label_smoothing_ce":
         smoothing = float(label_smoothing) if label_smoothing > 0 else 0.05
         return F.cross_entropy(logits, labels, label_smoothing=smoothing)
+    if loss_type == "focal_loss":
+        ce = F.cross_entropy(logits, labels, reduction="none", label_smoothing=float(label_smoothing))
+        pt = torch.exp(-ce).clamp(min=1e-6, max=1.0)
+        gamma = 2.0
+        return (((1.0 - pt) ** gamma) * ce).mean()
+    if loss_type == "sqrt_weighted_ce":
+        ce = F.cross_entropy(logits, labels, reduction="none", label_smoothing=float(label_smoothing))
+        counts = torch.bincount(train_labels, minlength=logits.shape[1]).to(logits.device, logits.dtype).clamp_min(1.0)
+        weights = (1.0 / torch.sqrt(counts))[labels]
+        return (weights * ce).sum() / weights.sum().clamp_min(1e-12)
     raise ValueError(f"unsupported SFT loss type: {loss_type}")
+
+
+def _loss(logits: torch.Tensor, labels: torch.Tensor, *, loss_type: str, train_labels: torch.Tensor, label_smoothing: float = 0.0) -> torch.Tensor:
+    return sft_loss(logits, labels, loss_type=loss_type, train_labels=train_labels, label_smoothing=label_smoothing)
 
 
 def train_sft_teacher(

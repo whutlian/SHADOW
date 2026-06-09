@@ -13,7 +13,12 @@ class PrepropBlockMeta:
     shape: list[int]
     dtype: str
     path: str
+    source_relations: list[str] = field(default_factory=list)
+    normalization: str = "none"
+    stats_fit_source: str = "train_target_rows"
     uses_logits: bool = False
+    uses_teacher_logits: bool = False
+    uses_kd: bool = False
     uses_diffusion_legacy: bool = False
     uses_dense_p2: bool = False
     uses_e_by_d_materialization: bool = False
@@ -31,13 +36,19 @@ class PrepropBlockMeta:
             "shape": [int(value) for value in self.shape],
             "dtype": self.dtype,
             "path": self.path,
+            "source_relations": list(self.source_relations),
+            "normalization": self.normalization,
+            "stats_fit_source": self.stats_fit_source,
             "uses_logits": bool(self.uses_logits),
+            "uses_teacher_logits": bool(self.uses_teacher_logits),
+            "uses_kd": bool(self.uses_kd),
             "uses_diffusion_legacy": bool(self.uses_diffusion_legacy),
             "uses_dense_p2": bool(self.uses_dense_p2),
             "uses_e_by_d_materialization": bool(self.uses_e_by_d_materialization),
             "uses_bounded_edges": bool(self.uses_bounded_edges),
             "edge_scans": int(self.edge_scans),
             "cache_bytes": int(self.cache_bytes),
+            "disk_bytes": int(self.cache_bytes),
             "stats_fit_scope": self.stats_fit_scope,
             "spec_hash": self.spec_hash,
             "diagnostics": self.diagnostics,
@@ -61,6 +72,9 @@ class PrepropManifest:
     block_dim: int
     uses_memmap: bool = True
     uses_logits_as_input: bool = False
+    uses_teacher_logits: bool = False
+    uses_kd: bool = False
+    uses_diffusion_legacy: bool = False
     uses_e_by_d_materialization: bool = False
     uses_dense_p2: bool = False
     uses_bounded_edges: bool = False
@@ -81,8 +95,12 @@ class PrepropManifest:
             "edge_chunk_size": int(self.edge_chunk_size),
             "dst_chunk_size": int(self.dst_chunk_size),
             "block_dim": int(self.block_dim),
+            "feature_dim": int(self.block_dim),
             "uses_memmap": bool(self.uses_memmap),
             "uses_logits_as_input": bool(self.uses_logits_as_input),
+            "uses_teacher_logits": bool(self.uses_teacher_logits),
+            "uses_kd": bool(self.uses_kd),
+            "uses_diffusion_legacy": bool(self.uses_diffusion_legacy),
             "uses_e_by_d_materialization": bool(self.uses_e_by_d_materialization),
             "uses_dense_p2": bool(self.uses_dense_p2),
             "uses_bounded_edges": bool(self.uses_bounded_edges),

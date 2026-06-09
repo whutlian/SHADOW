@@ -1,0 +1,125 @@
+{
+  "block_dim": 64,
+  "blocks": [
+    {
+      "cache_bytes": 313475712,
+      "diagnostics": {
+        "full_edge_scans": 0,
+        "normalization": "none"
+      },
+      "disk_bytes": 313475712,
+      "dtype": "float16",
+      "edge_scans": 0,
+      "kind": "self",
+      "name": "X0",
+      "normalization": "none",
+      "path": "block_X0.memmap",
+      "shape": [
+        2449029,
+        64
+      ],
+      "source_relations": [],
+      "spec_hash": "c6a4cb24ba3a1e07",
+      "stats_fit_scope": "train_target_rows",
+      "stats_fit_source": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_kd": false,
+      "uses_logits": false,
+      "uses_teacher_logits": false
+    },
+    {
+      "cache_bytes": 313475712,
+      "diagnostics": {
+        "edge_scans": 1,
+        "full_edge_scans": 1,
+        "materialized_full_e_by_d": false,
+        "max_edge_chunk_size": 65536,
+        "normalization": "destination_row",
+        "uses_e_by_d_materialization": false
+      },
+      "disk_bytes": 313475712,
+      "dtype": "float16",
+      "edge_scans": 1,
+      "kind": "preprop_one_hop",
+      "name": "X1_co_purchase",
+      "normalization": "destination_row",
+      "path": "block_X1_co_purchase.memmap",
+      "shape": [
+        2449029,
+        64
+      ],
+      "source_relations": [
+        "product--co_purchase-->product"
+      ],
+      "spec_hash": "b63c6a7dec63c616",
+      "stats_fit_scope": "train_target_rows",
+      "stats_fit_source": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_kd": false,
+      "uses_logits": false,
+      "uses_teacher_logits": false
+    },
+    {
+      "cache_bytes": 313475712,
+      "diagnostics": {
+        "edge_scans": 1,
+        "full_edge_scans": 1,
+        "materialized_full_e_by_d": false,
+        "max_edge_chunk_size": 65536,
+        "normalization": "destination_row",
+        "uses_e_by_d_materialization": false
+      },
+      "disk_bytes": 313475712,
+      "dtype": "float16",
+      "edge_scans": 1,
+      "kind": "preprop_one_hop",
+      "name": "X1_co_purchased_by",
+      "normalization": "destination_row",
+      "path": "block_X1_co_purchased_by.memmap",
+      "shape": [
+        2449029,
+        64
+      ],
+      "source_relations": [
+        "product--co_purchased_by-->product"
+      ],
+      "spec_hash": "7d4c11b46d5790ef",
+      "stats_fit_scope": "train_target_rows",
+      "stats_fit_source": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_kd": false,
+      "uses_logits": false,
+      "uses_teacher_logits": false
+    }
+  ],
+  "dataset": "ogbn-products",
+  "dst_chunk_size": 200000,
+  "edge_chunk_size": 65536,
+  "feature_dim": 64,
+  "feature_hash": "e38c784482a1b303",
+  "full_edge_scans": 2,
+  "peak_cpu_ram_gb": 10.918231964111328,
+  "peak_gpu_ram_gb": 0.0,
+  "seed": 42,
+  "split_hash": "143424042a0d8b7e",
+  "target_type": "product",
+  "total_cache_bytes": 940427136,
+  "uses_bounded_edges": false,
+  "uses_dense_p2": false,
+  "uses_diffusion_legacy": false,
+  "uses_e_by_d_materialization": false,
+  "uses_kd": false,
+  "uses_logits_as_input": false,
+  "uses_memmap": true,
+  "uses_teacher_logits": false,
+  "wall_time_s": 20.249736
+}

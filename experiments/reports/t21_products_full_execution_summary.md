@@ -1,0 +1,9 @@
+# T2.1 ogbn-products Full Execution
+
+This row never uses bounded edges, logits, KD, dense P2, legacy diffusion, or E x d materialization. If `--run-full` is not supplied, the row is explicitly blocked rather than promoted.
+
+| dataset | status | run_mode | accuracy | macro_f1 | full_edge_scans | total_cache_bytes | reason |
+|---|---|---|---|---|---|---|---|
+| ogbn-products | preprop_completed | full_edges |  |  | 2 | 940427136 | full_edge_products_preprop_completed |
+
+- CSV: `experiments\tables\t21_products_full_execution_seed42.csv`

@@ -1,0 +1,186 @@
+{
+  "block_dim": 128,
+  "blocks": [
+    {
+      "cache_bytes": 1262592,
+      "diagnostics": {
+        "full_edge_scans": 0,
+        "normalization": "none"
+      },
+      "disk_bytes": 1262592,
+      "dtype": "float16",
+      "edge_scans": 0,
+      "kind": "self",
+      "name": "X0",
+      "normalization": "none",
+      "path": "block_X0.memmap",
+      "shape": [
+        4932,
+        128
+      ],
+      "source_relations": [],
+      "spec_hash": "bdf54b1d86ae864e",
+      "stats_fit_scope": "train_target_rows",
+      "stats_fit_source": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_kd": false,
+      "uses_logits": false,
+      "uses_teacher_logits": false
+    },
+    {
+      "cache_bytes": 1262592,
+      "diagnostics": {
+        "edge_scans": 3,
+        "full_edge_scans": 3,
+        "materialized_full_e_by_d": false,
+        "max_edge_chunk_size": 23610,
+        "normalization": "destination_row",
+        "uses_e_by_d_materialization": false
+      },
+      "disk_bytes": 1262592,
+      "dtype": "float16",
+      "edge_scans": 3,
+      "kind": "typed_demand",
+      "name": "typed_demand",
+      "normalization": "destination_row",
+      "path": "block_typed_demand.memmap",
+      "shape": [
+        4932,
+        128
+      ],
+      "source_relations": [
+        "actor--acts_in-->movie",
+        "director--directs-->movie",
+        "keyword--keyword_in-->movie"
+      ],
+      "spec_hash": "7cade461db303d34",
+      "stats_fit_scope": "train_target_rows",
+      "stats_fit_source": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_kd": false,
+      "uses_logits": false,
+      "uses_teacher_logits": false
+    },
+    {
+      "cache_bytes": 59184,
+      "diagnostics": {
+        "edge_scans": 3,
+        "full_edge_scans": 3,
+        "materialized_full_e_by_d": false,
+        "normalization": "none",
+        "uses_e_by_d_materialization": false
+      },
+      "disk_bytes": 59184,
+      "dtype": "float16",
+      "edge_scans": 3,
+      "kind": "structure",
+      "name": "structure",
+      "normalization": "none",
+      "path": "block_structure.memmap",
+      "shape": [
+        4932,
+        6
+      ],
+      "source_relations": [
+        "actor--acts_in-->movie",
+        "director--directs-->movie",
+        "keyword--keyword_in-->movie"
+      ],
+      "spec_hash": "4b05c0c128060cec",
+      "stats_fit_scope": "train_target_rows",
+      "stats_fit_source": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_kd": false,
+      "uses_logits": false,
+      "uses_teacher_logits": false
+    },
+    {
+      "cache_bytes": 9864,
+      "diagnostics": {
+        "full_edge_scans": 0,
+        "normalization": "none"
+      },
+      "disk_bytes": 9864,
+      "dtype": "float16",
+      "edge_scans": 0,
+      "kind": "metapath",
+      "name": "metapath",
+      "normalization": "none",
+      "path": "block_metapath.memmap",
+      "shape": [
+        4932,
+        1
+      ],
+      "source_relations": [],
+      "spec_hash": "9681e8c4977ca32b",
+      "stats_fit_scope": "train_target_rows",
+      "stats_fit_source": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_kd": false,
+      "uses_logits": false,
+      "uses_teacher_logits": false
+    },
+    {
+      "cache_bytes": 9864,
+      "diagnostics": {
+        "full_edge_scans": 0,
+        "normalization": "none"
+      },
+      "disk_bytes": 9864,
+      "dtype": "float16",
+      "edge_scans": 0,
+      "kind": "lad_scap",
+      "name": "lad_scap",
+      "normalization": "none",
+      "path": "block_lad_scap.memmap",
+      "shape": [
+        4932,
+        1
+      ],
+      "source_relations": [],
+      "spec_hash": "02125bd5690f6d75",
+      "stats_fit_scope": "train_target_rows",
+      "stats_fit_source": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_kd": false,
+      "uses_logits": false,
+      "uses_teacher_logits": false
+    }
+  ],
+  "dataset": "imdb",
+  "dst_chunk_size": 200000,
+  "edge_chunk_size": 65536,
+  "feature_dim": 128,
+  "feature_hash": "c17672e7a4bd4ed0",
+  "full_edge_scans": 6,
+  "peak_cpu_ram_gb": 1.1266098022460938,
+  "peak_gpu_ram_gb": 0.0,
+  "seed": 42,
+  "split_hash": "a821b96baa2bcadf",
+  "target_type": "movie",
+  "total_cache_bytes": 2604096,
+  "uses_bounded_edges": false,
+  "uses_dense_p2": false,
+  "uses_diffusion_legacy": false,
+  "uses_e_by_d_materialization": false,
+  "uses_kd": false,
+  "uses_logits_as_input": false,
+  "uses_memmap": true,
+  "uses_teacher_logits": false,
+  "wall_time_s": 0.056095000000000006
+}
