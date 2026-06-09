@@ -9,22 +9,36 @@ from shadow_hgc.features.compiled_table import CompiledDemandSchema, block_slice
 
 
 class _BlockStandardizer(nn.Module):
-    def __init__(self, dim: int, eps: float = 1e-6) -> None:
+    def __init__(self, dim: int, eps: float = 1e-6, *, lazy_fit: bool = True) -> None:
         super().__init__()
         self.register_buffer("mean", torch.zeros(dim))
         self.register_buffer("std", torch.ones(dim))
         self.eps = eps
+        self.lazy_fit = bool(lazy_fit)
         self.fitted = False
+        self.frozen = False
+        self.source = "unfitted"
 
-    def fit(self, x: torch.Tensor) -> None:
+    def fit(self, x: torch.Tensor, *, source: str = "training_forward") -> None:
+        if self.frozen and self.fitted:
+            return
         with torch.no_grad():
             self.mean.copy_(x.mean(dim=0))
             self.std.copy_(x.std(dim=0, unbiased=False).clamp_min(self.eps))
             self.fitted = True
+            self.source = source
+
+    def freeze(self) -> None:
+        if not self.fitted:
+            raise RuntimeError("block stats must be fitted before freezing")
+        self.frozen = True
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        if not self.fitted and self.training and x.numel() > 0:
-            self.fit(x.detach())
+        if not self.fitted:
+            if self.training and self.lazy_fit and x.numel() > 0:
+                self.fit(x.detach(), source="training_forward")
+            else:
+                raise RuntimeError("block stats must be fitted before forward when lazy fitting is disabled")
         return (x - self.mean.to(x.device, x.dtype)) / self.std.to(x.device, x.dtype).clamp_min(self.eps)
 
 
@@ -38,6 +52,7 @@ class CompiledDemandMLP(nn.Module):
         block_norm: str = "standardize",
         block_gate: bool = True,
         fusion: Literal["concat_mlp", "sum_logits"] = "concat_mlp",
+        lazy_block_stats: bool = True,
     ) -> None:
         super().__init__()
         if fusion not in {"concat_mlp", "sum_logits"}:
@@ -51,6 +66,7 @@ class CompiledDemandMLP(nn.Module):
         self.block_norm = block_norm
         self.block_gate = bool(block_gate)
         self.fusion = fusion
+        self.lazy_block_stats = bool(lazy_block_stats)
         self._slices = block_slices(schema)
         self.normalizers = nn.ModuleDict()
         self.projections = nn.ModuleDict()
@@ -59,7 +75,11 @@ class CompiledDemandMLP(nn.Module):
         for idx, block in enumerate(schema.blocks):
             key = f"b{idx}"
             gate_names.append(block.name)
-            self.normalizers[key] = _BlockStandardizer(block.dim) if block_norm == "standardize" else nn.Identity()
+            self.normalizers[key] = (
+                _BlockStandardizer(block.dim, lazy_fit=self.lazy_block_stats)
+                if block_norm == "standardize"
+                else nn.Identity()
+            )
             self.projections[key] = nn.Linear(block.dim, hidden_dim)
             self.logit_heads[key] = nn.Linear(hidden_dim, num_classes)
         self._gate_names = gate_names
@@ -108,14 +128,33 @@ class CompiledDemandMLP(nn.Module):
         gates = self._gate_values_tensor(device=self.raw_gates.device, dtype=torch.float32).detach().cpu()
         return {name: float(gates[idx].item()) for idx, name in enumerate(self._gate_names)}
 
+    def fit_block_stats(self, table: torch.Tensor, *, source: str = "train_full_demand_table") -> dict:
+        if table.shape[1] != self.schema.total_dim:
+            raise ValueError(f"expected compiled dim {self.schema.total_dim}, got {table.shape[1]}")
+        for idx, block in enumerate(self.schema.blocks):
+            normalizer = self.normalizers[f"b{idx}"]
+            if isinstance(normalizer, _BlockStandardizer):
+                normalizer.fit(table[:, self._slices[block.name]].detach().to(torch.float32), source=source)
+        return self.block_norm_stats()
+
+    def freeze_block_stats(self) -> None:
+        for normalizer in self.normalizers.values():
+            if isinstance(normalizer, _BlockStandardizer):
+                normalizer.freeze()
+
     def block_norm_stats(self) -> dict[str, dict]:
         stats = {}
         for idx, block in enumerate(self.schema.blocks):
             normalizer = self.normalizers[f"b{idx}"]
             if isinstance(normalizer, _BlockStandardizer):
                 stats[block.name] = {
+                    "mean": normalizer.mean.detach().cpu().tolist(),
+                    "std": normalizer.std.detach().cpu().tolist(),
                     "mean_abs": float(normalizer.mean.abs().mean().item()),
                     "std_mean": float(normalizer.std.mean().item()),
+                    "fitted": bool(normalizer.fitted),
+                    "frozen": bool(normalizer.frozen),
+                    "source": normalizer.source,
                 }
         return stats
 
@@ -128,4 +167,22 @@ class CompiledDemandMLP(nn.Module):
             "block_gates": self.block_gate_values(),
             "block_norm_stats": self.block_norm_stats(),
             "fusion": self.fusion,
+            "lazy_block_stats": bool(self.lazy_block_stats),
         }
+
+
+def fit_compiled_block_stats(
+    model: CompiledDemandMLP,
+    train_full_table: torch.Tensor,
+    schema: CompiledDemandSchema,
+) -> dict:
+    """Fit and freeze per-block stats from original train-target demand rows."""
+
+    if model.schema != schema:
+        raise ValueError("compiled block stats schema must match model schema")
+    model.fit_block_stats(train_full_table, source="train_full_demand_table")
+    model.freeze_block_stats()
+    return {
+        "compiled_block_stats_source": "train_full_demand_table",
+        "block_norm_stats": model.block_norm_stats(),
+    }

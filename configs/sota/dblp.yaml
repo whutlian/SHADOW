@@ -1,0 +1,14 @@
+dataset: dblp
+seed: 42
+ratios: [0.012, 0.024, 0.048, 0.096]
+variant: SOTA
+model: sehgnn_lite
+prototype_mode: coverage_medoid
+features:
+  metapath_blocks: [APA]
+  path_lad_blocks: [APA]
+source_anchor_mode: none
+teacher_type: sehgnn_lite
+use_kd: true
+loss: ce_kd
+diffusion: false

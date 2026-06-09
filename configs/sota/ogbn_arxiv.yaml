@@ -1,0 +1,13 @@
+dataset: ogbn-arxiv
+seed: 42
+full_node_ratios: [0.0005, 0.0025, 0.005]
+variant: SOTA
+model: compiled_demand_head
+prototype_mode: coverage_medoid
+features:
+  label_affinity: true
+  path_lad_hops: [1, 2]
+  diffusion: false
+teacher_type: sign_lad_mlp
+use_kd: true
+loss: sqrt_weighted_logit_adjusted_kd

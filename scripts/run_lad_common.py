@@ -22,6 +22,7 @@ LAD_STAGE_DEFAULTS: dict[str, Any] = {
     "compiled_hidden_dim": 256,
     "compiled_dropout": 0.3,
     "compiled_block_gate": True,
+    "compiled_block_stats_source": "train_full_demand_table",
     "boundary_prototypes": False,
 }
 

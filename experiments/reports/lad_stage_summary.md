@@ -5,7 +5,9 @@
 - Seed policy: single seed `42` only.
 - No-diffusion decision: diffusion is not promoted because it caused OOM/resource failures on products and is too expensive for large-scale goals. It remains an appendix diagnostic only.
 - Variants: V0 current_best, V1 compiled demand head, V2 compiled demand head + LAD, V3 V2 + boundary-aware prototypes.
-- Ratios: ACM 9.6%; DBLP 0.5% and 6.5%; IMDB 0.5%, 2.5%, 5.0%; ogbn-arxiv/products 6.0% and 12.0%.
+- Main matrix ratios: ACM 9.6%; DBLP 0.5% and 6.5%; IMDB 0.5%, 2.5%, 5.0%; ogbn-arxiv/products 6.0% and 12.0%.
+- Full-graph ratio sweep: small datasets at 1.2%, 2.4%, 4.8%, 9.6%; ogbn-arxiv/products at 0.05%, 0.25%, 0.5%.
+- Result coverage: all LAD-stage tables are summarized here, including 24 small rows, 16 medium rows, 7 diagnostic rows, and 18 full-node sweep rows.
 
 ## 2. Code Changes
 
@@ -14,7 +16,7 @@
 - Added block-gated compiled demand MLP in `shadow_hgc/models/compiled_demand.py`.
 - Added boundary-aware prototype helper in `shadow_hgc/prototype/boundary.py`.
 - Integrated opt-in LAD/compiled/boundary arguments into `shadow_hgc/pipeline/core.py` without changing the default R-1 path.
-- Added LAD scripts under `scripts/run_lad_*.py` and tests under `tests/test_*lad*`, `tests/test_compiled_*`, and `tests/test_boundary_*`.
+- Added LAD scripts under `scripts/run_lad_*.py`, including `scripts/run_lad_full_node_ratio.py`, and tests under `tests/test_*lad*`, `tests/test_compiled_*`, and `tests/test_boundary_*`.
 - Test command: `C:\Users\slian\anaconda3\envs\pytorch\python.exe -m pytest tests -q`.
 - Latest result after experiments: `112 passed in 63.63s`.
 
@@ -102,7 +104,39 @@ Diagnostic interpretation:
 - ogbn-arxiv: `FullDemandTable-MLP` reaches `0.6616`, while best condensed LAD reaches `0.5968`. This indicates remaining condensation/prototype loss. `PrototypeOracleDemand-MLP` reaches `0.6143`, so shadow reconstruction costs about `0.0175` accuracy at 12%.
 - ogbn-products: `FullDemandTable-MLP` reaches `0.6884`, still below the 0.70 target but above condensed LAD. `PrototypeOracleDemand-MLP` is `0.6576`, almost identical to V2 `0.6587`, so shadow factorization is not the main products bottleneck; the signal/head ceiling is.
 
-## 5. LAD Analysis
+## 5. Full-Graph Ratio Sweep
+
+This supplemental LAD-stage sweep reruns no-diffusion V2 (`compiled_plus_lad`) with the budget set by full-graph condensed node ratio, not target prototype ratio. It includes small datasets at `1.2/2.4/4.8/9.6%` and medium datasets at `0.05/0.25/0.5%`, all with seed `42`.
+
+| Dataset | Requested full node ratio | Actual full node ratio | Acc | Macro-F1 | Weighted-F1 | Pred classes | Byte comp | Condensed nodes | Target prototypes | Shadow nodes | Status |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| acm | 1.200% | 1.197% | 0.8116 | 0.8086 | 0.8084 | 3 | 1.1661% | 131 | 52 | 79 | completed |
+| acm | 2.400% | 2.404% | 0.8055 | 0.8086 | 0.8078 | 3 | 2.3408% | 263 | 105 | 158 | completed |
+| acm | 4.800% | 4.789% | 0.7984 | 0.7987 | 0.7982 | 3 | 4.6612% | 524 | 209 | 315 | completed |
+| acm | 9.600% | 9.514% | 0.8546 | 0.8567 | 0.8551 | 3 | 9.2535% | 1041 | 411 | 630 | completed |
+| dblp | 1.200% | 1.202% | 0.4732 | 0.4759 | 0.4790 | 4 | 1.1803% | 314 | 157 | 157 | completed |
+| dblp | 2.400% | 2.400% | 0.5222 | 0.5020 | 0.5086 | 4 | 2.3538% | 627 | 314 | 313 | completed |
+| dblp | 4.800% | 4.715% | 0.4958 | 0.4713 | 0.4793 | 4 | 4.6968% | 1232 | 605 | 627 | completed |
+| dblp | 9.600% | 9.117% | 0.4570 | 0.4747 | 0.4823 | 4 | 9.3310% | 2382 | 1128 | 1254 | completed |
+| imdb | 1.200% | 1.200% | 0.2552 | 0.1314 | 0.1581 | 5 | 1.2170% | 257 | 128 | 129 | completed |
+| imdb | 2.400% | 2.395% | 0.2761 | 0.1005 | 0.1330 | 3 | 2.4293% | 513 | 256 | 257 | completed |
+| imdb | 4.800% | 4.748% | 0.0765 | 0.0388 | 0.0234 | 3 | 4.8145% | 1017 | 503 | 514 | completed |
+| imdb | 9.600% | 8.730% | 0.1246 | 0.0840 | 0.0821 | 5 | 8.8221% | 1870 | 842 | 1028 | completed |
+| ogbn-arxiv | 0.050% | 0.050% | 0.5949 | 0.3285 | 0.5829 | 32 | 0.0390% | 85 | 57 | 28 | completed |
+| ogbn-arxiv | 0.250% | 0.250% | 0.6012 | 0.3961 | 0.5911 | 39 | 0.1915% | 423 | 282 | 141 | completed |
+| ogbn-arxiv | 0.500% | 0.500% | 0.5977 | 0.4110 | 0.5943 | 38 | 0.3836% | 847 | 565 | 282 | completed |
+| ogbn-products | 0.050% | 0.050% | 0.5894 | 0.3270 | 0.5940 | 36 | 0.0130% | 1225 | 817 | 408 | completed |
+| ogbn-products | 0.250% | 0.250% | 0.5733 | 0.3033 | 0.5909 | 35 | 0.0647% | 6111 | 4070 | 2041 | completed |
+| ogbn-products | 0.500% | 0.497% | 0.5884 | 0.3366 | 0.6142 | 34 | 0.1289% | 12175 | 8093 | 4082 | completed |
+
+Full-graph sweep observations:
+
+- ACM improves at the largest full-node ratio: `9.514%` actual full-node ratio gives `0.8546` accuracy / `0.8567` macro-F1.
+- DBLP and IMDB are not helped by LAD V2 under full-node ratio budgeting; DBLP peaks at `0.5222`, and IMDB peaks at `0.2761`.
+- ogbn-arxiv remains strong at very small full-node ratios: `0.250%` actual reaches `0.6012` accuracy, and `0.500%` actual reaches `0.4110` macro-F1.
+- ogbn-products keeps good macro-F1 at tiny full-node ratios: `0.497%` actual reaches `0.3366` macro-F1, but accuracy remains below the earlier 12% target-ratio V2 row.
+
+## 6. LAD Analysis
 
 - LAD uses training labels only; validation/test labels are not used in label-affinity construction.
 - LAD blocks are target-side compiled features, not exposed graph edge types.
@@ -110,13 +144,13 @@ Diagnostic interpretation:
 - Medium LAD gains are strong: at 12%, ogbn-arxiv V2 improves over V1 from `0.5200` to `0.5968`; ogbn-products V2 improves from `0.4658` to `0.6587`.
 - Small LAD is mixed: ACM V2 improves over V1 but remains below the R++ ACM best; DBLP compiled rows are much worse than V0; IMDB improves at 0.5% but does not beat the 2.5% R++ best.
 
-## 6. Boundary Prototype Analysis
+## 7. Boundary Prototype Analysis
 
 - V3 enables boundary-aware prototypes with `boundary_fraction=0.30` and train-only entropy scoring.
 - Boundary pool sizes, score stats, and base/boundary prototype counts are logged in V3 JSON files.
 - Boundary prototypes are not promoted from this stage. V3 generally underperforms V2, except a small macro-F1 improvement on ogbn-arxiv 6%; it hurts products and IMDB.
 
-## 7. Compression and Resource Accounting
+## 8. Compression and Resource Accounting
 
 - Tables include target ratio, total condensed node ratio, byte-size compression, LAD precompute time, CPU RAM, and GPU RAM fields.
 - FullDemandTable diagnostics are upper bounds and should not be read as condensation compression results.
@@ -172,7 +206,7 @@ Diagnostic interpretation:
 | ogbn-products | 12.0% | `V2_compiled_plus_lad` | 0.960% | 23501 |
 | ogbn-products | 12.0% | `V3_compiled_lad_boundary` | 0.978% | 23960 |
 
-## 8. Decision
+## 9. Decision
 
 - Promote LAD for medium no-diffusion experiments and as the replacement signal to study instead of diffusion. Do not promote LAD as a universal small-dataset default.
 - Do not promote compiled head alone. V1 usually underperforms V0; its value appears only when paired with LAD on medium datasets.
@@ -186,7 +220,7 @@ Direct bottleneck answers:
 - Is the bottleneck training head? Compiled head alone is not enough. V1 is weak, but FullDemandTable shows the same head can be strong when trained on all target rows for arxiv/products, so the head is not the only bottleneck.
 - Is LAD useful enough to replace diffusion? For arxiv, yes as a scalable no-diffusion promoted path because V2 reaches `0.5968` and passes the `0.58` gate. For products, LAD improves macro-F1 to `0.3381` but does not reach `0.70` accuracy, so it is promising but not sufficient. For small datasets, no universal replacement.
 
-## 9. Next Recommended Experiments
+## 10. Next Recommended Experiments
 
 - Run multi-seed only for rows that beat R++ without diffusion.
 - If products remains below target, avoid diffusion and focus on sparse train-label affinity plus target coreset allocation.
@@ -197,4 +231,6 @@ Direct bottleneck answers:
 - Small CSV: `experiments\tables\lad_stage_small_seed42.csv`
 - Medium CSV: `experiments\tables\lad_stage_medium_seed42.csv`
 - Diagnostics CSV: `experiments\tables\lad_stage_diagnostics_seed42.csv`
+- Full-node ratio CSV: `experiments\tables\lad_full_node_ratio_seed42.csv`
+- Full-node ratio report: `experiments\reports\lad_full_node_ratio_seed42.md`
 - Report: `experiments\reports\lad_stage_summary.md`

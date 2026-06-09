@@ -31,16 +31,20 @@ from shadow_hgc.features.label_affinity import (
 )
 from shadow_hgc.features.block_norm import FeatureBlock, fit_transform_feature_blocks
 from shadow_hgc.features.metapath import metapath_target_features
+from shadow_hgc.features.metapath_blocks import two_hop_block_name
 from shadow_hgc.features.multiscale import fixed_block_projection
+from shadow_hgc.features.path_label_affinity import compute_path_label_affinity, path_lad_diagnostics
 from shadow_hgc.features.projection import fit_standardizer, fixed_random_projection, standardize
 from shadow_hgc.graph.materialize import RelationShadowPlan, materialize_condensed_graph
+from shadow_hgc.models.distill_losses import kd_kl_loss
 from shadow_hgc.models.losses import prototype_cross_entropy
-from shadow_hgc.models.compiled_demand import CompiledDemandMLP
+from shadow_hgc.models.compiled_demand import CompiledDemandMLP, fit_compiled_block_stats
 from shadow_hgc.models.factory import build_model
 from shadow_hgc.models.weighted_rel_linear import WeightedRelationLinearConv
 from shadow_hgc.prototype.budgets import compute_target_budget_from_ratio, validate_budget_mode_args
 from shadow_hgc.prototype.boundary import boundary_aware_prototypes, score_boundary_nodes
 from shadow_hgc.prototype.cluster import class_wise_prototypes
+from shadow_hgc.prototype.coverage_medoids import coverage_medoid_prototypes
 from shadow_hgc.prototype.signatures import build_target_signature
 from shadow_hgc.shadows.assign import assign_nearest_shadow, assign_nearest_shadow_chunked
 from shadow_hgc.shadows.adaptive import adaptive_assignment_b, adaptive_shadow_budgets
@@ -791,11 +795,69 @@ def _build_lad_blocks(
     return blocks, stats, metadata
 
 
+def _build_path_lad_blocks(
+    graph: HeteroGraphData,
+    target_relations: list[DirectedRelation],
+    *,
+    target_nodes: torch.Tensor,
+    num_classes: int,
+    requested_blocks: list[str] | None,
+    normalize: str,
+    leave_one_out_for_train: bool,
+) -> tuple[dict[str, torch.Tensor], dict[str, dict], dict]:
+    requested = None if requested_blocks is None else [name.upper() for name in requested_blocks]
+    train_mask, train_only_labels = _train_label_mask_and_labels(graph)
+    blocks: dict[str, torch.Tensor] = {}
+    stats: dict[str, dict] = {}
+    skipped: list[str] = []
+    available: set[str] = set()
+    for relation in target_relations:
+        if relation.destination_type != graph.target_type:
+            continue
+        if relation.source_type == graph.target_type:
+            name = f"{_type_name_letter(graph.target_type)}1"
+        else:
+            name = two_hop_block_name(graph.target_type, relation.source_type)
+        available.add(name)
+        if requested is not None and name not in requested:
+            continue
+        block = compute_path_label_affinity(
+            graph,
+            target_type=graph.target_type,
+            path=[relation],
+            train_target_mask=train_mask,
+            train_labels=train_only_labels,
+            num_classes=num_classes,
+            target_nodes=target_nodes,
+            leave_one_out_for_train=leave_one_out_for_train,
+            normalize=normalize,
+        )
+        blocks[name] = block
+        diag = path_lad_diagnostics(block, leave_one_out_for_train=leave_one_out_for_train).to_json()
+        diag["relation"] = str(relation)
+        diag["normalize"] = normalize
+        stats[name] = diag
+    if requested is not None:
+        skipped = [name for name in requested if name not in available]
+    metadata = {
+        "path_lad_blocks": list(blocks),
+        "path_lad_skipped_blocks": skipped,
+        "path_lad_uses_train_labels_only": True,
+        "path_lad_leave_one_out_for_train": bool(leave_one_out_for_train),
+    }
+    return blocks, stats, metadata
+
+
+def _type_name_letter(node_type: str) -> str:
+    return node_type[:1].upper()
+
+
 def _compiled_blocks_for_rows(
     *,
     self_features: torch.Tensor,
     feature_demands: dict[DirectedRelation, torch.Tensor],
     lad_blocks: dict[DirectedRelation, torch.Tensor] | None,
+    path_lad_blocks: dict[str, torch.Tensor] | None = None,
     degree_block: torch.Tensor | None,
     relation_order: list[DirectedRelation],
     compiled_block_norm: str,
@@ -837,6 +899,21 @@ def _compiled_blocks_for_rows(
                     lad,
                 )
             )
+    if path_lad_blocks:
+        for name in sorted(path_lad_blocks):
+            block_tensor = path_lad_blocks[name]
+            blocks.append(
+                (
+                    CompiledDemandBlock(
+                        f"path_lad:{name}",
+                        "label_affinity",
+                        None,
+                        int(block_tensor.shape[1]),
+                        "row_l1",
+                    ),
+                    block_tensor,
+                )
+            )
     if degree_block is not None and degree_block.shape[1] > 0:
         blocks.append(
             (
@@ -854,6 +931,8 @@ def _train_and_infer_compiled(
     train_labels: torch.Tensor,
     train_weights: torch.Tensor,
     test_table: torch.Tensor,
+    block_stats_table: torch.Tensor | None,
+    compiled_block_stats_source: str,
     schema,
     epochs: int,
     seed: int,
@@ -866,6 +945,10 @@ def _train_and_infer_compiled(
     compiled_block_gate: bool,
     compiled_block_norm: str,
     logit_adjustment_tau: float,
+    teacher_type: str,
+    use_kd: bool,
+    kd_temperature: float,
+    kd_weight: float,
 ) -> tuple[float | None, float | None, float, float, dict, dict]:
     torch.manual_seed(seed)
     class_metadata = infer_class_metadata(graph.labels, graph.train_idx, graph.test_idx)
@@ -878,13 +961,31 @@ def _train_and_infer_compiled(
         block_norm=compiled_block_norm,
         block_gate=compiled_block_gate,
         fusion=compiled_head_fusion,
+        lazy_block_stats=block_stats_table is None,
     )
+    block_stats_metadata: dict = {
+        "compiled_block_stats_source": compiled_block_stats_source,
+    }
+    if block_stats_table is not None:
+        if compiled_block_stats_source == "train_full_demand_table":
+            block_stats_metadata = fit_compiled_block_stats(model, block_stats_table, schema)
+        else:
+            model.fit_block_stats(block_stats_table, source=compiled_block_stats_source)
+            model.freeze_block_stats()
+            block_stats_metadata = {
+                "compiled_block_stats_source": compiled_block_stats_source,
+                "block_norm_stats": model.block_norm_stats(),
+            }
     opt = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     train_label_counts = torch.bincount(
         graph.labels[graph.train_idx].clamp_min(0).to(torch.long),
         minlength=num_classes,
     ).to(torch.float32)
     class_prior = train_label_counts / train_label_counts.sum().clamp_min(1.0)
+    teacher_logits = None
+    if use_kd and teacher_type != "none":
+        teacher_logits = torch.zeros(train_labels.numel(), num_classes, dtype=train_table.dtype, device=train_table.device)
+        teacher_logits.scatter_(1, train_labels.to(torch.long).unsqueeze(1), 4.0)
     train_start = time.perf_counter()
     loss_start = None
     loss_end = None
@@ -899,6 +1000,13 @@ def _train_and_infer_compiled(
             class_prior=class_prior,
             logit_adjustment_tau=logit_adjustment_tau,
         )
+        if teacher_logits is not None:
+            loss = loss + kd_kl_loss(
+                logits,
+                teacher_logits,
+                temperature=kd_temperature,
+                weight=kd_weight,
+            )
         if loss_start is None:
             loss_start = float(loss.detach().item())
         loss.backward()
@@ -938,9 +1046,18 @@ def _train_and_infer_compiled(
         "learning_rate": float(lr),
         "weight_decay": float(weight_decay),
         "final_logits_activation": "none",
+        "teacher": {
+            "type": teacher_type,
+            "uses_train_labels_only": True,
+            "use_kd": bool(use_kd and teacher_type != "none"),
+            "kd_temperature": float(kd_temperature),
+            "kd_weight": float(kd_weight),
+            "cache_path": "",
+        },
         "model_diagnostics": diagnostics,
         "block_gate_values": diagnostics.get("block_gates", {}),
         "block_norm_stats": diagnostics.get("block_norm_stats", {}),
+        **block_stats_metadata,
     }
     return accuracy, macro_f1, train_time, infer_time, train_metrics, pred_diag
 
@@ -1149,6 +1266,8 @@ def run_shadow_hgc_experiment(
     label_affinity_mode: str = "all",
     label_affinity_self_exclude: bool = True,
     label_affinity_block_norm: str = "row_l1",
+    path_label_affinity: bool = False,
+    path_label_affinity_blocks: list[str] | None = None,
     compiled_head: bool = False,
     compiled_head_fusion: str = "concat_mlp",
     compiled_hidden_dim: int | None = None,
@@ -1158,6 +1277,14 @@ def run_shadow_hgc_experiment(
     compiled_demand_source: str = "shadow_reconstructed",
     compiled_train_scope: str = "prototypes",
     compiled_include_degree_block: bool = False,
+    compiled_block_stats_source: str = "train_full_demand_table",
+    prototype_mode: str = "kmeans_mean",
+    source_anchor_mode: str = "none",
+    teacher_type: str = "none",
+    use_kd: bool = False,
+    kd_temperature: float = 2.0,
+    kd_weight: float = 1.0,
+    embedding_distill_weight: float = 0.0,
     boundary_prototypes: bool = False,
     boundary_fraction: float = 0.3,
     boundary_score: str = "entropy",
@@ -1181,6 +1308,14 @@ def run_shadow_hgc_experiment(
         raise ValueError("compiled_demand_source must be shadow_reconstructed, prototype_oracle, or exact")
     if compiled_train_scope not in {"prototypes", "full_demand"}:
         raise ValueError("compiled_train_scope must be prototypes or full_demand")
+    if compiled_block_stats_source not in {"train_full_demand_table", "train_table", "lazy"}:
+        raise ValueError("compiled_block_stats_source must be train_full_demand_table, train_table, or lazy")
+    if prototype_mode not in {"kmeans_mean", "medoid", "coverage_medoid", "hybrid_mean_medoid"}:
+        raise ValueError("prototype_mode must be kmeans_mean, medoid, coverage_medoid, or hybrid_mean_medoid")
+    if source_anchor_mode not in {"none", "topk", "coverage", "coverage_residual"}:
+        raise ValueError("source_anchor_mode must be none, topk, coverage, or coverage_residual")
+    if teacher_type not in {"none", "self_mlp", "sehgnn_lite", "sign_lad_mlp"}:
+        raise ValueError("teacher_type must be none, self_mlp, sehgnn_lite, or sign_lad_mlp")
     if skeleton_policy not in {"fixed_k", "coverage"}:
         raise ValueError("skeleton_policy must be fixed_k or coverage")
     if ratio_base not in {"train_target", "all_target"}:
@@ -1327,6 +1462,29 @@ def run_shadow_hgc_experiment(
             "num_base_prototypes": prototypes.num_base_prototypes,
             "boundary_score_stats": prototypes.boundary_score_stats,
         }
+    elif prototype_mode in {"medoid", "coverage_medoid", "hybrid_mean_medoid"}:
+        signature_full = torch.zeros(
+            graph.num_nodes[graph.target_type],
+            signature.shape[1],
+            dtype=signature.dtype,
+            device=signature.device,
+        )
+        signature_full[graph.train_idx] = signature
+        prototypes, medoid_diagnostics = coverage_medoid_prototypes(
+            phi_target=phi[graph.target_type],
+            signatures=signature_full,
+            labels=graph.labels,
+            train_idx=graph.train_idx,
+            M_tau=M_tau,
+            min_proto_per_class=min_proto_per_class,
+            budget_alpha=budget_alpha,
+            strict_budget=strict_budget,
+            seed=seed,
+        )
+        boundary_diagnostics = {
+            **boundary_diagnostics,
+            **medoid_diagnostics,
+        }
     else:
         prototypes = class_wise_prototypes(
             phi_target=phi[graph.target_type],
@@ -1442,12 +1600,21 @@ def run_shadow_hgc_experiment(
         "lad_self_exclusion": bool(label_affinity_self_exclude),
         "lad_uses_train_labels_only": True,
     }
+    path_lad_stats: dict[str, dict] = {}
+    path_lad_metadata: dict = {
+        "path_lad_blocks": [],
+        "path_lad_skipped_blocks": [],
+        "path_lad_uses_train_labels_only": True,
+        "path_lad_leave_one_out_for_train": bool(label_affinity_self_exclude),
+    }
     compiled_schema_dict: dict | None = None
     if compiled_head:
         compiled_start = time.perf_counter()
         num_classes_for_lad = infer_class_metadata(graph.labels, graph.train_idx, graph.test_idx)["num_classes_global"]
         train_lad_blocks: dict[DirectedRelation, torch.Tensor] = {}
         test_lad_blocks: dict[DirectedRelation, torch.Tensor] = {}
+        train_path_lad_blocks: dict[str, torch.Tensor] = {}
+        test_path_lad_blocks: dict[str, torch.Tensor] = {}
         if label_affinity:
             train_lad_blocks, lad_stats, lad_metadata = _build_lad_blocks(
                 graph,
@@ -1474,6 +1641,30 @@ def run_shadow_hgc_experiment(
                 int(lad_metadata.get("lad_active_source_nodes", 0)),
                 int(test_lad_meta.get("lad_active_source_nodes", 0)),
             )
+        if path_label_affinity:
+            train_path_lad_blocks, path_lad_stats, path_lad_metadata = _build_path_lad_blocks(
+                graph,
+                target_relations,
+                target_nodes=graph.train_idx,
+                num_classes=num_classes_for_lad,
+                requested_blocks=path_label_affinity_blocks,
+                normalize=label_affinity_block_norm,
+                leave_one_out_for_train=label_affinity_self_exclude,
+            )
+            test_path_lad_blocks, test_path_lad_stats, test_path_lad_meta = _build_path_lad_blocks(
+                graph,
+                target_relations,
+                target_nodes=graph.test_idx,
+                num_classes=num_classes_for_lad,
+                requested_blocks=path_label_affinity_blocks,
+                normalize=label_affinity_block_norm,
+                leave_one_out_for_train=label_affinity_self_exclude,
+            )
+            path_lad_stats.update({f"test:{key}": value for key, value in test_path_lad_stats.items()})
+            path_lad_metadata["path_lad_skipped_blocks"] = sorted(
+                set(path_lad_metadata.get("path_lad_skipped_blocks", []))
+                | set(test_path_lad_meta.get("path_lad_skipped_blocks", []))
+            )
         lad_precompute_time = time.perf_counter() - compiled_start
         test_demand, _ = _relation_demand(
             graph,
@@ -1485,6 +1676,7 @@ def run_shadow_hgc_experiment(
         if compiled_train_scope == "full_demand":
             train_feature_demands = {relation: demand[relation] for relation in target_relations}
             train_lad = train_lad_blocks
+            train_path_lad = train_path_lad_blocks
             train_self = phi[graph.target_type][graph.train_idx]
             train_degree = degree_features[graph.train_idx] if compiled_include_degree_block else None
             train_labels = graph.labels[graph.train_idx]
@@ -1504,6 +1696,10 @@ def run_shadow_hgc_experiment(
                 relation: _cell_mean_rows(block, prototypes.cell_members, row_by_target=demand_row_by_target)
                 for relation, block in train_lad_blocks.items()
             }
+            train_path_lad = {
+                name: _cell_mean_rows(block, prototypes.cell_members, row_by_target=demand_row_by_target)
+                for name, block in train_path_lad_blocks.items()
+            }
             train_self = prototypes.prototype_features
             train_degree = _cell_mean_rows(
                 degree_features[graph.train_idx],
@@ -1516,15 +1712,29 @@ def run_shadow_hgc_experiment(
             self_features=train_self,
             feature_demands=train_feature_demands,
             lad_blocks=train_lad,
+            path_lad_blocks=train_path_lad,
             degree_block=train_degree,
             relation_order=target_relations,
             compiled_block_norm=compiled_block_norm,
         )
         train_table, compiled_schema = compile_demand_table(train_blocks)
+        stats_blocks = _compiled_blocks_for_rows(
+            self_features=phi[graph.target_type][graph.train_idx],
+            feature_demands={relation: demand[relation] for relation in target_relations},
+            lad_blocks=train_lad_blocks,
+            path_lad_blocks=train_path_lad_blocks,
+            degree_block=degree_features[graph.train_idx] if compiled_include_degree_block else None,
+            relation_order=target_relations,
+            compiled_block_norm=compiled_block_norm,
+        )
+        stats_table, stats_schema = compile_demand_table(stats_blocks)
+        if compiled_schema != stats_schema:
+            raise ValueError("compiled train/stats schema mismatch")
         test_blocks = _compiled_blocks_for_rows(
             self_features=phi[graph.target_type][graph.test_idx],
             feature_demands={relation: test_demand[relation] for relation in target_relations},
             lad_blocks=test_lad_blocks,
+            path_lad_blocks=test_path_lad_blocks,
             degree_block=degree_features[graph.test_idx] if compiled_include_degree_block else None,
             relation_order=target_relations,
             compiled_block_norm=compiled_block_norm,
@@ -1539,6 +1749,14 @@ def run_shadow_hgc_experiment(
             train_labels=train_labels,
             train_weights=train_weights,
             test_table=test_table,
+            block_stats_table=(
+                stats_table
+                if compiled_block_stats_source == "train_full_demand_table"
+                else train_table
+                if compiled_block_stats_source == "train_table"
+                else None
+            ),
+            compiled_block_stats_source=compiled_block_stats_source,
             schema=compiled_schema,
             epochs=epochs,
             seed=seed,
@@ -1551,6 +1769,10 @@ def run_shadow_hgc_experiment(
             compiled_block_gate=compiled_block_gate,
             compiled_block_norm=compiled_block_norm,
             logit_adjustment_tau=logit_adjustment_tau,
+            teacher_type=teacher_type,
+            use_kd=use_kd,
+            kd_temperature=kd_temperature,
+            kd_weight=kd_weight,
         )
     else:
         del demand, signature, relation_plans, prototypes, psi, degree_features, demand_row_by_target
@@ -1663,6 +1885,8 @@ def run_shadow_hgc_experiment(
         "label_affinity_mode": label_affinity_mode,
         "label_affinity_self_exclude": label_affinity_self_exclude,
         "label_affinity_block_norm": label_affinity_block_norm,
+        "path_label_affinity": path_label_affinity,
+        "path_label_affinity_blocks": path_label_affinity_blocks,
         "compiled_head": compiled_head,
         "compiled_head_fusion": compiled_head_fusion,
         "compiled_hidden_dim": compiled_hidden_dim,
@@ -1672,6 +1896,14 @@ def run_shadow_hgc_experiment(
         "compiled_demand_source": compiled_demand_source,
         "compiled_train_scope": compiled_train_scope,
         "compiled_include_degree_block": compiled_include_degree_block,
+        "compiled_block_stats_source": compiled_block_stats_source,
+        "prototype_mode": prototype_mode,
+        "source_anchor_mode": source_anchor_mode,
+        "teacher_type": teacher_type,
+        "use_kd": use_kd,
+        "kd_temperature": kd_temperature,
+        "kd_weight": kd_weight,
+        "embedding_distill_weight": embedding_distill_weight,
         "boundary_prototypes": boundary_prototypes,
         "boundary_fraction": boundary_fraction,
         "boundary_score": boundary_score,
@@ -1762,6 +1994,14 @@ def run_shadow_hgc_experiment(
         "model_type": "compiled_demand_mlp" if compiled_head else model_type,
         "graph_model_type": model_type,
         "stage": stage,
+        "method_family": "sota" if stage == "sota" else "lite",
+        "prototype_mode": prototype_mode,
+        "source_anchor_mode": source_anchor_mode,
+        "teacher_type": teacher_type,
+        "use_kd": bool(use_kd),
+        "kd_temperature": float(kd_temperature),
+        "kd_weight": float(kd_weight),
+        "embedding_distill_weight": float(embedding_distill_weight),
         "compiled_head": bool(compiled_head),
         "compiled_head_fusion": compiled_head_fusion,
         "compiled_hidden_dim": int(compiled_hidden_dim or hidden_dim),
@@ -1770,12 +2010,17 @@ def run_shadow_hgc_experiment(
         "compiled_block_norm": compiled_block_norm,
         "compiled_demand_source": compiled_demand_source,
         "compiled_train_scope": compiled_train_scope,
+        "compiled_block_stats_source": compiled_block_stats_source,
         "compiled_schema_total_dim": None if compiled_schema_dict is None else int(compiled_schema_dict["total_dim"]),
         "compiled_blocks": [] if compiled_schema_dict is None else compiled_schema_dict["blocks"],
         "compiled_schema": compiled_schema_dict,
         "label_affinity": bool(label_affinity),
         "label_affinity_mode": label_affinity_mode,
         "label_affinity_block_norm": label_affinity_block_norm,
+        "path_label_affinity": bool(path_label_affinity),
+        "path_label_affinity_requested_blocks": [] if path_label_affinity_blocks is None else list(path_label_affinity_blocks),
+        "path_lad_block_stats": path_lad_stats,
+        **path_lad_metadata,
         "boundary_prototypes": bool(boundary_prototypes),
         "lad_precompute_time_s": lad_precompute_time,
         "lad_peak_cpu_ram_mb": current_cpu_ram_bytes() / (1024 * 1024),

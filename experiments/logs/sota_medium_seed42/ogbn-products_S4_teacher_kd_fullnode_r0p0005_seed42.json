@@ -1,0 +1,28 @@
+{
+  "dataset": "ogbn-products",
+  "variant": "S4_teacher_kd",
+  "seed": 42,
+  "requested_full_condensed_node_ratio": 0.0005,
+  "status": "timeout_dropped",
+  "reason": "products SOTA medium row was dropped after no new JSON progress during the timeout window",
+  "method_family": "sota",
+  "prototype_mode": "coverage_medoid",
+  "source_anchor_mode": "none",
+  "teacher_type": "sign_lad_mlp",
+  "use_kd": true,
+  "path_lad_blocks": [],
+  "diffusion_enabled": false,
+  "diffusion_status": "diagnostic_only",
+  "planned_total_condensed_nodes": 1225,
+  "planned_target_budget": 817,
+  "planned_shadow_total_budget": 408,
+  "planned_shadow_budget_by_relation": {
+    "product--co_purchase-->product": 204,
+    "product--co_purchased_by-->product": 204
+  },
+  "original_nodes_total": 2449029,
+  "generated_at": "2026-06-09T04:47:55Z",
+  "git_commit": "c1d27c6",
+  "config_hash": "1c710f278ef36c7e",
+  "run_id": "ogbn-products-run-seed42-1c710f27"
+}
