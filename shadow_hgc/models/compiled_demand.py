@@ -186,3 +186,74 @@ def fit_compiled_block_stats(
         "compiled_block_stats_source": "train_full_demand_table",
         "block_norm_stats": model.block_norm_stats(),
     }
+
+
+def fit_block_stats(
+    train_full_table: torch.Tensor,
+    schema: CompiledDemandSchema,
+    *,
+    source: str = "train_full_target_demand_table",
+    eps: float = 1e-6,
+) -> dict:
+    slices = block_slices(schema)
+    blocks = {}
+    for block in schema.blocks:
+        x = train_full_table[:, slices[block.name]].detach().to(torch.float32)
+        blocks[block.name] = {
+            "mean": x.mean(dim=0),
+            "std": x.std(dim=0, unbiased=False).clamp_min(float(eps)),
+            "dim": int(block.dim),
+        }
+    return {
+        "source": source,
+        "schema_total_dim": int(schema.total_dim),
+        "fit_num_rows": int(train_full_table.shape[0]),
+        "blocks": blocks,
+        "frozen": False,
+    }
+
+
+def freeze_block_stats(stats: dict) -> dict:
+    frozen = dict(stats)
+    frozen["frozen"] = True
+    return frozen
+
+
+def _stats_metadata(schema: CompiledDemandSchema, stats: dict) -> dict:
+    block_names = [block.name for block in schema.blocks]
+    std_values = []
+    mean_norms = {}
+    for block in schema.blocks:
+        entry = stats["blocks"][block.name]
+        mean = entry["mean"]
+        std = entry["std"]
+        mean_norms[block.name] = float(mean.norm().item())
+        std_values.append(std.flatten())
+    all_std = torch.cat(std_values) if std_values else torch.ones(1)
+    return {
+        "block_norm_stats_source": stats.get("source", ""),
+        "block_names": block_names,
+        "block_dims": {block.name: int(block.dim) for block in schema.blocks},
+        "block_mean_norms": mean_norms,
+        "block_std_min": float(all_std.min().item()),
+        "block_std_max": float(all_std.max().item()),
+        "stats_fit_num_rows": int(stats.get("fit_num_rows", 0)),
+        "stats_frozen": bool(stats.get("frozen", False)),
+    }
+
+
+def apply_block_stats(
+    table: torch.Tensor,
+    schema: CompiledDemandSchema,
+    stats: dict,
+) -> tuple[torch.Tensor, dict]:
+    if int(stats.get("schema_total_dim", schema.total_dim)) != int(schema.total_dim):
+        raise ValueError("compiled block stats schema dimension mismatch")
+    slices = block_slices(schema)
+    out = table.clone().to(torch.float32)
+    for block in schema.blocks:
+        entry = stats["blocks"][block.name]
+        mean = entry["mean"].to(device=out.device, dtype=out.dtype)
+        std = entry["std"].to(device=out.device, dtype=out.dtype).clamp_min(1e-12)
+        out[:, slices[block.name]] = (out[:, slices[block.name]] - mean) / std
+    return out, _stats_metadata(schema, stats)

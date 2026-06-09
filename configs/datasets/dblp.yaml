@@ -3,3 +3,11 @@ target_type: author
 directed_relations:
   - [paper, written_by, author]
 standardization_scope: documented_small_transductive_or_train_only
+loader_mode: current_processed
+full_schema_directed_relations:
+  - [author, writes, paper]
+  - [paper, written_by, author]
+  - [paper, has_term, term]
+  - [term, term_in, paper]
+  - [paper, published_in, venue]
+  - [venue, publishes, paper]

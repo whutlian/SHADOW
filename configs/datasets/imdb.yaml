@@ -5,3 +5,11 @@ directed_relations:
   - [director, directs, movie]
   - [keyword, keyword_in, movie]
 standardization_scope: documented_small_transductive_or_train_only
+loader_mode: current_processed
+full_schema_directed_relations:
+  - [movie, directed_by, director]
+  - [director, directs, movie]
+  - [movie, has_actor, actor]
+  - [actor, acts_in, movie]
+  - [movie, has_keyword, keyword]
+  - [keyword, keyword_in, movie]

@@ -7,3 +7,13 @@ directed_relations:
   - [subject, subject_of, paper]
   - [term, term_in, paper]
 standardization_scope: documented_small_transductive_or_train_only
+loader_mode: current_processed
+full_schema_directed_relations:
+  - [paper, cite_ref, paper]
+  - [paper, cited_by, paper]
+  - [paper, written_by, author]
+  - [author, writes, paper]
+  - [paper, has_subject, subject]
+  - [subject, subject_of, paper]
+  - [paper, has_term, term]
+  - [term, term_in, paper]

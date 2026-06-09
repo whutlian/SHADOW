@@ -17,12 +17,19 @@ TARGET_TYPES = {
 RELATION_NAME_MAP = {
     ("paper", "cite", "paper"): "cite_ref",
     ("paper", "ref", "paper"): "cited_by",
+    ("paper", "to", "subject"): "has_subject",
+    ("paper", "to", "term"): "has_term",
     ("author", "to", "paper"): "writes",
     ("subject", "to", "paper"): "subject_of",
     ("term", "to", "paper"): "term_in",
     ("paper", "to", "author"): "written_by",
+    ("paper", "to", "venue"): "published_in",
+    ("venue", "to", "paper"): "publishes",
+    ("movie", "to", "director"): "directed_by",
     ("director", "to", "movie"): "directs",
+    ("movie", ">actorh", "actor"): "has_actor",
     ("actor", "to", "movie"): "acts_in",
+    ("movie", "to", "keyword"): "has_keyword",
     ("keyword", "to", "movie"): "keyword_in",
 }
 
@@ -53,7 +60,7 @@ def _relation_name(src_type: str, raw_name: str, dst_type: str) -> str:
     return RELATION_NAME_MAP.get((src_type, raw_name, dst_type), f"{src_type}_{raw_name}_{dst_type}")
 
 
-def load_processed_small_dataset(dataset: str, *, root: str | Path = "dataset") -> HeteroGraphData:
+def _load_processed_small_dataset(dataset: str, *, root: str | Path = "dataset", include_all_relations: bool = False) -> HeteroGraphData:
     dataset = dataset.lower()
     if dataset not in TARGET_TYPES:
         raise ValueError(f"unknown small dataset: {dataset}")
@@ -86,7 +93,7 @@ def load_processed_small_dataset(dataset: str, *, root: str | Path = "dataset") 
         if not isinstance(key, tuple):
             continue
         src_type, raw_name, dst_type = key
-        if dst_type != target_type:
+        if not include_all_relations and dst_type != target_type:
             continue
         relation = DirectedRelation(src_type, _relation_name(src_type, raw_name, dst_type), dst_type)
         relations.append(relation)
@@ -107,3 +114,11 @@ def load_processed_small_dataset(dataset: str, *, root: str | Path = "dataset") 
         relations=relations,
         num_nodes=num_nodes,
     )
+
+
+def load_processed_small_dataset(dataset: str, *, root: str | Path = "dataset") -> HeteroGraphData:
+    return _load_processed_small_dataset(dataset, root=root, include_all_relations=False)
+
+
+def load_processed_small_dataset_full_schema(dataset: str, *, root: str | Path = "dataset") -> HeteroGraphData:
+    return _load_processed_small_dataset(dataset, root=root, include_all_relations=True)

@@ -1,0 +1,61 @@
+{
+  "dataset": "imdb",
+  "variant": "fullgraph_imdb_sehgnn_lite_MAM_MDM_MKM",
+  "seed": 42,
+  "status": "completed",
+  "model_type": "sehgnn_lite",
+  "block_dims": {
+    "self": 3489,
+    "MDM": 3489,
+    "MAM": 3489,
+    "MKM": 3489
+  },
+  "feature_blocks": [
+    "self",
+    "MDM",
+    "MAM",
+    "MKM"
+  ],
+  "block_norm_stats_source": "train_full_target_rows",
+  "final_logits_activation": "none",
+  "block_gates": {
+    "self": 0.9368019700050354,
+    "MDM": 0.6632915139198303,
+    "MAM": 0.6300253868103027,
+    "MKM": 0.6000422835350037
+  },
+  "num_classes": 5,
+  "train_time": 7.838798799999999,
+  "infer_time": 0.06004790000000071,
+  "loss_type": "weighted",
+  "label_smoothing": 0.0,
+  "metapath_blocks": [
+    "MDM",
+    "MAM",
+    "MKM"
+  ],
+  "metapath_skipped_blocks": [],
+  "path_lad_blocks": [],
+  "metapath_required_blocks": [
+    "MAM",
+    "MDM",
+    "MKM"
+  ],
+  "accuracy": 0.4244222342967987,
+  "macro_f1": 0.3732550173997879,
+  "weighted_f1": 0.4170499496602855,
+  "predicted_class_count": 5,
+  "prediction_entropy": 1.4742902573616221,
+  "predicted_class_histogram": {
+    "0": 746,
+    "1": 1012,
+    "2": 902,
+    "3": 212,
+    "4": 330
+  },
+  "train_accuracy": 1.0,
+  "generated_at": "2026-06-09T07:11:46Z",
+  "git_commit": "f7faced",
+  "config_hash": "85c81e7c05d6a03e",
+  "run_id": "imdb-run-seed42-85c81e7c"
+}

@@ -1,0 +1,57 @@
+{
+  "dataset": "acm",
+  "variant": "fullgraph_sehgnn_lite_tuned",
+  "seed": 42,
+  "status": "completed",
+  "model_type": "sehgnn_lite",
+  "block_dims": {
+    "self": 1902,
+    "PAP": 1902,
+    "PSP": 1902,
+    "PTP": 1902
+  },
+  "feature_blocks": [
+    "self",
+    "PAP",
+    "PSP",
+    "PTP"
+  ],
+  "block_norm_stats_source": "train_full_target_rows",
+  "final_logits_activation": "none",
+  "block_gates": {
+    "self": 0.7454617619514465,
+    "PAP": 0.7362207174301147,
+    "PSP": 0.686669647693634,
+    "PTP": 0.6968681216239929
+  },
+  "num_classes": 3,
+  "train_time": 6.4730439,
+  "infer_time": 0.032813299999999046,
+  "loss_type": "weighted",
+  "label_smoothing": 0.0,
+  "metapath_blocks": [
+    "PAP",
+    "PSP",
+    "PTP"
+  ],
+  "metapath_skipped_blocks": [],
+  "path_lad_blocks": [],
+  "metapath_required_blocks": [
+    "PAP"
+  ],
+  "accuracy": 0.9027384519577026,
+  "macro_f1": 0.9037294189135233,
+  "weighted_f1": 0.9026813750451448,
+  "predicted_class_count": 3,
+  "prediction_entropy": 1.0978405811888436,
+  "predicted_class_histogram": {
+    "0": 699,
+    "1": 676,
+    "2": 743
+  },
+  "train_accuracy": 1.0,
+  "generated_at": "2026-06-09T07:11:26Z",
+  "git_commit": "f7faced",
+  "config_hash": "14af50e1c9aa76a5",
+  "run_id": "acm-run-seed42-14af50e1"
+}

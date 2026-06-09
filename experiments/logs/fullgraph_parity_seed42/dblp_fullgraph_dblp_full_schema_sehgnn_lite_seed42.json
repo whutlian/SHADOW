@@ -1,0 +1,55 @@
+{
+  "dataset": "dblp",
+  "variant": "fullgraph_dblp_full_schema_sehgnn_lite",
+  "seed": 42,
+  "status": "completed",
+  "model_type": "sehgnn_lite",
+  "block_dims": {
+    "self": 334,
+    "APA": 334
+  },
+  "feature_blocks": [
+    "self",
+    "APA"
+  ],
+  "block_norm_stats_source": "train_full_target_rows",
+  "final_logits_activation": "none",
+  "block_gates": {
+    "self": 0.730235755443573,
+    "APA": 0.7165681719779968
+  },
+  "num_classes": 4,
+  "train_time": 2.476389300000001,
+  "infer_time": 0.005742300000001421,
+  "loss_type": "weighted",
+  "label_smoothing": 0.0,
+  "metapath_blocks": [
+    "APA"
+  ],
+  "metapath_skipped_blocks": [
+    "APVPA",
+    "APTPA",
+    "APCPA"
+  ],
+  "path_lad_blocks": [],
+  "metapath_required_blocks": [
+    "APA"
+  ],
+  "accuracy": 0.8066901564598083,
+  "macro_f1": 0.7988300323486328,
+  "weighted_f1": 0.8067662124977617,
+  "predicted_class_count": 4,
+  "prediction_entropy": 1.3711539199397218,
+  "predicted_class_histogram": {
+    "0": 840,
+    "1": 518,
+    "2": 777,
+    "3": 705
+  },
+  "train_accuracy": 0.9934264421463013,
+  "schema_incomplete_for_sota": true,
+  "generated_at": "2026-06-09T07:11:38Z",
+  "git_commit": "f7faced",
+  "config_hash": "09b7f83b002bff90",
+  "run_id": "dblp-run-seed42-09b7f83b"
+}

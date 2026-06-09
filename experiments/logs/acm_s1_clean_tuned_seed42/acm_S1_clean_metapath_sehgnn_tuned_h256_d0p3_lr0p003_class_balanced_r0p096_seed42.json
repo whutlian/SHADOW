@@ -1,0 +1,69 @@
+{
+  "dataset": "acm",
+  "variant": "S1_clean_metapath_sehgnn_tuned_h256_d0p3_lr0p003_class_balanced",
+  "seed": 42,
+  "status": "completed",
+  "target_type": "paper",
+  "feature_mode": "schema_default_metapath",
+  "teacher_type": "none",
+  "use_kd": false,
+  "use_diffusion": false,
+  "use_source_anchors": false,
+  "use_coverage_medoid": false,
+  "model_type": "sehgnn_lite",
+  "block_dims": {
+    "self": 1902,
+    "PAP": 1902,
+    "PSP": 1902,
+    "PTP": 1902
+  },
+  "feature_blocks": [
+    "self",
+    "PAP",
+    "PSP",
+    "PTP"
+  ],
+  "block_norm_stats_source": "train_full_target_rows",
+  "final_logits_activation": "none",
+  "block_gates": {
+    "self": 0.7343694567680359,
+    "PAP": 0.7173399329185486,
+    "PSP": 0.6810899972915649,
+    "PTP": 0.6993157863616943
+  },
+  "num_classes": 3,
+  "requested_ratio": 0.096,
+  "ratio_mode": "train_target",
+  "effective_M_tau": 85,
+  "condensed_nodes_total": 85,
+  "total_condensed_node_ratio": 0.007768232498629135,
+  "effective_target_ratio": 0.09371554575523705,
+  "prototype_mode": "class_wise_kmeans_mean",
+  "train_time": 1.0744171999999992,
+  "infer_time": 0.027095799999997894,
+  "loss_type": "class_balanced",
+  "metapath_blocks": [
+    "PAP",
+    "PSP",
+    "PTP"
+  ],
+  "metapath_skipped_blocks": [],
+  "path_lad_blocks": [],
+  "metapath_required_blocks": [
+    "PAP"
+  ],
+  "accuracy": 0.8951841592788696,
+  "macro_f1": 0.8952458699544271,
+  "weighted_f1": 0.8940387970064002,
+  "predicted_class_count": 3,
+  "prediction_entropy": 1.0893019628058087,
+  "predicted_class_histogram": {
+    "0": 597,
+    "1": 689,
+    "2": 832
+  },
+  "generated_at": "2026-06-09T07:12:58Z",
+  "git_commit": "f7faced",
+  "config_hash": "d8408e17970276ca",
+  "run_id": "acm-run-seed42-d8408e17"
+}
