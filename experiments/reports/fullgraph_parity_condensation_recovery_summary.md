@@ -118,6 +118,50 @@
 - Invalid rows are retained in artifacts but excluded from promoted best-row summaries.
 - KD v2 is skipped unless teacher gate passes.
 
+## 10. paper100M Local Trial
+
+The local paper100M directory was tested with guarded memmap access:
+
+- Dataset root: `D:\Shadow-HGC\dataset\paper100M`
+- Memmap root: `D:\Shadow-HGC\dataset\paper100M\processed\papers100m_memmap`
+- Nodes: `111059956`
+- Edges: `1615685872`
+- Train/valid/test nodes: `1207179` / `125265` / `214338`
+- Feature dim: `128`
+- Local smoke status: `completed_smoke`
+- Smoke setting: `sample_train=20000`, `sample_valid=5000`, `epochs=10`, `no_diffusion=true`
+- Smoke train/valid accuracy: `0.38175` / `0.33800`
+- Observed classes in smoke: `172`
+- Full-scale local status: `blocked_resource_guard`
+- Conservative full-scale peak RAM estimate: `115.37 GB`
+- Available RAM at trial time: `23.43 GB`
+- Expected full edge scans: `4`
+- Edge-slice cache estimate: `0.329 GB`
+- Disk spill used by estimate: `false`
+
+No hard OOM was triggered because the full run was stopped by the resource guard before allocating unsafe tensors. Use these commands on a larger server:
+
+```powershell
+& 'C:\Users\slian\anaconda3\envs\pytorch\python.exe' scripts/run_paper100m_local_trial.py --dataset-root D:/Shadow-HGC/dataset/paper100M --output-dir experiments/logs/paper100m_local_trial_seed42 --seed 42 --sample-train 200000 --sample-valid 50000 --epochs 50 --full-scale --no-diffusion
+```
+
+```powershell
+& 'C:\Users\slian\anaconda3\envs\pytorch\python.exe' scripts/dry_run_ultra.py --dataset ogbn-papers100M --ratios 0.001 0.0025 0.005 --output experiments/logs/paper100m_local_trial_seed42/paper100m_ultra_dry_run_server.json
+```
+
+Linux server template:
+
+```bash
+python scripts/run_paper100m_local_trial.py --dataset-root /path/to/paper100M --output-dir experiments/logs/paper100m_server_seed42 --seed 42 --sample-train 200000 --sample-valid 50000 --epochs 50 --full-scale --no-diffusion
+```
+
+Artifacts:
+
+- Local trial JSON: `experiments\logs\paper100m_local_trial_seed42\paper100m_local_trial_seed42.json`
+- Local trial CSV: `experiments\tables\paper100m_local_trial_seed42.csv`
+- Local trial report: `experiments\reports\paper100m_local_trial_seed42.md`
+- Ultra dry-run JSON: `experiments\logs\paper100m_local_trial_seed42\paper100m_ultra_dry_run_seed42.json`
+
 ## Files
 
 - Schema audit: `experiments\tables\schema_alignment_audit_seed42.csv`
