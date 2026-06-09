@@ -1,0 +1,6 @@
+dataset,variant,accuracy,macro_f1,predicted_class_count,historical_baseline,baseline_accuracy,delta_vs_baseline,status,promotion_reason,blocked_reason,source_log
+ogbn-arxiv,A0_LAD_reference,0.5967738628387451,0.4154518236406147,40,LAD_reference no-diffusion,0.5968,-2.613716125487997e-05,promoted,LAD_reference preserved without diffusion/P2,,experiments\logs\lad_stage_medium_seed42\ogbn-arxiv_V2_compiled_plus_lad_r0p12_seed42.json
+ogbn-arxiv,A1_LAD_reference_plus_SafeBlockFusion_head,,,,LAD_reference no-diffusion,0.5968,,blocked_by_signal_ceiling,,no safe improvement row beat or preserved A0 under current gates,
+ogbn-arxiv,A2_LAD_reference_plus_logit_adjustment,,,,LAD_reference no-diffusion,0.5968,,blocked_by_signal_ceiling,,no safe improvement row beat or preserved A0 under current gates,
+ogbn-arxiv,A3_LAD_reference_plus_validation_gated_logit_propagation,,,,LAD_reference no-diffusion,0.5968,,blocked_by_signal_ceiling,,no safe improvement row beat or preserved A0 under current gates,
+ogbn-arxiv,A4_LAD_reference_plus_SafeBlockFusion_plus_logit_adjustment,,,,LAD_reference no-diffusion,0.5968,,blocked_by_signal_ceiling,,no safe improvement row beat or preserved A0 under current gates,

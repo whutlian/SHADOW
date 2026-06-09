@@ -1,0 +1,4 @@
+dataset,relation_name,shape_a,shape_b,row_l2_mean,row_l2_median,row_l2_max,cosine_mean,cosine_min,allclose_fraction,block_dim,block_norm_stats_source,status,alpha_normalization_checked,destination_type,edge_direction_checked,nan_count_a,nan_count_b,num_train_target_ids,source_type
+imdb,metapath:MAM,"[4932, 3489]","[4932, 3489]",0.0,0.0,0.0,1.0,0.9999992847442627,1.0,3489,clean_s1_metapath_provider,completed,True,movie,True,0,0,4932,movie
+imdb,metapath:MDM,"[4932, 3489]","[4932, 3489]",0.0,0.0,0.0,1.0,0.9999997019767761,1.0,3489,clean_s1_metapath_provider,completed,True,movie,True,0,0,4932,movie
+imdb,metapath:MKM,"[4932, 3489]","[4932, 3489]",0.0,0.0,0.0,1.0,0.9999988079071045,1.0,3489,clean_s1_metapath_provider,completed,True,movie,True,0,0,4932,movie

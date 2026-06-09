@@ -1,0 +1,93 @@
+{
+  "batchnorm": false,
+  "dataset": "ogbn-products",
+  "device": "cuda",
+  "epochs": 200,
+  "feature_dtype": "float32",
+  "feature_mean_std_sample": {
+    "mean": 0.008809780701994896,
+    "std": 1.0373265743255615
+  },
+  "feature_nan_count": 0,
+  "feature_shape": [
+    2449029,
+    100
+  ],
+  "first_10_train_ids": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "first_10_train_labels": [
+    0,
+    1,
+    2,
+    3,
+    3,
+    4,
+    5,
+    2,
+    1,
+    6
+  ],
+  "first_10_valid_ids": [
+    196615,
+    196616,
+    196617,
+    196618,
+    196619,
+    196620,
+    196621,
+    196622,
+    196623,
+    196624
+  ],
+  "first_10_valid_labels": [
+    1,
+    6,
+    9,
+    4,
+    7,
+    9,
+    4,
+    1,
+    4,
+    4
+  ],
+  "label_max": 46,
+  "label_min": 0,
+  "label_shape": [
+    2449029
+  ],
+  "macro_f1": 0.18873283596467252,
+  "num_classes_from_dataset": 47,
+  "num_classes_from_labels": 47,
+  "num_nodes": 2449029,
+  "num_test": 2213091,
+  "num_train": 196615,
+  "num_valid": 39323,
+  "output_dim": 47,
+  "predicted_class_count": 24,
+  "prediction_entropy": 2.202575868051049,
+  "reason": "",
+  "seed": 42,
+  "standardize_train_features": false,
+  "status": "completed",
+  "test_acc": 0.5367506351975585,
+  "test_mask_hash": "c4bf7283403c40af28f135774bbb89b5d5e230eb75b0678090d360bdc3080b9d",
+  "train_acc": 0.6828675329959566,
+  "train_mask_hash": "bdeff6c88c0304a6588ea3f8640ab807fb5371e80f6c0c98ab98cbe98cd55f81",
+  "training_time_s": 15.692372500000001,
+  "uses_bounded_edges": false,
+  "uses_ogb_evaluator": true,
+  "valid_acc": 0.6695572565674033,
+  "valid_mask_hash": "3195e41378e7ab0744abfbaeeb5d56340a52244e46b09aeb2c24ec5393b2052a",
+  "weighted_f1": 0.48929022262014943
+}
