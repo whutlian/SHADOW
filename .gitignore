@@ -26,6 +26,7 @@ env/
 # One-off local debug attempts; canonical experiment outputs remain tracked.
 /experiments/logs/medium_products_attempt/
 /experiments/tables/medium_products_attempt*.csv
+/experiments/logit_caches/
 /experiment_result_zips/
 
 # Local/editor metadata
