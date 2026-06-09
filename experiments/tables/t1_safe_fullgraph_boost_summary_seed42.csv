@@ -1,0 +1,2 @@
+dataset,promoted_variant,base_variant,accuracy,macro_f1,predicted_class_count,valid_acc_after,promotion_status,promotion_reason,uses_diffusion,uses_dense_p2,uses_bounded_edges,invalid_reasons
+acm,pseudo_scap,SFB-v2 B3_scap_v2 retained,0.9159584641456604,0.9172853231430054,3,0.9340659379959106,promoted,validation_selected,False,False,False,[]

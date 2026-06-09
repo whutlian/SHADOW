@@ -91,6 +91,16 @@ def save_logits_cache(
     np.save(root / "train_logits.npy", train_array)
     np.save(root / "valid_logits.npy", valid_array)
     np.save(root / "test_logits.npy", test_array)
+    np.save(root / "train_target_ids.npy", as_numpy(train_idx, dtype=np.int64))
+    if valid_idx is not None:
+        np.save(root / "valid_target_ids.npy", as_numpy(valid_idx, dtype=np.int64))
+    if test_idx is not None:
+        np.save(root / "test_target_ids.npy", as_numpy(test_idx, dtype=np.int64))
+    np.save(root / "labels_train.npy", as_numpy(y_train, dtype=np.int64))
+    if y_valid is not None:
+        np.save(root / "labels_valid.npy", as_numpy(y_valid, dtype=np.int64))
+    if y_test is not None:
+        np.save(root / "labels_test.npy", as_numpy(y_test, dtype=np.int64))
 
     labels_present = _save_optional_npz(
         root / "labels.npz",
@@ -129,6 +139,29 @@ def save_logits_cache(
 
     payload = {"meta": meta.to_dict(), "storage": storage}
     (root / "meta.json").write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    metadata = {
+        "dataset": meta.dataset,
+        "base_variant": meta.variant,
+        "variant": meta.variant,
+        "seed": int(meta.seed),
+        "num_classes": int(meta.num_classes),
+        "target_type": meta.target_type,
+        "split_hash": meta.split_hash,
+        "feature_hash": meta.feature_hash,
+        "model_config_hash": None,
+        "base_accuracy": meta.accuracy,
+        "base_macro_f1": meta.macro_f1,
+        "base_predicted_class_count": meta.predicted_class_count,
+        "uses_diffusion": bool(meta.uses_diffusion),
+        "uses_dense_p2": bool(meta.uses_dense_p2),
+        "uses_bounded_edges": bool(meta.uses_bounded_edges),
+        "uses_coverage_medoid": bool(meta.uses_coverage_medoid),
+        "uses_source_anchors": bool(meta.uses_source_anchors),
+        "uses_old_kd": bool(meta.uses_old_kd),
+        "logit_dtype": str(logit_dtype),
+        "cache_status": "available_verified" if not forbidden_reasons(meta) else "diagnostic_only",
+    }
+    (root / "metadata.json").write_text(json.dumps(metadata, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return root
 
 

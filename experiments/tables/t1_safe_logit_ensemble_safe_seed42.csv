@@ -1,0 +1,3 @@
+dataset,base_variant,candidate_components,ensemble_mode,weights,valid_acc,test_acc,macro_f1,predicted_class_count,promotion_status,promotion_reason,uses_bounded_edges,uses_diffusion,uses_dense_p2
+acm,SFB-v2 B3_scap_v2 retained,1,nonnegative_grid,,,,,,blocked,not_enough_validated_component_logits,False,False,False
+ogbn-products,,0,nonnegative_grid,,,,,,blocked,not_enough_validated_component_logits,False,False,False

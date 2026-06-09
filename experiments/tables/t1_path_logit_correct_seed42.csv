@@ -1,0 +1,3 @@
+dataset,base_variant,path_set,alpha,space,valid_acc_before,valid_acc_after,test_acc_before,test_acc_after,promotion_status,promotion_reason,uses_dense_path_adjacency,exposes_metapath_edge_type
+dblp,R+ relation-linear current-best,,,,,,,,blocked,current historical safe-row script records metrics but does not expose replayable all-target logits,False,False
+imdb,clean S1 MAM/MDM/MKM,,,,,,,,blocked,current historical safe-row script records metrics but does not expose replayable all-target logits,False,False
