@@ -84,7 +84,28 @@ def _write_summary(promoted: list[dict[str, Any]]) -> None:
     path_correct = _read(PATH_CORRECT)
     pseudo = _read(PSEUDO)
     ensemble = _read(ENSEMBLE)
-    blocked = [row for row in [*cache, *replay, *correct, *path_correct, *pseudo, *ensemble] if row.get("cache_status", row.get("promotion_status", "")) not in {"available_verified", "promoted"}]
+
+    def active_status(row: dict[str, str]) -> str:
+        return row.get("cache_status") or row.get("promotion_status", "")
+
+    raw_blocked = [
+        row
+        for row in [*cache, *replay, *correct, *path_correct, *pseudo, *ensemble]
+        if active_status(row) not in {"available_unreplayed", "available_verified", "promoted"}
+    ]
+    blocked = []
+    seen_blocked: set[tuple[str, str, str]] = set()
+    for row in raw_blocked:
+        reason = row.get("blocked_reason") or row.get("promotion_reason", "")
+        key = (
+            row.get("dataset", ""),
+            row.get("base_variant", ""),
+            reason,
+        )
+        if key in seen_blocked:
+            continue
+        seen_blocked.add(key)
+        blocked.append(row)
     medium_promoted_bounded = [row for row in promoted if row.get("dataset") in {"ogbn-arxiv", "ogbn-products"} and str(row.get("uses_bounded_edges")).lower() == "true"]
     macro_collapse = [
         row for row in promoted
@@ -94,6 +115,38 @@ def _write_summary(promoted: list[dict[str, Any]]) -> None:
         f"{row['dataset']} {row['promoted_variant']} acc={row.get('accuracy', '')} macro_f1={row.get('macro_f1', '')}"
         for row in promoted
     ) or "None"
+    generated_cache = [row for row in cache if row.get("cache_status") == "available_unreplayed"]
+    verified_replay = [row for row in replay if row.get("cache_status") == "available_verified"]
+    mismatch_replay = [row for row in replay if row.get("cache_status") == "invalid_replay_mismatch"]
+    slow_or_failed_cache = [row for row in cache if row.get("cache_status") not in {"available_unreplayed", "available_verified"}]
+    logit_correct_promoted = [row for row in correct if row.get("promotion_status") == "promoted"]
+    path_promoted = [row for row in path_correct if row.get("promotion_status") == "promoted"]
+    pseudo_promoted = [row for row in pseudo if row.get("promotion_status") == "promoted"]
+    ensemble_promoted = [row for row in ensemble if row.get("promotion_status") == "promoted"]
+    generated_names = ", ".join(f"{row['dataset']}:{row['base_variant']}" for row in generated_cache) or "None"
+    verified_names = ", ".join(f"{row['dataset']}:{row['base_variant']}" for row in verified_replay) or "None"
+    mismatch_names = ", ".join(f"{row['dataset']}:{row['base_variant']} delta={row.get('delta_replay', '')}" for row in mismatch_replay) or "None"
+    slow_names = ", ".join(f"{row['dataset']}:{row['base_variant']} ({row.get('blocked_reason', '')})" for row in slow_or_failed_cache) or "None"
+    logit_correct_summary = (
+        "Yes: " + "; ".join(row.get("dataset", "") for row in logit_correct_promoted)
+        if logit_correct_promoted
+        else "No promoted LogitCorrectLite row."
+    )
+    path_summary = (
+        "Yes: " + "; ".join(f"{row.get('dataset', '')} {row.get('test_acc_before', '')}->{row.get('test_acc_after', '')}" for row in path_promoted)
+        if path_promoted
+        else "No promoted PathLogitCorrectLite row."
+    )
+    pseudo_summary = (
+        "Yes: " + "; ".join(f"{row.get('dataset', '')} {row.get('test_acc_before', '')}->{row.get('test_acc_after', '')}" for row in pseudo_promoted)
+        if pseudo_promoted
+        else "No promoted Pseudo-SCAP row."
+    )
+    ensemble_summary = (
+        "Yes: " + "; ".join(row.get("dataset", "") for row in ensemble_promoted)
+        if ensemble_promoted
+        else "No promoted safe ensemble row."
+    )
     lines = [
         "# T1.1 Safe Cache and Boost Stage Summary",
         "",
@@ -101,13 +154,33 @@ def _write_summary(promoted: list[dict[str, Any]]) -> None:
         "",
         "## Code Changes",
         "",
-        "- Added cache replay/index helpers and T1.1 cache filename compatibility.",
-        "- Added validation-only Correct&Smooth-lite, path logit correction primitives, and T1 pseudo-label helpers.",
-        "- Added safe-row cache generation, replay audit, booster scripts, large dry-run, and this stage runner.",
+        "- Exposed all-target logits from SeHGNNLite and pipeline graph/compiled inference for replay-safe cache generation.",
+        "- Extended T1.1 safe-row cache generation to DBLP, IMDB, ogbn-arxiv, and ogbn-products LAD; products R++ 500-epoch base is opt-in because it was too slow locally.",
+        "- Wired validation-only PathLogitCorrectLite for replay-verified DBLP/IMDB caches while keeping sparse path steps and no exposed meta-path edge types.",
+        "- Made cache reuse explicit and validated replay/gate cache metadata before reuse.",
+        "- Refreshed replay audit, booster tables, large dry-run, and this stage summary.",
+        "",
+        "## Cache Generation",
+        "",
+        *markdown_table(cache, ["dataset", "base_variant", "cache_status", "train_nodes", "valid_nodes", "test_nodes", "all_target_nodes", "blocked_reason"]),
         "",
         "## Cache Replay",
         "",
         *markdown_table(replay, ["dataset", "base_variant", "cache_status", "historical_test_acc", "replay_test_acc", "delta_replay", "blocked_reason"]),
+        "",
+        "## Replay Classification",
+        "",
+        "### Verified",
+        "",
+        *markdown_table(verified_replay, ["dataset", "base_variant", "historical_test_acc", "replay_test_acc", "delta_replay"]),
+        "",
+        "### Mismatch",
+        "",
+        *markdown_table(mismatch_replay, ["dataset", "base_variant", "historical_test_acc", "replay_test_acc", "delta_replay", "blocked_reason"]),
+        "",
+        "### Not Generated",
+        "",
+        *markdown_table(slow_or_failed_cache, ["dataset", "base_variant", "cache_status", "blocked_reason"]),
         "",
         "## Promoted Rows",
         "",
@@ -119,20 +192,20 @@ def _write_summary(promoted: list[dict[str, Any]]) -> None:
         "",
         "## Required Questions",
         "",
-        "1. Were the correct historical safe rows regenerated with logits cache? ACM SFB-v2 B3 was regenerated with historical replay and gate-selection caches; DBLP, IMDB, arxiv, and products safe rows are blocked because current historical scripts do not expose replayable all-target logits.",
-        "2. Did cache replay match the historical metrics? ACM matched within tolerance; blocked rows have no replay cache.",
-        "3. Did LogitCorrectLite improve any dataset? No. ACM validation did not improve; arxiv/products were blocked by missing replay-verified historical caches.",
-        "4. Did Correct&Smooth-lite improve arxiv/products? No, because their historical safe caches were not replay-verified locally.",
-        "5. Did PathLogitCorrectLite improve DBLP/IMDB? No, both are blocked by missing replay-verified historical caches.",
-        f"6. Did Pseudo-SCAP improve any dataset? Yes: {promoted_summary}.",
-        "7. Did Safe Logit Ensemble improve products or ACM? No; ensemble is blocked unless component logits are persisted.",
+        f"1. Were the correct historical safe rows regenerated with logits cache? Generated: {generated_names}. Slow/failed: {slow_names}.",
+        f"2. Did cache replay match the historical metrics? Verified: {verified_names}. Mismatch: {mismatch_names}.",
+        f"3. Did LogitCorrectLite improve any dataset? {logit_correct_summary}",
+        "4. Did Correct&Smooth-lite improve arxiv/products? No promoted arxiv/products Correct&Smooth row; their replay caches did not pass the historical gate.",
+        f"5. Did PathLogitCorrectLite improve DBLP/IMDB? {path_summary}",
+        f"6. Did Pseudo-SCAP improve any dataset? {pseudo_summary}",
+        f"7. Did Safe Logit Ensemble improve products or ACM? {ensemble_summary}",
         f"8. Which rows were promoted? {promoted_summary}.",
         "9. Which rows were blocked and why? See `Blocked Rows`.",
         "10. Did any promoted row use forbidden components? No; promotion validator rejects forbidden flags.",
         f"11. Did any promoted medium row use bounded edges? {'Yes' if medium_promoted_bounded else 'No'}.",
         f"12. Did macro-F1 or predicted class count collapse? {'Yes' if macro_collapse else 'No'} for promoted rows.",
         f"13. Which datasets are now eligible for condensation recovery? {sorted({row['dataset'] for row in promoted}) if promoted else []}.",
-        "14. If no improvement occurred, what is the next bottleneck: cache mismatch, base signal ceiling, or validation overfit? For blocked datasets the bottleneck is cache mismatch/missing replayable logits; for ACM, inspect promoted row deltas for possible validation overfit before condensation recovery.",
+        f"14. If no improvement occurred, what is the next bottleneck: cache mismatch, base signal ceiling, or validation overfit? Current blockers are replay mismatch ({mismatch_names}) and slow local products R++ generation ({slow_names}); verified rows can proceed to condensation recovery.",
         "",
         "## Artifacts",
         "",
@@ -153,8 +226,14 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Run T1.1 safe cache and boost stage.")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--epochs", type=int, default=80)
+    parser.add_argument("--reuse-existing-caches", action="store_true", help="Reuse already validated cache directories instead of regenerating them.")
     args = parser.parse_args()
-    _run("run_t1_generate_safe_logit_caches.py", ["--seed", str(args.seed), "--epochs", str(args.epochs)])
+    cache_args = ["--seed", str(args.seed), "--epochs", str(args.epochs)]
+    if args.reuse_existing_caches:
+        cache_args.append("--reuse-existing-caches")
+    else:
+        cache_args.append("--no-reuse-existing-caches")
+    _run("run_t1_generate_safe_logit_caches.py", cache_args)
     _run("run_t1_cache_replay_audit.py", ["--seed", str(args.seed)])
     _run("run_t1_logit_correct_safe.py")
     _run("run_t1_path_logit_correct_safe.py")

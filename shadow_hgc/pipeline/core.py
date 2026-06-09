@@ -940,6 +940,8 @@ def _train_and_infer_compiled(
     train_labels: torch.Tensor,
     train_weights: torch.Tensor,
     test_table: torch.Tensor,
+    target_eval_tables: list[tuple[torch.Tensor, torch.Tensor]] | None,
+    target_eval_batch_size: int | None,
     block_stats_table: torch.Tensor | None,
     compiled_block_stats_source: str,
     schema,
@@ -958,7 +960,7 @@ def _train_and_infer_compiled(
     use_kd: bool,
     kd_temperature: float,
     kd_weight: float,
-) -> tuple[float | None, float | None, float, float, dict, dict]:
+) -> tuple[float | None, float | None, float, float, dict, dict, torch.Tensor | None]:
     torch.manual_seed(seed)
     class_metadata = infer_class_metadata(graph.labels, graph.train_idx, graph.test_idx)
     num_classes = class_metadata["num_classes_global"]
@@ -1025,11 +1027,23 @@ def _train_and_infer_compiled(
     model.eval()
     infer_start = time.perf_counter()
     with torch.no_grad():
-        train_logits = model(train_table)
+        train_logits = _predict_compiled_table(model, train_table, target_eval_batch_size)
         prototype_pred = train_logits.argmax(dim=1)
         prototype_train_acc = float((prototype_pred == train_labels).to(torch.float32).mean().item())
-        test_logits = model(test_table)
+        test_logits = _predict_compiled_table(model, test_table, target_eval_batch_size)
         pred = test_logits.argmax(dim=1)
+        target_logits: torch.Tensor | None = None
+        if target_eval_tables is not None:
+            target_logits = torch.zeros(
+                graph.num_nodes[graph.target_type],
+                num_classes,
+                dtype=torch.float32,
+            )
+            for rows, table in target_eval_tables:
+                if rows.numel() == 0:
+                    continue
+                split_logits = _predict_compiled_table(model, table, target_eval_batch_size).detach().cpu().to(torch.float32)
+                target_logits[rows.detach().cpu().to(torch.long)] = split_logits
     infer_time = time.perf_counter() - infer_start
     accuracy = None
     macro_f1 = None
@@ -1068,7 +1082,16 @@ def _train_and_infer_compiled(
         "block_norm_stats": diagnostics.get("block_norm_stats", {}),
         **block_stats_metadata,
     }
-    return accuracy, macro_f1, train_time, infer_time, train_metrics, pred_diag
+    return accuracy, macro_f1, train_time, infer_time, train_metrics, pred_diag, target_logits
+
+
+def _predict_compiled_table(model: torch.nn.Module, table: torch.Tensor, batch_size: int | None) -> torch.Tensor:
+    if batch_size is None or batch_size <= 0 or table.shape[0] <= batch_size:
+        return model(table)
+    chunks = []
+    for start in range(0, table.shape[0], int(batch_size)):
+        chunks.append(model(table[start : start + int(batch_size)]))
+    return torch.cat(chunks, dim=0)
 
 
 def _train_and_infer(
@@ -1092,7 +1115,7 @@ def _train_and_infer(
     relation_gate_init: float = 1.0,
     block_gate: bool = False,
     logit_adjustment_tau: float = 1.0,
-) -> tuple[float | None, float | None, float, float, dict, dict]:
+) -> tuple[float | None, float | None, float, float, dict, dict, torch.Tensor | None]:
     _trace_memory("train_infer:start")
     torch.manual_seed(seed)
     class_metadata = infer_class_metadata(graph.labels, graph.train_idx, graph.test_idx)
@@ -1199,7 +1222,7 @@ def _train_and_infer(
         train_metrics["block_gate_values"] = model.block_gate_values()
     elif isinstance(model_diagnostics.get("block_gates"), dict):
         train_metrics["block_gate_values"] = model_diagnostics["block_gates"]
-    return accuracy, macro_f1, train_time, infer_time, train_metrics, pred_diag
+    return accuracy, macro_f1, train_time, infer_time, train_metrics, pred_diag, target_logits.detach().cpu()
 
 
 def run_shadow_hgc_experiment(
@@ -1300,6 +1323,7 @@ def run_shadow_hgc_experiment(
     boundary_pool_quantile: float = 0.4,
     boundary_cluster_method: str = "kmeans",
     boundary_score_epochs: int = 80,
+    return_logits: bool = False,
 ) -> dict:
     start = time.perf_counter()
     _trace_memory("pipeline:start")
@@ -1333,6 +1357,9 @@ def run_shadow_hgc_experiment(
         raise ValueError("ratio_mode must be target_only or total_nodes")
     if block_norm not in {"none", "standardize", "l2", "standardize_l2"}:
         raise ValueError("block_norm must be none, standardize, l2, or standardize_l2")
+    ultra_scale_datasets = {"ogbn-papers100M", "papers100M", "paper100M", "mag240m", "MAG240M"}
+    if return_logits and compiled_head and graph.dataset_name in ultra_scale_datasets:
+        raise ValueError("compiled_head return_logits uses non-streaming split-level demand tables and is disabled for ultra-scale datasets")
     if M_tau is not None and target_budget is None:
         target_budget = M_tau
     if budget_mode == "ratio":
@@ -1620,10 +1647,13 @@ def run_shadow_hgc_experiment(
     if compiled_head:
         compiled_start = time.perf_counter()
         num_classes_for_lad = infer_class_metadata(graph.labels, graph.train_idx, graph.test_idx)["num_classes_global"]
+        valid_idx = getattr(graph, "val_idx", torch.empty(0, dtype=torch.long))
         train_lad_blocks: dict[DirectedRelation, torch.Tensor] = {}
         test_lad_blocks: dict[DirectedRelation, torch.Tensor] = {}
+        valid_lad_blocks: dict[DirectedRelation, torch.Tensor] = {}
         train_path_lad_blocks: dict[str, torch.Tensor] = {}
         test_path_lad_blocks: dict[str, torch.Tensor] = {}
+        valid_path_lad_blocks: dict[str, torch.Tensor] = {}
         if label_affinity:
             train_lad_blocks, lad_stats, lad_metadata = _build_lad_blocks(
                 graph,
@@ -1650,6 +1680,22 @@ def run_shadow_hgc_experiment(
                 int(lad_metadata.get("lad_active_source_nodes", 0)),
                 int(test_lad_meta.get("lad_active_source_nodes", 0)),
             )
+            if return_logits and valid_idx.numel() > 0:
+                valid_lad_blocks, valid_lad_stats, valid_lad_meta = _build_lad_blocks(
+                    graph,
+                    target_relations,
+                    alpha,
+                    target_nodes=valid_idx,
+                    num_classes=num_classes_for_lad,
+                    label_affinity_mode=label_affinity_mode,
+                    label_affinity_self_exclude=label_affinity_self_exclude,
+                    label_affinity_block_norm=label_affinity_block_norm,
+                )
+                lad_stats.update({f"valid:{key}": value for key, value in valid_lad_stats.items()})
+                lad_metadata["lad_active_source_nodes"] = max(
+                    int(lad_metadata.get("lad_active_source_nodes", 0)),
+                    int(valid_lad_meta.get("lad_active_source_nodes", 0)),
+                )
         if path_label_affinity:
             train_path_lad_blocks, path_lad_stats, path_lad_metadata = _build_path_lad_blocks(
                 graph,
@@ -1674,6 +1720,21 @@ def run_shadow_hgc_experiment(
                 set(path_lad_metadata.get("path_lad_skipped_blocks", []))
                 | set(test_path_lad_meta.get("path_lad_skipped_blocks", []))
             )
+            if return_logits and valid_idx.numel() > 0:
+                valid_path_lad_blocks, valid_path_lad_stats, valid_path_lad_meta = _build_path_lad_blocks(
+                    graph,
+                    target_relations,
+                    target_nodes=valid_idx,
+                    num_classes=num_classes_for_lad,
+                    requested_blocks=path_label_affinity_blocks,
+                    normalize=label_affinity_block_norm,
+                    leave_one_out_for_train=label_affinity_self_exclude,
+                )
+                path_lad_stats.update({f"valid:{key}": value for key, value in valid_path_lad_stats.items()})
+                path_lad_metadata["path_lad_skipped_blocks"] = sorted(
+                    set(path_lad_metadata.get("path_lad_skipped_blocks", []))
+                    | set(valid_path_lad_meta.get("path_lad_skipped_blocks", []))
+                )
         lad_precompute_time = time.perf_counter() - compiled_start
         test_demand, _ = _relation_demand(
             graph,
@@ -1682,6 +1743,15 @@ def run_shadow_hgc_experiment(
             edge_chunk_size=inference_edge_chunk_size,
             demand_dst_idx=graph.test_idx,
         )
+        valid_demand = None
+        if return_logits and valid_idx.numel() > 0:
+            valid_demand, _ = _relation_demand(
+                graph,
+                phi,
+                target_relations,
+                edge_chunk_size=inference_edge_chunk_size,
+                demand_dst_idx=valid_idx,
+            )
         if compiled_train_scope == "full_demand":
             train_feature_demands = {relation: demand[relation] for relation in target_relations}
             train_lad = train_lad_blocks
@@ -1751,13 +1821,32 @@ def run_shadow_hgc_experiment(
         test_table, test_schema = compile_demand_table(test_blocks)
         if compiled_schema != test_schema:
             raise ValueError("compiled train/infer schema mismatch")
+        target_eval_tables = None
+        if return_logits:
+            target_eval_tables = [(graph.train_idx, stats_table), (graph.test_idx, test_table)]
+            if valid_idx.numel() > 0 and valid_demand is not None:
+                valid_blocks = _compiled_blocks_for_rows(
+                    self_features=phi[graph.target_type][valid_idx],
+                    feature_demands={relation: valid_demand[relation] for relation in target_relations},
+                    lad_blocks=valid_lad_blocks,
+                    path_lad_blocks=valid_path_lad_blocks,
+                    degree_block=degree_features[valid_idx] if compiled_include_degree_block else None,
+                    relation_order=target_relations,
+                    compiled_block_norm=compiled_block_norm,
+                )
+                valid_table, valid_schema = compile_demand_table(valid_blocks)
+                if compiled_schema != valid_schema:
+                    raise ValueError("compiled train/valid schema mismatch")
+                target_eval_tables.append((valid_idx, valid_table))
         compiled_schema_dict = schema_to_dict(compiled_schema)
-        accuracy, macro_f1, train_time, infer_time, train_metrics, pred_diag = _train_and_infer_compiled(
+        accuracy, macro_f1, train_time, infer_time, train_metrics, pred_diag, target_logits_for_cache = _train_and_infer_compiled(
             graph,
             train_table=train_table,
             train_labels=train_labels,
             train_weights=train_weights,
             test_table=test_table,
+            target_eval_tables=target_eval_tables,
+            target_eval_batch_size=inference_dst_chunk_size,
             block_stats_table=(
                 stats_table
                 if compiled_block_stats_source == "train_full_demand_table"
@@ -1787,7 +1876,7 @@ def run_shadow_hgc_experiment(
         del demand, signature, relation_plans, prototypes, psi, degree_features, demand_row_by_target
         gc.collect()
         _trace_memory("pipeline:after_condense_gc")
-        accuracy, macro_f1, train_time, infer_time, train_metrics, pred_diag = _train_and_infer(
+        accuracy, macro_f1, train_time, infer_time, train_metrics, pred_diag, target_logits_for_cache = _train_and_infer(
             graph,
             phi,
             alpha,
@@ -2072,6 +2161,8 @@ def run_shadow_hgc_experiment(
         "full_edge_scans": 0,
         "edge_slice_cache_bytes": 0,
         "cache_all_targets": False,
+        "returned_all_target_logits": bool(return_logits),
+        "return_logits_non_streaming": bool(return_logits and compiled_head),
         "demand_edge_chunk_size": demand_edge_chunk_size,
         "inference_edge_chunk_size": inference_edge_chunk_size,
         "inference_dst_chunk_size": inference_dst_chunk_size,
@@ -2117,4 +2208,7 @@ def run_shadow_hgc_experiment(
     output_path = Path(output_path)
     summary = attach_run_metadata(_jsonable(summary), config=config_for_hash)
     write_json_summary(output_path, summary, config=config_for_hash)
+    if return_logits:
+        summary = dict(summary)
+        summary["_target_logits"] = target_logits_for_cache
     return summary

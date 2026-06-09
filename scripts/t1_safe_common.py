@@ -101,6 +101,7 @@ def save_cache_for_graph(
     role: str,
     metrics: dict[str, Any],
     dtype: str,
+    model_config_payload: Any | None = None,
 ) -> Path:
     cache_dir = root / f"{base['dataset']}_{base['cache_variant']}_{role}_seed{seed}"
     num_classes = _num_classes(graph.labels)
@@ -144,9 +145,15 @@ def save_cache_for_graph(
     )
     metadata_path = path / "metadata.json"
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    model_config_hash = stable_hash(
+        model_config_payload
+        if model_config_payload is not None
+        else {"model": "sfb_v2", "cache_variant": base["cache_variant"], "role": role, "seed": seed}
+    )
     metadata.update(
         {
-            "model_config_hash": stable_hash({"model": "sfb_v2", "cache_variant": base["cache_variant"], "role": role, "seed": seed}),
+            "model_config_hash": model_config_hash,
+            "model_config_payload": model_config_payload,
             "cache_role": role,
             "base_variant": base["base_variant"],
             "historical_expected_acc": float(base["expected_acc"]),

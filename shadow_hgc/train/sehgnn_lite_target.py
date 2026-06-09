@@ -18,6 +18,7 @@ from shadow_hgc.prototype.cluster import class_wise_prototypes
 class SeHGNNTargetRun:
     summary: dict
     blocks: dict[str, torch.Tensor]
+    logits: torch.Tensor | None = None
 
 
 def _num_classes(labels: torch.Tensor) -> int:
@@ -180,7 +181,7 @@ def train_fullgraph_sehgnn_lite(
     }
     train_summary = _prediction_summary(all_logits, graph.labels, graph.train_idx, num_classes)
     summary["train_accuracy"] = train_summary["accuracy"]
-    return SeHGNNTargetRun(summary=summary, blocks=blocks)
+    return SeHGNNTargetRun(summary=summary, blocks=blocks, logits=all_logits.detach().cpu())
 
 
 def train_prototype_sehgnn_lite(
@@ -258,4 +259,4 @@ def train_prototype_sehgnn_lite(
         **metadata,
         **_prediction_summary(all_logits, graph.labels, graph.test_idx, num_classes),
     }
-    return SeHGNNTargetRun(summary=summary, blocks=blocks)
+    return SeHGNNTargetRun(summary=summary, blocks=blocks, logits=all_logits.detach().cpu())
