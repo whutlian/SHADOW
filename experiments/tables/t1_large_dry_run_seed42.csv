@@ -1,0 +1,5 @@
+dataset,num_target_nodes,num_edges_used,num_classes,active_source_counts,expected_wall_time_category,seed,full_edge_scans,peak_cpu_ram_gb,peak_gpu_ram_gb,disk_cache_gb,logit_cache_bytes,logit_cache_gb,pseudo_scap_cache_bytes,pseudo_scap_cache_gb,edge_scans,uses_memmap,uses_topk_sparse,uses_bounded_edges,status
+ogbn-arxiv,169343,1166243,40,169343,minutes,42,2,streaming_dependent,logit_chunk_only,0.0291,13547440,0.0135,15579556,0.0156,2,True,True,False,dry_run_estimate
+ogbn-products,2449029,61859140,47,2449029,tens_of_minutes,42,2,streaming_dependent,logit_chunk_only,0.4555,230208726,0.2302,225310668,0.2253,2,True,True,False,dry_run_estimate
+ogbn-papers100M,111059956,1615685872,172,train_target_and_active_sources_only,hours_server_recommended,42,2,streaming_dependent,logit_chunk_only,48.4221,38204624864,38.2046,10217515952,10.2175,2,True,True,False,dry_run_estimate
+MAG240M,121751666,paper_author_and_citation_streams,153,train_period_active_sources_only,hours_server_recommended,42,2,streaming_dependent,logit_chunk_only,48.4572,37256009796,37.256,11201153272,11.2012,2,True,True,False,dry_run_estimate
