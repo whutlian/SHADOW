@@ -1,0 +1,10 @@
+block_name,kind,shape,dtype,path,cache_bytes,edge_scans,normalization
+X0,self,232965x64,float16,block_X0.memmap,29819520,0,none
+X1,hop_block,232965x64,float16,block_X1.memmap,29819520,2,destination_row
+X2,hop_block,232965x64,float16,block_X2.memmap,29819520,2,destination_row
+X3,hop_block,232965x64,float16,block_X3.memmap,29819520,2,destination_row
+Xres1,residual,232965x64,float16,block_Xres1.memmap,29819520,0,none
+Y1,label_reuse,232965x41,float16,block_Y1.memmap,19103130,2,destination_row
+Y2,label_reuse,232965x41,float16,block_Y2.memmap,19103130,2,destination_row
+Y3,label_reuse,232965x41,float16,block_Y3.memmap,19103130,2,destination_row
+structure,structure,232965x3,float16,block_structure.memmap,1397790,1,none

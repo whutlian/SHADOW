@@ -124,3 +124,86 @@ def write_sft_signature_cache_from_memmap(
     }
     (root / "metadata.json").write_text(json.dumps(metadata, indent=2, sort_keys=True), encoding="utf-8")
     return SFTSignatureCacheResult(root=root, metadata=metadata)
+
+
+def _signature_block_key(name: str) -> str:
+    return "self" if str(name) == "X0" else str(name).lower()
+
+
+def load_existing_sft_signature_cache(
+    out_dir: str | Path,
+    *,
+    manifest_dir: str | Path | None = None,
+    selected_blocks: list[str] | tuple[str, ...] | None = None,
+    train_rows: torch.Tensor | np.ndarray | list[int] | None = None,
+    dtype: str | None = None,
+) -> SFTSignatureCacheResult | None:
+    root = Path(out_dir)
+    metadata_path = root / "metadata.json"
+    if not metadata_path.exists():
+        return None
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    arrays = metadata.get("arrays", {})
+    if not arrays:
+        return None
+    for array in arrays.values():
+        path = root / str(array.get("path", ""))
+        if not path.exists():
+            return None
+        expected = int(array.get("bytes", 0))
+        if expected > 0 and path.stat().st_size < expected:
+            return None
+    if manifest_dir is not None:
+        stored_manifest = metadata.get("manifest_dir")
+        if stored_manifest in {"", None}:
+            return None
+        if Path(str(stored_manifest)).resolve() != Path(manifest_dir).resolve():
+            return None
+    if selected_blocks is not None:
+        stored_blocks = metadata.get("block_names")
+        if not stored_blocks:
+            return None
+        requested = [_signature_block_key(str(name)) for name in selected_blocks]
+        if list(stored_blocks) != requested:
+            return None
+    if train_rows is not None:
+        train_meta = arrays.get("train_signature")
+        if train_meta is None:
+            return None
+        if int(train_meta.get("shape", [0])[0]) != int(_as_rows(train_rows).numel()):
+            return None
+    if dtype is not None and str(metadata.get("dtype")) != str(dtype):
+        return None
+    return SFTSignatureCacheResult(root=root, metadata=metadata)
+
+
+def write_or_load_sft_signature_cache_from_memmap(
+    *,
+    manifest_dir: str | Path,
+    splits: Mapping[str, torch.Tensor | np.ndarray | list[int]],
+    train_rows: torch.Tensor | np.ndarray | list[int],
+    out_dir: str | Path,
+    selected_blocks: list[str] | tuple[str, ...] | None = None,
+    dtype: str = "float16",
+    batch_size: int = 16_384,
+    reuse_existing: bool = True,
+) -> SFTSignatureCacheResult:
+    if reuse_existing:
+        existing = load_existing_sft_signature_cache(
+            out_dir,
+            manifest_dir=manifest_dir,
+            selected_blocks=selected_blocks,
+            train_rows=train_rows,
+            dtype=dtype,
+        )
+        if existing is not None:
+            return existing
+    return write_sft_signature_cache_from_memmap(
+        manifest_dir=manifest_dir,
+        splits=splits,
+        train_rows=train_rows,
+        out_dir=out_dir,
+        selected_blocks=selected_blocks,
+        dtype=dtype,
+        batch_size=batch_size,
+    )

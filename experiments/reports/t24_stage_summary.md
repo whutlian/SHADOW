@@ -33,4 +33,24 @@
 - Added Reddit processed-cache loader and T24 Reddit SFT/condense entrypoints.
 - Added unified T24 tables, ultra dry-run, tests, and configuration.
 
+## Post-Stage Reddit Streaming Check
+
+- Added raw Reddit `.npz` to stream-friendly memmap conversion and a chunked edge reader that avoids `processed/data.pt`.
+- Completed full Reddit streaming preprop for `X0/X1/X2/X3/Xres1/Y1/Y2/Y3/structure` at block dim 64.
+- Full run scanned 114,615,892 edges for 13 total edge scans in 84.03s, wrote 207,804,780 bytes of preprop cache, and reported peak CPU RSS 0.53GB.
+- The run logged `uses_processed_data_pt=False`, `materialized_stacked_edge_index=False`, and `uses_e_by_d_materialization=False`.
+- Completed actual Reddit lazy SFT training/eval from those full streaming-preprop blocks with `sagn_lite_v4`, 30 epochs, hidden dim 128, and CUDA mini-batches.
+- Reddit streaming SFT test accuracy is 0.9400570884871551, macro-F1 is 0.9110379599379667, training time is 18.04s, peak CPU RSS is 1.45GB, and peak GPU allocation is 0.96GB.
+- The SFT run logged `loads_edge_index=False`, `uses_lazy_memmap=True`, `uses_logits_as_input=False`, `uses_teacher_logits=False`, `uses_kd=False`, and `uses_e_by_d_materialization=False`.
+- Reddit condensation training is now completed in a post-stage run over the same full streaming-preprop blocks.
+
+## Post-Stage Reddit Condensation Check
+
+- Ran Reddit condensed training at full-node ratios 0.10%, 0.25%, 0.50%, and 1.00% with `SFT-signature random`, `medoid`, `kcenter`, and `shadow condensed b=1`.
+- All rows used CPU/memmap-resident full Reddit streaming preprop blocks and CUDA mini-batch condensed training; all rows logged `loads_edge_index=False`, `uses_lazy_memmap=True`, `uses_logits_as_input=False`, `uses_teacher_logits=False`, `uses_kd=False`, and `uses_e_by_d_materialization=False`.
+- At the T24 medium default 0.50% full-node ratio, best row is `SFT-signature random` with accuracy 0.9244564924689873 and macro-F1 0.8862562817528249 over 1,165 condensed nodes.
+- At 0.50% full-node ratio, the main `SFT-signature shadow condensed b=1` row has accuracy 0.9215841157567815 and macro-F1 0.8840176339405728 over 1,165 condensed nodes.
+- Best ratio-sweep rows: 0.10% b=1 accuracy 0.9097894188822864; 0.25% medoid accuracy 0.9179577401576217; 0.50% random accuracy 0.9244564924689873; 1.00% random accuracy 0.9245283018867925.
+- Full Reddit streaming SFT reference is accuracy 0.9400570884871551, so the best 0.50% condensed row is 0.015600596018167851 absolute accuracy below the full-preprop SFT reference.
+
 - Stage CSV: `experiments\tables\t24_stage_summary_seed42.csv`

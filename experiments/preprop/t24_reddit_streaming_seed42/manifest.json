@@ -1,0 +1,379 @@
+{
+  "block_dim": 64,
+  "blocks": [
+    {
+      "cache_bytes": 29819520,
+      "diagnostics": {
+        "edge_limit": "",
+        "fit_stats_on": "train_target_rows",
+        "full_edge_scans": 0,
+        "materialized_stacked_edge_index": false,
+        "normalization": "none",
+        "uses_e_by_d_materialization": false
+      },
+      "disk_bytes": 29819520,
+      "dtype": "float16",
+      "edge_scans": 0,
+      "kind": "self",
+      "name": "X0",
+      "normalization": "none",
+      "path": "block_X0.memmap",
+      "shape": [
+        232965,
+        64
+      ],
+      "source_relations": [],
+      "spec_hash": "29546cb665a07982",
+      "stats_fit_scope": "train_target_rows",
+      "stats_fit_source": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_kd": false,
+      "uses_logits": false,
+      "uses_teacher_logits": false
+    },
+    {
+      "cache_bytes": 29819520,
+      "diagnostics": {
+        "edge_limit": "",
+        "edge_scans": 2,
+        "fit_stats_on": "train_target_rows",
+        "full_edge_scans": 2,
+        "materialized_full_e_by_d": false,
+        "materialized_stacked_edge_index": false,
+        "max_edge_chunk_size": 65536,
+        "normalization": "destination_row",
+        "num_edges": 114615892,
+        "uses_e_by_d_materialization": false,
+        "wall_time_s": 22.3633414
+      },
+      "disk_bytes": 29819520,
+      "dtype": "float16",
+      "edge_scans": 2,
+      "kind": "hop_block",
+      "name": "X1",
+      "normalization": "destination_row",
+      "path": "block_X1.memmap",
+      "shape": [
+        232965,
+        64
+      ],
+      "source_relations": [
+        "reddit_node--links-->reddit_node"
+      ],
+      "spec_hash": "d4d2e66521f4a5f0",
+      "stats_fit_scope": "train_target_rows",
+      "stats_fit_source": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_kd": false,
+      "uses_logits": false,
+      "uses_teacher_logits": false
+    },
+    {
+      "cache_bytes": 29819520,
+      "diagnostics": {
+        "edge_limit": "",
+        "edge_scans": 2,
+        "fit_stats_on": "train_target_rows",
+        "full_edge_scans": 2,
+        "materialized_full_e_by_d": false,
+        "materialized_stacked_edge_index": false,
+        "max_edge_chunk_size": 65536,
+        "normalization": "destination_row",
+        "num_edges": 114615892,
+        "uses_e_by_d_materialization": false,
+        "wall_time_s": 22.784032999999997
+      },
+      "disk_bytes": 29819520,
+      "dtype": "float16",
+      "edge_scans": 2,
+      "kind": "hop_block",
+      "name": "X2",
+      "normalization": "destination_row",
+      "path": "block_X2.memmap",
+      "shape": [
+        232965,
+        64
+      ],
+      "source_relations": [
+        "reddit_node--links-->reddit_node"
+      ],
+      "spec_hash": "df2220baf21f7cb7",
+      "stats_fit_scope": "train_target_rows",
+      "stats_fit_source": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_kd": false,
+      "uses_logits": false,
+      "uses_teacher_logits": false
+    },
+    {
+      "cache_bytes": 29819520,
+      "diagnostics": {
+        "edge_limit": "",
+        "edge_scans": 2,
+        "fit_stats_on": "train_target_rows",
+        "full_edge_scans": 2,
+        "materialized_full_e_by_d": false,
+        "materialized_stacked_edge_index": false,
+        "max_edge_chunk_size": 65536,
+        "normalization": "destination_row",
+        "num_edges": 114615892,
+        "uses_e_by_d_materialization": false,
+        "wall_time_s": 22.622528200000005
+      },
+      "disk_bytes": 29819520,
+      "dtype": "float16",
+      "edge_scans": 2,
+      "kind": "hop_block",
+      "name": "X3",
+      "normalization": "destination_row",
+      "path": "block_X3.memmap",
+      "shape": [
+        232965,
+        64
+      ],
+      "source_relations": [
+        "reddit_node--links-->reddit_node"
+      ],
+      "spec_hash": "ceebc922212ca224",
+      "stats_fit_scope": "train_target_rows",
+      "stats_fit_source": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_kd": false,
+      "uses_logits": false,
+      "uses_teacher_logits": false
+    },
+    {
+      "cache_bytes": 29819520,
+      "diagnostics": {
+        "edge_limit": "",
+        "fit_stats_on": "train_target_rows",
+        "full_edge_scans": 0,
+        "materialized_stacked_edge_index": false,
+        "normalization": "none",
+        "uses_e_by_d_materialization": false
+      },
+      "disk_bytes": 29819520,
+      "dtype": "float16",
+      "edge_scans": 0,
+      "kind": "residual",
+      "name": "Xres1",
+      "normalization": "none",
+      "path": "block_Xres1.memmap",
+      "shape": [
+        232965,
+        64
+      ],
+      "source_relations": [
+        "reddit_node--links-->reddit_node"
+      ],
+      "spec_hash": "187dc30caa7b965a",
+      "stats_fit_scope": "train_target_rows",
+      "stats_fit_source": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_kd": false,
+      "uses_logits": false,
+      "uses_teacher_logits": false
+    },
+    {
+      "cache_bytes": 19103130,
+      "diagnostics": {
+        "edge_limit": "",
+        "edge_scans": 2,
+        "fit_stats_on": "train_target_rows",
+        "full_edge_scans": 2,
+        "materialized_full_e_by_d": false,
+        "materialized_stacked_edge_index": false,
+        "max_edge_chunk_size": 65536,
+        "normalization": "destination_row",
+        "num_edges": 114615892,
+        "uses_e_by_d_materialization": false,
+        "uses_test_labels": false,
+        "uses_valid_labels": false,
+        "wall_time_s": 4.547701899999993
+      },
+      "disk_bytes": 19103130,
+      "dtype": "float16",
+      "edge_scans": 2,
+      "kind": "label_reuse",
+      "name": "Y1",
+      "normalization": "destination_row",
+      "path": "block_Y1.memmap",
+      "shape": [
+        232965,
+        41
+      ],
+      "source_relations": [
+        "reddit_node--links-->reddit_node"
+      ],
+      "spec_hash": "7ad32d8219924491",
+      "stats_fit_scope": "train_target_rows",
+      "stats_fit_source": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_kd": false,
+      "uses_logits": false,
+      "uses_teacher_logits": false
+    },
+    {
+      "cache_bytes": 19103130,
+      "diagnostics": {
+        "edge_limit": "",
+        "edge_scans": 2,
+        "fit_stats_on": "train_target_rows",
+        "full_edge_scans": 2,
+        "materialized_full_e_by_d": false,
+        "materialized_stacked_edge_index": false,
+        "max_edge_chunk_size": 65536,
+        "normalization": "destination_row",
+        "num_edges": 114615892,
+        "uses_e_by_d_materialization": false,
+        "uses_test_labels": false,
+        "uses_valid_labels": false,
+        "wall_time_s": 4.473862699999998
+      },
+      "disk_bytes": 19103130,
+      "dtype": "float16",
+      "edge_scans": 2,
+      "kind": "label_reuse",
+      "name": "Y2",
+      "normalization": "destination_row",
+      "path": "block_Y2.memmap",
+      "shape": [
+        232965,
+        41
+      ],
+      "source_relations": [
+        "reddit_node--links-->reddit_node"
+      ],
+      "spec_hash": "be4a6a673700d80e",
+      "stats_fit_scope": "train_target_rows",
+      "stats_fit_source": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_kd": false,
+      "uses_logits": false,
+      "uses_teacher_logits": false
+    },
+    {
+      "cache_bytes": 19103130,
+      "diagnostics": {
+        "edge_limit": "",
+        "edge_scans": 2,
+        "fit_stats_on": "train_target_rows",
+        "full_edge_scans": 2,
+        "materialized_full_e_by_d": false,
+        "materialized_stacked_edge_index": false,
+        "max_edge_chunk_size": 65536,
+        "normalization": "destination_row",
+        "num_edges": 114615892,
+        "uses_e_by_d_materialization": false,
+        "uses_test_labels": false,
+        "uses_valid_labels": false,
+        "wall_time_s": 4.451296900000003
+      },
+      "disk_bytes": 19103130,
+      "dtype": "float16",
+      "edge_scans": 2,
+      "kind": "label_reuse",
+      "name": "Y3",
+      "normalization": "destination_row",
+      "path": "block_Y3.memmap",
+      "shape": [
+        232965,
+        41
+      ],
+      "source_relations": [
+        "reddit_node--links-->reddit_node"
+      ],
+      "spec_hash": "3314e7d949056ee1",
+      "stats_fit_scope": "train_target_rows",
+      "stats_fit_source": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_kd": false,
+      "uses_logits": false,
+      "uses_teacher_logits": false
+    },
+    {
+      "cache_bytes": 1397790,
+      "diagnostics": {
+        "edge_limit": "",
+        "edge_scans": 1,
+        "fit_stats_on": "train_target_rows",
+        "full_edge_scans": 1,
+        "materialized_stacked_edge_index": false,
+        "max_edge_chunk_size": 65536,
+        "normalization": "none",
+        "num_edges": 114615892,
+        "uses_e_by_d_materialization": false,
+        "wall_time_s": 0.7984454999999997
+      },
+      "disk_bytes": 1397790,
+      "dtype": "float16",
+      "edge_scans": 1,
+      "kind": "structure",
+      "name": "structure",
+      "normalization": "none",
+      "path": "block_structure.memmap",
+      "shape": [
+        232965,
+        3
+      ],
+      "source_relations": [
+        "reddit_node--links-->reddit_node"
+      ],
+      "spec_hash": "1e90bd2af52acce2",
+      "stats_fit_scope": "train_target_rows",
+      "stats_fit_source": "train_target_rows",
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_kd": false,
+      "uses_logits": false,
+      "uses_teacher_logits": false
+    }
+  ],
+  "dataset": "Reddit",
+  "dst_chunk_size": 232965,
+  "edge_chunk_size": 65536,
+  "feature_dim": 64,
+  "feature_hash": "7ee3df64dc3185a5",
+  "full_edge_scans": 13,
+  "peak_cpu_ram_gb": 0.5306587219238281,
+  "peak_gpu_ram_gb": 0.0,
+  "seed": 42,
+  "split_hash": "03b9d678fcb7334f",
+  "target_type": "reddit_node",
+  "total_cache_bytes": 207804780,
+  "uses_bounded_edges": false,
+  "uses_dense_p2": false,
+  "uses_diffusion_legacy": false,
+  "uses_e_by_d_materialization": false,
+  "uses_kd": false,
+  "uses_logits_as_input": false,
+  "uses_memmap": true,
+  "uses_teacher_logits": false,
+  "wall_time_s": 84.026138
+}

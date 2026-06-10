@@ -45,6 +45,59 @@ class ArrayEdgeStream:
             yield EdgeChunk(src=src, dst=dst, weight=weight)
 
 
+class MemmapEdgeStream:
+    """Re-iterable chunked edge stream over .npy arrays opened with mmap_mode."""
+
+    def __init__(
+        self,
+        src_path: str | Path,
+        dst_path: str | Path,
+        weight_path: str | Path | None = None,
+        *,
+        chunk_size: int = 1_000_000,
+        edge_limit: int | None = None,
+    ) -> None:
+        self.src_path = Path(src_path)
+        self.dst_path = Path(dst_path)
+        self.weight_path = None if weight_path is None else Path(weight_path)
+        self.src = np.load(self.src_path, mmap_mode="r")
+        self.dst = np.load(self.dst_path, mmap_mode="r")
+        self.weight = None if self.weight_path is None else np.load(self.weight_path, mmap_mode="r")
+        if self.src.shape != self.dst.shape:
+            raise ValueError("src and dst memmaps must have the same shape")
+        if self.weight is not None and self.weight.shape != self.src.shape:
+            raise ValueError("weight memmap must match src/dst shape")
+        self.chunk_size = max(1, int(chunk_size))
+        if edge_limit is None:
+            self.edge_limit = int(self.src.shape[0])
+        else:
+            self.edge_limit = min(int(edge_limit), int(self.src.shape[0]))
+            if self.edge_limit < 0:
+                raise ValueError("edge_limit must be non-negative")
+
+    @property
+    def num_edges(self) -> int:
+        return int(self.edge_limit)
+
+    @property
+    def storage_bytes(self) -> int:
+        total = int(self.src.nbytes) + int(self.dst.nbytes)
+        if self.weight is not None:
+            total += int(self.weight.nbytes)
+        return total
+
+    def __iter__(self) -> Iterator[EdgeChunk]:
+        for start in range(0, self.num_edges, self.chunk_size):
+            stop = min(start + self.chunk_size, self.num_edges)
+            src = torch.as_tensor(np.asarray(self.src[start:stop]).copy(), dtype=torch.long)
+            dst = torch.as_tensor(np.asarray(self.dst[start:stop]).copy(), dtype=torch.long)
+            if self.weight is None:
+                weight = torch.ones(stop - start, dtype=torch.float32)
+            else:
+                weight = torch.as_tensor(np.asarray(self.weight[start:stop]).copy(), dtype=torch.float32)
+            yield EdgeChunk(src=src, dst=dst, weight=weight)
+
+
 class SyntheticEdgeStream:
     """Deterministic synthetic edge stream for stress and dry-run tests."""
 

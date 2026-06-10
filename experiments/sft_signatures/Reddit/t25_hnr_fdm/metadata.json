@@ -1,0 +1,43 @@
+{
+  "arrays": {
+    "train_signature": {
+      "bytes": 136860452,
+      "dtype": "float16",
+      "path": "train_signature.memmap",
+      "shape": [
+        153431,
+        446
+      ]
+    }
+  },
+  "block_dims": {
+    "self": 64,
+    "structure": 3,
+    "x1": 64,
+    "x2": 64,
+    "x3": 64,
+    "xres1": 64,
+    "y1": 41,
+    "y2": 41,
+    "y3": 41
+  },
+  "block_names": [
+    "self",
+    "x1",
+    "x2",
+    "x3",
+    "xres1",
+    "y1",
+    "y2",
+    "y3",
+    "structure"
+  ],
+  "cache_bytes": 136860452,
+  "dtype": "float16",
+  "manifest_dir": "experiments/preprop/t24_reddit_streaming_seed42",
+  "normalization_stats_source": "train_target_rows",
+  "uses_kd": false,
+  "uses_logits": false,
+  "uses_logits_as_input": false,
+  "uses_teacher_logits": false
+}

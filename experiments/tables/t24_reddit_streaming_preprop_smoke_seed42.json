@@ -1,0 +1,27 @@
+{
+  "rows": [
+    {
+      "block_dim": 64,
+      "blocks": "X0,X1,structure",
+      "cache_bytes": 61036830,
+      "dataset": "Reddit",
+      "edge_chunk_size": 65536,
+      "edge_limit": 1000000,
+      "feature_dim": 602,
+      "full_edge_scans": 3,
+      "manifest_dir": "experiments/preprop/t24_reddit_streaming_seed42",
+      "materialized_stacked_edge_index": false,
+      "num_blocks": 3,
+      "num_edges": 114615892,
+      "num_nodes": 232965,
+      "peak_cpu_ram_gb": 0.5213279724121094,
+      "peak_gpu_ram_gb": 0.0,
+      "reason": "streaming raw-memmap preprop completed without processed data.pt or stacked edge_index",
+      "status": "completed_streaming_smoke",
+      "uses_e_by_d_materialization": false,
+      "uses_memmap": true,
+      "uses_processed_data_pt": false,
+      "wall_time_s": 0.7589912000000001
+    }
+  ]
+}
