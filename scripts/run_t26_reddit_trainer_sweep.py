@@ -28,13 +28,14 @@ METHODS = [
 FIELDS = T26_REQUIRED_FIELDS + ["source_t25_table", "seed_sweep_mean_acc", "seed_sweep_std_acc", "seed_sweep_mean_macro_f1", "seed_sweep_std_macro_f1", "validation_selected"]
 
 
-def _source_row(rows: list[dict[str, str]], *, ratio: float, method: str) -> dict[str, str] | None:
+def _source_row(rows: list[dict[str, str]], *, ratio: float, method: str, seed: int) -> dict[str, str] | None:
     candidates = [
         row
         for row in rows
         if row.get("dataset") == "Reddit"
         and abs(float(row.get("requested_full_node_ratio", 0.0)) - float(ratio)) < 1e-12
         and row.get("method") in {method, method.replace("reddit_", "")}
+        and int(float(row.get("seed", -1))) == int(seed)
     ]
     if not candidates:
         return None
@@ -60,8 +61,8 @@ def build_rows(seed: int = 42, t25_csv: str | Path = "experiments/tables/t25_red
         for method in METHODS:
             method_rows: list[dict[str, Any]] = []
             for sweep_seed in seeds:
-                source = _source_row(source_rows, ratio=ratio, method=method)
-                use_source = source is not None and int(float(source.get("seed", -1))) == int(sweep_seed)
+                source = _source_row(source_rows, ratio=ratio, method=method, seed=int(sweep_seed))
+                use_source = source is not None
                 shadow = "true_shadow" in method
                 failure = "seed_not_run"
                 status = "ready_not_run"

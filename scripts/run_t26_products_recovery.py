@@ -55,6 +55,18 @@ def _read_t25_rows(path: str | Path) -> list[dict[str, str]]:
     return rows
 
 
+def _read_long_rows(path: str | Path | None) -> list[dict[str, str]]:
+    if path in {"", None}:
+        return []
+    target = Path(path)
+    if not target.exists():
+        return []
+    rows = read_csv(target)
+    for row in rows:
+        row["source_long_table"] = str(target)
+    return rows
+
+
 def _best_t25_product_row(rows: list[dict[str, str]], *, ratio: float, method_contains: str | None = None) -> dict[str, str] | None:
     candidates = [row for row in rows if row.get("dataset") == "ogbn-products" and abs(float(row.get("requested_full_node_ratio", 0.0)) - float(ratio)) < 1e-12]
     if method_contains is not None:
@@ -63,6 +75,35 @@ def _best_t25_product_row(rows: list[dict[str, str]], *, ratio: float, method_co
     if not candidates:
         return None
     return max(candidates, key=lambda row: float(row.get("accuracy", 0.0)))
+
+
+def _long_product_row(rows: list[dict[str, str]], *, method: str, ratio: float | None = None) -> dict[str, str] | None:
+    candidates = [row for row in rows if row.get("dataset") == "ogbn-products" and row.get("method") == method]
+    if ratio is not None:
+        candidates = [row for row in candidates if row.get("requested_full_node_ratio") not in {"", None} and abs(float(row["requested_full_node_ratio"]) - float(ratio)) < 1e-12]
+    if not candidates:
+        return None
+    return candidates[-1]
+
+
+def _row_metric(row: dict[str, str] | None, *fields: str) -> float | str:
+    if row is None:
+        return ""
+    for field in fields:
+        value = row.get(field, "")
+        if value not in {"", None}:
+            return float(value)
+    return ""
+
+
+def _row_int(row: dict[str, str] | None, *fields: str) -> int | str:
+    if row is None:
+        return ""
+    for field in fields:
+        value = row.get(field, "")
+        if value not in {"", None}:
+            return int(float(value))
+    return ""
 
 
 def _labels_or_none(products_root: str | Path) -> tuple[torch.Tensor | None, torch.Tensor | None]:
@@ -75,6 +116,7 @@ def _labels_or_none(products_root: str | Path) -> tuple[torch.Tensor | None, tor
 
 def build_products_outputs(args: argparse.Namespace) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
     t25_rows = _read_t25_rows(args.t25_products_csv)
+    long_rows = _read_long_rows(getattr(args, "long_results_csv", None))
     labels, train_rows = _labels_or_none(args.products_root)
     num_classes = 47 if labels is None else int(labels.max().item()) + 1
     ratios = [float(value) for value in args.ratios]
@@ -101,14 +143,17 @@ def build_products_outputs(args: argparse.Namespace) -> tuple[list[dict[str, Any
         for item in report:
             per_class_rows.append({"method": "products_uca_hybrid_balanced_trainer", "ratio": ratio, "seed": int(args.seed), **item})
         best_existing = _best_t25_product_row(t25_rows, ratio=ratio)
+        p0a_source = _long_product_row(long_rows, method="P0a_alltrain_condensed_trainer_parity")
+        p0b_source = _long_product_row(long_rows, method="P0b_selected_prototype_self_fit", ratio=ratio)
         p0_diag = compute_p0_recovery_diagnostics(
-            alltrain_acc="",
-            self_fit_acc="",
+            alltrain_acc=_row_metric(p0a_source, "p0a_alltrain_acc", "accuracy"),
+            self_fit_acc=_row_metric(p0b_source, "p0b_self_fit_acc", "accuracy"),
             normalization_match=bool(best_existing and best_existing.get("products_diag_memmap_row_order_matches_node_id") == "True" and best_existing.get("products_diag_masks_aligned") == "True"),
-            predicted_class_count="" if best_existing is None else best_existing.get("predicted_class_count", ""),
+            predicted_class_count=_row_int(p0a_source, "predicted_class_count", "predicted_classes") or ("" if best_existing is None else best_existing.get("predicted_class_count", "")),
             num_classes=num_classes,
         )
         for diag_id in T26_PRODUCTS_DIAGNOSTICS:
+            diag_source = _long_product_row(long_rows, method=diag_id, ratio=ratio) or _long_product_row(long_rows, method=diag_id)
             failure = {
                 "P0a_alltrain_condensed_trainer_parity": "P0a_condensed_trainer_parity_not_rerun",
                 "P0b_selected_prototype_self_fit": "P0b_self_fit_not_rerun",
@@ -118,6 +163,13 @@ def build_products_outputs(args: argparse.Namespace) -> tuple[list[dict[str, Any
                 "P0f_feature_normalization_parity": "normalization_parity_from_existing_manifest",
             }[diag_id]
             status = "ready_not_run" if diag_id == "P0e_per_class_collapse_report" else ("completed_diagnostic" if diag_id == "P0f_feature_normalization_parity" else "ready_not_run")
+            if diag_source is not None:
+                status = diag_source.get("status", "completed_long") or "completed_long"
+                failure = ""
+                if diag_id == "P0a_alltrain_condensed_trainer_parity" and not p0_diag["p0a_passed"]:
+                    failure = "P0a_gate_not_met"
+                if diag_id == "P0b_selected_prototype_self_fit" and not p0_diag["p0b_passed"]:
+                    failure = "P0b_gate_not_met"
             if diag_id == "P0f_feature_normalization_parity" and not p0_diag["p0f_normalization_parity"]:
                 status = "blocked"
                 failure = "normalization_parity_not_confirmed"
@@ -130,6 +182,9 @@ def build_products_outputs(args: argparse.Namespace) -> tuple[list[dict[str, Any
                 shadow_nodes=0,
                 total_condensed_edges=total_budget,
                 seed=int(args.seed),
+                accuracy=_row_metric(diag_source, "accuracy"),
+                macro_f1=_row_metric(diag_source, "macro_f1"),
+                predicted_classes=_row_int(diag_source, "predicted_class_count", "predicted_classes"),
                 status=status,
                 promotion_status="not_promoted",
                 promotion_reason="products_recovery_diagnostic_only",
@@ -146,6 +201,8 @@ def build_products_outputs(args: argparse.Namespace) -> tuple[list[dict[str, Any
                 source_t25_method="" if best_existing is None else best_existing.get("method", ""),
                 diagnostic_id=diag_id,
                 t26_gate=failure,
+                p0d_prototype_oracle_acc=_row_metric(diag_source, "p0d_prototype_oracle_acc", "prototype_oracle_acc"),
+                p0d_centroid_oracle_acc=_row_metric(diag_source, "p0d_centroid_oracle_acc", "centroid_oracle_acc"),
                 peak_cpu_ram=current_cpu_ram_bytes() / (1024**3),
                 peak_gpu_ram=current_gpu_ram_bytes() / (1024**3),
                 **p0_diag,
@@ -154,7 +211,20 @@ def build_products_outputs(args: argparse.Namespace) -> tuple[list[dict[str, Any
 
         for method in T26_PRODUCTS_METHODS:
             source_row = _best_t25_product_row(t25_rows, ratio=ratio, method_contains="P1") if method.startswith("products_cb") else None
+            long_source = _long_product_row(long_rows, method=method, ratio=ratio)
+            p0_passed = bool(p0_diag["p0a_passed"]) and bool(p0_diag["p0b_passed"])
             p0_failure = "blocked_by_P0a_P0b_gate"
+            status = "blocked_by_P0_gate"
+            failure_reason = p0_failure
+            promotion_reason = p0_failure
+            if p0_passed and long_source is not None:
+                status = long_source.get("status", "completed_long") or "completed_long"
+                failure_reason = "products_t26_gate_not_met"
+                promotion_reason = "products_t26_gate_not_met"
+            elif p0_passed:
+                status = "ready_not_run"
+                failure_reason = "long_experiment_not_run"
+                promotion_reason = "long_experiment_not_run"
             row = make_t26_row(
                 dataset="ogbn-products",
                 method=method,
@@ -164,13 +234,13 @@ def build_products_outputs(args: argparse.Namespace) -> tuple[list[dict[str, Any
                 shadow_nodes=0,
                 total_condensed_edges=total_budget,
                 seed=int(args.seed),
-                accuracy="",
-                macro_f1="",
-                predicted_classes="",
-                status="blocked_by_P0_gate",
+                accuracy=_row_metric(long_source, "accuracy") if p0_passed else "",
+                macro_f1=_row_metric(long_source, "macro_f1") if p0_passed else "",
+                predicted_classes=_row_int(long_source, "predicted_class_count", "predicted_classes") if p0_passed else "",
+                status=status,
                 promotion_status="not_promoted",
-                promotion_reason=p0_failure,
-                failure_reason=p0_failure,
+                promotion_reason=promotion_reason,
+                failure_reason=failure_reason,
                 notes="UCA/product recovery rows are not promoted or assigned T26 performance until P0a >= 0.74 and P0b >= 0.95 are actually satisfied.",
                 split="sales_ranking",
                 per_class_report_path=str(args.per_class_csv),
@@ -179,10 +249,10 @@ def build_products_outputs(args: argparse.Namespace) -> tuple[list[dict[str, Any
                 class_budget_min=min(budget.values()) if budget else "",
                 class_budget_max=max(budget.values()) if budget else "",
                 class_budget_json=budget_to_json(budget),
-                coverage_gap_l1="",
-                coverage_gap_l2="",
-                uca_num_domains=int(args.uca_domains),
-                uca_domain_seed=int(args.seed),
+                coverage_gap_l1=_row_metric(long_source, "coverage_gap_l1"),
+                coverage_gap_l2=_row_metric(long_source, "coverage_gap_l2"),
+                uca_num_domains=_row_int(long_source, "uca_num_domains") or int(args.uca_domains),
+                uca_domain_seed=_row_int(long_source, "uca_domain_seed") or int(args.seed),
                 uca_uses_valid_test_labels=False,
                 trainer_recipe="balanced_adamw_label_smoothing_mixup" if "balanced_trainer" in method or "mixup" in method else "standard_adamw",
                 trainer_balanced_batches="balanced_trainer" in method,
@@ -231,6 +301,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Build T26 products recovery diagnostics and UCA sweep tables.")
     parser.add_argument("--products-root", default="dataset/ogbn_products")
     parser.add_argument("--t25-products-csv", default="experiments/tables/t25_products_recovery_ladder_seed42.csv")
+    parser.add_argument("--long-results-csv", default="experiments/tables/t26_products_long_experiments_seed42.csv")
     parser.add_argument("--ratios", nargs="+", type=float, default=[0.0025, 0.005])
     parser.add_argument("--uca-domains", type=int, default=256)
     parser.add_argument("--seed", type=int, default=42)
