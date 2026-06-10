@@ -1,0 +1,6 @@
+accuracy,best_variant,dataset,macro_f1,status
+0.7016645063061951,A3_true_sagn_lite_v2,ogbn-arxiv,0.5048992808650066,promoted_short
+0.7555780580193042,P7_sagn_lite_v2,ogbn-products,0.4046991170720907,promoted_short
+0.9159584641456604,ACM_H512_D0p3_CE,acm,0.9164112210273743,completed
+0.924647867679596,0.05,dblp,0.920296385884285,promoted
+0.47158026695251465,diagnostic_only,imdb,0.3900045245885849,diagnostic_only

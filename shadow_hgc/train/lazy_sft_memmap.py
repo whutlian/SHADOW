@@ -11,6 +11,7 @@ import numpy as np
 import torch
 
 from shadow_hgc.eval.resource import current_cpu_ram_bytes, current_gpu_ram_bytes
+from shadow_hgc.models.sft_teacher_v3 import SFTTeacherV3
 from shadow_hgc.models.sft_table_teacher import SFTTableTeacherV2
 from shadow_hgc.train.train_sft_teacher import sft_loss
 
@@ -62,6 +63,22 @@ class LazyMemmapBlockStore:
         if not arrays or num_rows is None:
             raise ValueError("manifest does not contain any memmap blocks")
         return cls(root=base, arrays=arrays, block_dims=dims, stats=stats, num_rows=int(num_rows))
+
+    def subset(self, selected_blocks: list[str] | tuple[str, ...] | None) -> "LazyMemmapBlockStore":
+        if not selected_blocks:
+            return self
+        requested = {_block_key(str(name)) for name in selected_blocks}
+        missing = sorted(requested - set(self.arrays))
+        if missing:
+            raise ValueError(f"selected memmap blocks missing from manifest: {missing}")
+        return LazyMemmapBlockStore(
+            root=self.root,
+            arrays={key: self.arrays[key] for key in self.arrays if key in requested},
+            block_dims={key: self.block_dims[key] for key in self.block_dims if key in requested},
+            stats={key: self.stats[key] for key in self.stats if key in requested},
+            num_rows=self.num_rows,
+            max_batch_materialized_bytes=self.max_batch_materialized_bytes,
+        )
 
     def fetch(self, rows: torch.Tensor | np.ndarray, *, device: torch.device, dtype: torch.dtype = torch.float32) -> dict[str, torch.Tensor]:
         if isinstance(rows, torch.Tensor):
@@ -118,6 +135,41 @@ def _load_block_stats_into_model(model: SFTTableTeacherV2, store: LazyMemmapBloc
         normalizer.fit_rows = [int(value) for value in stats.get("fit_rows", [])]
         normalizer.fitted = True
         normalizer.frozen = True
+
+
+def _build_lazy_model(
+    block_dims: dict[str, int],
+    *,
+    num_classes: int,
+    model_type: str,
+    hidden_dim: int,
+    dropout: float,
+    num_layers: int,
+    block_dropout: float,
+    hop_dropout: float,
+    activation: str,
+    norm: str,
+):
+    if str(model_type).endswith("_v2"):
+        return SFTTeacherV3(
+            block_dims,
+            num_classes=int(num_classes),
+            model_type=model_type,  # type: ignore[arg-type]
+            hidden_dim=int(hidden_dim),
+            dropout=float(dropout),
+            num_layers=int(num_layers),
+            block_dropout=float(block_dropout),
+            hop_dropout=float(hop_dropout),
+            activation=str(activation),
+            norm=str(norm),
+        )
+    return SFTTableTeacherV2(
+        block_dims,
+        num_classes=int(num_classes),
+        model_type=model_type,  # type: ignore[arg-type]
+        hidden_dim=int(hidden_dim),
+        dropout=float(dropout),
+    )
 
 
 @dataclass
@@ -188,10 +240,22 @@ def train_lazy_sft_from_memmap(
     model_type: str = "gamlp_lite",
     hidden_dim: int = 128,
     dropout: float = 0.3,
+    num_layers: int = 2,
+    block_dropout: float = 0.0,
+    hop_dropout: float = 0.0,
+    activation: str = "relu",
+    norm: str = "none",
+    selected_blocks: list[str] | tuple[str, ...] | None = None,
     loss_type: str = "sqrt_weighted_ce",
     lr: float = 0.003,
     weight_decay: float = 1e-4,
     epochs: int = 1,
+    two_stage: bool = False,
+    stage1_loss: str = "sqrt_weighted_ce",
+    stage2_loss: str = "cross_entropy",
+    stage1_epochs: int = 100,
+    stage2_epochs: int = 100,
+    stage2_lr_mult: float = 0.2,
     batch_size: int = 16_384,
     eval_batch_size: int = 65_536,
     seed: int = 42,
@@ -200,13 +264,18 @@ def train_lazy_sft_from_memmap(
     started = time.perf_counter()
     torch.manual_seed(int(seed))
     target_device = torch.device(device)
-    store = load_manifest_block_store(manifest_dir)
-    model = SFTTableTeacherV2(
+    store = load_manifest_block_store(manifest_dir).subset(selected_blocks)
+    model = _build_lazy_model(
         store.block_dims,
         num_classes=int(num_classes),
-        model_type=model_type,  # type: ignore[arg-type]
+        model_type=model_type,
         hidden_dim=int(hidden_dim),
         dropout=float(dropout),
+        num_layers=int(num_layers),
+        block_dropout=float(block_dropout),
+        hop_dropout=float(hop_dropout),
+        activation=str(activation),
+        norm=str(norm),
     ).to(target_device)
     _load_block_stats_into_model(model, store)
     labels = labels.to(torch.long).cpu()
@@ -216,33 +285,69 @@ def train_lazy_sft_from_memmap(
     train_labels = labels[train_rows].to(torch.long)
     opt = torch.optim.AdamW(model.parameters(), lr=float(lr), weight_decay=float(weight_decay))
     best_valid: dict[str, Any] | None = None
-    for epoch in range(int(epochs)):
-        model.train()
-        total_loss = 0.0
-        seen = 0
-        for batch_rows in _iter_batches(train_rows, batch_size=int(batch_size), shuffle=True, seed=int(seed) + epoch):
-            opt.zero_grad(set_to_none=True)
-            blocks = store.fetch(batch_rows, device=target_device)
-            y = labels[batch_rows].to(device=target_device, dtype=torch.long)
-            logits = model(blocks)
-            loss = sft_loss(logits, y, loss_type=loss_type, train_labels=train_labels.to(target_device), label_smoothing=label_smoothing)
-            loss.backward()
-            opt.step()
-            batch_size_seen = int(batch_rows.numel())
-            total_loss += float(loss.detach().cpu().item()) * batch_size_seen
-            seen += batch_size_seen
-        valid = evaluate_lazy_sft(
-            model,
-            store,
-            labels,
-            valid_rows,
-            num_classes=int(num_classes),
-            batch_size=int(eval_batch_size),
-            device=target_device,
+    best_score = -1.0
+    best_state = {key: value.detach().cpu().clone() for key, value in model.state_dict().items()}
+    stage_plan = (
+        [
+            {"loss_type": stage1_loss, "epochs": int(stage1_epochs), "lr_mult": 1.0},
+            {"loss_type": stage2_loss, "epochs": int(stage2_epochs), "lr_mult": float(stage2_lr_mult)},
+        ]
+        if bool(two_stage)
+        else [{"loss_type": loss_type, "epochs": int(epochs), "lr_mult": 1.0}]
+    )
+    stage_summaries: list[dict[str, Any]] = []
+    global_epoch = 0
+    for stage_idx, stage in enumerate(stage_plan):
+        for group in opt.param_groups:
+            group["lr"] = float(lr) * float(stage["lr_mult"])
+        stage_valid: dict[str, Any] | None = None
+        for epoch in range(int(stage["epochs"])):
+            current_epoch = global_epoch + epoch
+            current_loss_type = str(stage["loss_type"])
+            if current_loss_type == "logit_adjusted_ce_as_loss":
+                current_loss_type = "logit_adjusted_ce_as_training_loss_only"
+            model.train()
+            total_loss = 0.0
+            seen = 0
+            for batch_rows in _iter_batches(train_rows, batch_size=int(batch_size), shuffle=True, seed=int(seed) + current_epoch):
+                opt.zero_grad(set_to_none=True)
+                blocks = store.fetch(batch_rows, device=target_device)
+                y = labels[batch_rows].to(device=target_device, dtype=torch.long)
+                logits = model(blocks)
+                loss = sft_loss(logits, y, loss_type=current_loss_type, train_labels=train_labels.to(target_device), label_smoothing=label_smoothing)
+                loss.backward()
+                opt.step()
+                batch_size_seen = int(batch_rows.numel())
+                total_loss += float(loss.detach().cpu().item()) * batch_size_seen
+                seen += batch_size_seen
+            valid = evaluate_lazy_sft(
+                model,
+                store,
+                labels,
+                valid_rows,
+                num_classes=int(num_classes),
+                batch_size=int(eval_batch_size),
+                device=target_device,
+            )
+            valid["epoch"] = int(current_epoch)
+            valid["train_loss"] = total_loss / max(1, seen)
+            score = float(valid["accuracy"]) + 0.10 * float(valid["macro_f1"]) + 0.02 * min(1.0, float(valid["predicted_class_count"]) / max(1.0, float(num_classes)))
+            if score > best_score:
+                best_score = score
+                best_valid = dict(valid)
+                best_state = {key: value.detach().cpu().clone() for key, value in model.state_dict().items()}
+            stage_valid = valid
+        stage_summaries.append(
+            {
+                "stage": int(stage_idx + 1),
+                "loss_type": str(stage["loss_type"]),
+                "epochs": int(stage["epochs"]),
+                "lr_mult": float(stage["lr_mult"]),
+                "valid": stage_valid or {},
+            }
         )
-        valid["epoch"] = int(epoch)
-        valid["train_loss"] = total_loss / max(1, seen)
-        best_valid = valid
+        global_epoch += int(stage["epochs"])
+    model.load_state_dict({key: value.to(target_device) for key, value in best_state.items()})
     test_started = time.perf_counter()
     test = evaluate_lazy_sft(
         model,
@@ -258,7 +363,10 @@ def train_lazy_sft_from_memmap(
         "model_type": model_type,
         "loss_type": loss_type,
         "seed": int(seed),
-        "epochs_ran": int(epochs),
+        "epochs_ran": int(global_epoch),
+        "two_stage": bool(two_stage),
+        "stages": stage_summaries,
+        "best_valid_score": float(best_score),
         "batch_size": int(batch_size),
         "eval_batch_size": int(eval_batch_size),
         "device": str(target_device),

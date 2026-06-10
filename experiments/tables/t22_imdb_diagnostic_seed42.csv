@@ -1,0 +1,2 @@
+accuracy,dataset,macro_f1,predicted_class_count,reason,status,uses_bounded_edges,uses_dense_p2,uses_e_by_d_materialization,uses_kd,uses_logits_as_input,uses_teacher_logits,variant
+0.47158026695251465,imdb,0.3900045245885849,5,IMDB dropped from T2.2 main gate; no expensive sweep,diagnostic_only,False,False,False,False,False,False,IMDB_current_T2_replay

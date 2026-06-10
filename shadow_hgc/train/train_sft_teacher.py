@@ -30,7 +30,7 @@ def sft_loss(logits: torch.Tensor, labels: torch.Tensor, *, loss_type: str, trai
     if loss_type == "balanced_softmax":
         counts = torch.bincount(train_labels, minlength=logits.shape[1]).to(logits.device, logits.dtype).clamp_min(1.0)
         return F.cross_entropy(logits + counts.log().unsqueeze(0), labels, label_smoothing=float(label_smoothing))
-    if loss_type in {"logit_adjusted_ce", "logit_adjusted_ce_as_training_loss_only"}:
+    if loss_type in {"logit_adjusted_ce", "logit_adjusted_ce_as_training_loss_only", "logit_adjusted_ce_as_loss"}:
         counts = torch.bincount(train_labels, minlength=logits.shape[1]).to(logits.device, logits.dtype).clamp_min(1.0)
         prior = counts / counts.sum()
         return F.cross_entropy(logits - prior.log().unsqueeze(0), labels, label_smoothing=float(label_smoothing))
