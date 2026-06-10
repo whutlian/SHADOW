@@ -52,7 +52,7 @@ def _project_if_needed(x: torch.Tensor, *, feature_dim: int, seed: int) -> torch
 
 
 def _relation_suffix(block_name: str) -> str:
-    for prefix in ("X1_", "X2_", "Xres1_", "Xres2_", "Y1_", "Y2_", "Y3_"):
+    for prefix in ("X1_", "X2_", "X3_", "X4_", "Xres1_", "Xres2_", "Xres3_", "Y1_", "Y2_", "Y3_", "Y4_", "Yres1_"):
         if block_name.startswith(prefix):
             return block_name[len(prefix) :]
     return ""
@@ -375,40 +375,102 @@ def compute_preprop_filter_bank(
             x2_name = "X2" + (f"_{suffix}" if suffix else "")
             block = ensure_hop(x1_name) - ensure_hop(x2_name)
             add_block(name, "residual", block, {"normalization": "none", "full_edge_scans": 0, "uses_e_by_d_materialization": False}, computed.get(f"__rels__{x2_name}", []))  # type: ignore[arg-type]
-        elif name.startswith(("Y1", "Y2", "Y3")):
+        elif name.startswith("Xres3"):
+            suffix = _relation_suffix(name)
+            x2_name = "X2" + (f"_{suffix}" if suffix else "")
+            x3_name = "X3" + (f"_{suffix}" if suffix else "")
+            block = ensure_hop(x2_name) - ensure_hop(x3_name)
+            add_block(name, "residual", block, {"normalization": "none", "full_edge_scans": 0, "uses_e_by_d_materialization": False}, computed.get(f"__rels__{x3_name}", []))  # type: ignore[arg-type]
+        elif name == "Y0_train_masked":
+            y0 = torch.zeros(num_nodes, num_classes, dtype=torch.float32)
+            if train_rows.numel() > 0:
+                y0[train_rows, labels[train_rows]] = 1.0
+            add_block(
+                name,
+                "label_reuse",
+                y0,
+                {
+                    "normalization": "none",
+                    "full_edge_scans": 0,
+                    "uses_e_by_d_materialization": False,
+                    "uses_valid_labels": False,
+                    "uses_test_labels": False,
+                    "label_reuse_version": "v2",
+                },
+                [],
+            )
+        elif name.startswith(("Y1", "Y2", "Y3", "Y4", "Yres1")):
             if not label_blocks:
+                requested_steps = sorted(
+                    {
+                        int(str(block_name)[1])
+                        for block_name in blocks
+                        if str(block_name).startswith(("Y1", "Y2", "Y3", "Y4"))
+                    }
+                )
                 label_blocks, label_diag = compute_label_reuse_blocks(
                     relation_blocks=label_relation_blocks,
                     labels=labels,
                     train_target_ids=train_rows,
                     num_target_nodes=num_nodes,
                     num_classes=num_classes,
-                    steps=(1, 2, 3),
-                    prior_centering=False,
+                    steps=tuple(requested_steps or [1, 2, 3]),
+                    prior_centering=True,
                     edge_chunk_size=int(edge_chunk_size),
                 )
-            suffix = _relation_suffix(name)
-            if suffix == "mix":
-                step = name[1]
-                candidates = [value for key, value in label_blocks.items() if key.startswith(f"Y{step}_") and "_support" not in key and "_entropy" not in key and "_max_affinity" not in key]
-                block = sum(candidates) / max(1, len(candidates)) if candidates else torch.zeros(num_nodes, num_classes)
-                rel_names = [str(rel) for rel in _target_target_relations(relation_map, target_type)]
-            else:
-                key = name if name in label_blocks else f"{name}_{suffix}" if suffix else name
-                block = label_blocks.get(key)
-                if block is None and not suffix and label_relation_blocks:
+            if name.startswith("Yres1"):
+                y0 = torch.zeros(num_nodes, num_classes, dtype=torch.float32)
+                if train_rows.numel() > 0:
+                    y0[train_rows, labels[train_rows]] = 1.0
+                suffix = _relation_suffix(name)
+                if suffix == "mix":
                     candidates = [
                         value
-                        for key_name, value in label_blocks.items()
-                        if key_name.startswith(f"{name}_")
-                        and "_support" not in key_name
-                        and "_entropy" not in key_name
-                        and "_max_affinity" not in key_name
+                        for key, value in label_blocks.items()
+                        if key.startswith("Y1_")
+                        and "_support" not in key
+                        and "_entropy" not in key
+                        and "_max_affinity" not in key
+                        and "_centered" not in key
                     ]
-                    block = sum(candidates) / max(1, len(candidates)) if candidates else None
-                if block is None:
-                    block = torch.zeros(num_nodes, num_classes)
-                rel_names = [str(rel) for rel in _target_target_relations(relation_map, target_type, suffix=suffix)]
+                    y1 = sum(candidates) / max(1, len(candidates)) if candidates else torch.zeros(num_nodes, num_classes)
+                    rel_names = [str(rel) for rel in _target_target_relations(relation_map, target_type)]
+                else:
+                    y1 = label_blocks.get(f"Y1_{suffix}", torch.zeros(num_nodes, num_classes))
+                    rel_names = [str(rel) for rel in _target_target_relations(relation_map, target_type, suffix=suffix)]
+                block = y0 - y1
+            else:
+                suffix = _relation_suffix(name)
+                if suffix == "mix":
+                    step = name[1]
+                    candidates = [
+                        value
+                        for key, value in label_blocks.items()
+                        if key.startswith(f"Y{step}_")
+                        and "_support" not in key
+                        and "_entropy" not in key
+                        and "_max_affinity" not in key
+                        and "_centered" not in key
+                    ]
+                    block = sum(candidates) / max(1, len(candidates)) if candidates else torch.zeros(num_nodes, num_classes)
+                    rel_names = [str(rel) for rel in _target_target_relations(relation_map, target_type)]
+                else:
+                    key = name if name in label_blocks else f"{name}_{suffix}" if suffix else name
+                    block = label_blocks.get(key)
+                    if block is None and not suffix and label_relation_blocks:
+                        candidates = [
+                            value
+                            for key_name, value in label_blocks.items()
+                            if key_name.startswith(f"{name}_")
+                            and "_support" not in key_name
+                            and "_entropy" not in key_name
+                            and "_max_affinity" not in key_name
+                            and "_centered" not in key_name
+                        ]
+                        block = sum(candidates) / max(1, len(candidates)) if candidates else None
+                    if block is None:
+                        block = torch.zeros(num_nodes, num_classes)
+                    rel_names = [str(rel) for rel in _target_target_relations(relation_map, target_type, suffix=suffix)]
             add_block(name, "label_reuse", block, {"normalization": "destination_row", "full_edge_scans": 1, "uses_e_by_d_materialization": False, **label_diag}, rel_names)
         elif name == "structure":
             block, diag, rel_names = _structure_blocks(

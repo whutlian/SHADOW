@@ -43,6 +43,23 @@ class TwoStageTrainResult:
     summary: dict[str, Any]
 
 
+def t23_selection_score(valid_acc: float, valid_macro_f1: float) -> float:
+    return float(valid_acc) + 0.05 * float(valid_macro_f1)
+
+
+def select_best_t23_row(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    candidates = [row for row in rows if row.get("valid_acc", "") not in {"", None}]
+    if not candidates:
+        return {}
+    return max(
+        candidates,
+        key=lambda row: (
+            t23_selection_score(float(row.get("valid_acc", 0.0) or 0.0), float(row.get("valid_macro_f1", 0.0) or 0.0)),
+            float(row.get("accuracy", 0.0) or 0.0),
+        ),
+    )
+
+
 def _slice(blocks: dict[str, torch.Tensor], rows: torch.Tensor) -> dict[str, torch.Tensor]:
     return {name: value[rows] for name, value in blocks.items()}
 
@@ -67,6 +84,10 @@ def train_sft_two_stage(
     hidden_dim: int = 512,
     dropout: float = 0.3,
     num_layers: int = 2,
+    block_dropout: float = 0.0,
+    hop_dropout: float = 0.0,
+    label_dropout: float = 0.0,
+    attention_heads: int = 1,
     lr: float = 0.003,
     weight_decay: float = 1e-4,
     config: TwoStageConfig | None = None,
@@ -88,6 +109,10 @@ def train_sft_two_stage(
         hidden_dim=int(hidden_dim),
         dropout=float(dropout),
         num_layers=int(num_layers),
+        block_dropout=float(block_dropout),
+        hop_dropout=float(hop_dropout),
+        label_dropout=float(label_dropout),
+        attention_heads=int(attention_heads),
     )
     model.fit_block_stats(blocks, train_rows=train_rows)
     train_labels = labels[train_rows]
@@ -137,4 +162,5 @@ def train_sft_two_stage(
         "uses_kd": False,
         **model.diagnostics(),
     }
+    summary["selection_score"] = t23_selection_score(float(summary["valid"]["accuracy"]), float(summary["valid"]["macro_f1"]))
     return TwoStageTrainResult(model=model, logits=logits, summary=summary)

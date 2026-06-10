@@ -1,0 +1,71 @@
+stage: T23-SFT-Arxiv+Condense
+seed: 42
+default_method_path_unchanged: true
+opt_in: true
+
+arxiv:
+  filter_bank_v3:
+    block_dim: 128
+    dtype: float16
+    normalization: destination_row
+    fit_stats_on: train_target_rows
+    blocks:
+      - X0
+      - X1_cite_ref
+      - X1_cited_by
+      - X2_cite_ref
+      - X2_cited_by
+      - X3_mix
+      - X4_mix
+      - Xres1_cite_ref
+      - Xres1_cited_by
+      - Xres2_mix
+      - Xres3_mix
+      - Y0_train_masked
+      - Y1_cite_ref
+      - Y1_cited_by
+      - Y2_cite_ref
+      - Y2_cited_by
+      - Y3_mix
+      - Y4_mix
+      - Yres1_mix
+      - structure
+  head_v3:
+    model_types: [sagn_lite_v3, gamlp_lite_v3]
+    hidden_dims: [512, 768, 1024]
+    layers: [2, 3]
+    label_dropout: [0.0, 0.2]
+    selection_score: valid_acc + 0.05 * valid_macro_f1
+  gates:
+    accuracy: [0.715, 0.725, 0.740]
+
+products:
+  fullgraph_teacher_reference:
+    row: P7_sagn_lite_v2
+    accuracy: 0.7555780580193042
+  full_node_ratio_grid: [0.0005, 0.0025, 0.005, 0.01, 0.02]
+  recovery_rows: [identity, prototype_oracle, shadow_b1, shadow_b2]
+
+dblp:
+  ratio_grid: [0.005, 0.012, 0.024, 0.048, 0.096]
+  methods:
+    - current_reference
+    - sft_centroid_b1
+    - sft_medoid_b1
+    - sft_herding_b1
+    - sft_medoid_b2
+    - sft_herding_b2
+
+acm:
+  run_condensed_sweep_if_fullgraph_accuracy_at_least: 0.93
+  ratio_grid: [0.005, 0.012, 0.024, 0.048, 0.096]
+
+ultra:
+  datasets: [ogbn-arxiv, ogbn-products, ogbn-papers100M, MAG240M]
+  cache_policy: train_target_only_for_ultra
+  forbidden:
+    - all_node_demand_cache_for_ultra
+    - logits_as_input
+    - knowledge_distillation
+    - dense_p2
+    - e_by_d_materialization

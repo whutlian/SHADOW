@@ -147,10 +147,12 @@ def _build_lazy_model(
     num_layers: int,
     block_dropout: float,
     hop_dropout: float,
+    label_dropout: float,
+    attention_heads: int,
     activation: str,
     norm: str,
 ):
-    if str(model_type).endswith("_v2"):
+    if str(model_type).endswith("_v2") or str(model_type).endswith("_v3"):
         return SFTTeacherV3(
             block_dims,
             num_classes=int(num_classes),
@@ -160,6 +162,8 @@ def _build_lazy_model(
             num_layers=int(num_layers),
             block_dropout=float(block_dropout),
             hop_dropout=float(hop_dropout),
+            label_dropout=float(label_dropout),
+            attention_heads=int(attention_heads),
             activation=str(activation),
             norm=str(norm),
         )
@@ -243,6 +247,8 @@ def train_lazy_sft_from_memmap(
     num_layers: int = 2,
     block_dropout: float = 0.0,
     hop_dropout: float = 0.0,
+    label_dropout: float = 0.0,
+    attention_heads: int = 1,
     activation: str = "relu",
     norm: str = "none",
     selected_blocks: list[str] | tuple[str, ...] | None = None,
@@ -274,6 +280,8 @@ def train_lazy_sft_from_memmap(
         num_layers=int(num_layers),
         block_dropout=float(block_dropout),
         hop_dropout=float(hop_dropout),
+        label_dropout=float(label_dropout),
+        attention_heads=int(attention_heads),
         activation=str(activation),
         norm=str(norm),
     ).to(target_device)
@@ -331,7 +339,7 @@ def train_lazy_sft_from_memmap(
             )
             valid["epoch"] = int(current_epoch)
             valid["train_loss"] = total_loss / max(1, seen)
-            score = float(valid["accuracy"]) + 0.10 * float(valid["macro_f1"]) + 0.02 * min(1.0, float(valid["predicted_class_count"]) / max(1.0, float(num_classes)))
+            score = float(valid["accuracy"]) + 0.05 * float(valid["macro_f1"])
             if score > best_score:
                 best_score = score
                 best_valid = dict(valid)
@@ -378,6 +386,7 @@ def train_lazy_sft_from_memmap(
         "test_rows": int(test_rows.numel()),
         "valid": best_valid or {},
         "test": test,
+        "selection_score": float(best_score),
         "training_time_s": float(time.perf_counter() - started),
         "inference_time_s": inference_time,
         "max_batch_materialized_bytes": int(store.max_batch_materialized_bytes),

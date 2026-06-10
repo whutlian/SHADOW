@@ -57,13 +57,22 @@ class SFTTeacherV3(nn.Module):
         block_dims: dict[str, int],
         *,
         num_classes: int,
-        model_type: Literal["sagn_lite_v2", "gamlp_lite_v2", "gamlp_recursive_v2", "residual_block_gated_v2"] = "sagn_lite_v2",
+        model_type: Literal[
+            "sagn_lite_v2",
+            "gamlp_lite_v2",
+            "gamlp_recursive_v2",
+            "residual_block_gated_v2",
+            "sagn_lite_v3",
+            "gamlp_lite_v3",
+        ] = "sagn_lite_v2",
         hidden_dim: int = 512,
         dropout: float = 0.3,
         num_layers: int = 2,
         block_dropout: float = 0.0,
         hop_dropout: float = 0.0,
         label_branch_hidden: int = 128,
+        label_dropout: float = 0.0,
+        attention_heads: int = 1,
         activation: str = "relu",
         norm: str = "none",
     ) -> None:
@@ -75,13 +84,17 @@ class SFTTeacherV3(nn.Module):
         if forbidden:
             raise ValueError(f"logits are forbidden as T2.2 SFT-NL input blocks: {forbidden}")
         self.block_dims = OrderedDict((str(name), int(dim)) for name, dim in block_dims.items())
+        aliases = {"sagn_lite_v3": "sagn_lite_v2", "gamlp_lite_v3": "gamlp_lite_v2"}
         self.model_type = str(model_type)
+        canonical_model_type = aliases.get(self.model_type, self.model_type)
         self.num_classes = int(num_classes)
         self.hidden_dim = int(hidden_dim)
+        self.label_dropout = float(label_dropout)
+        self.attention_heads = int(attention_heads)
         self.label_blocks = [name for name in self.block_dims if name.lower().startswith("y") or name.lower().startswith("label")]
         self.structure_blocks = [name for name in self.block_dims if name == "structure" or name.lower().startswith("degree")]
         self.normalizers = nn.ModuleDict({name: _TorchBlockStandardizer(dim, name=name) for name, dim in self.block_dims.items()})
-        if model_type == "sagn_lite_v2":
+        if canonical_model_type == "sagn_lite_v2":
             self.core = SAGNLiteV2Core(
                 self.block_dims,
                 hidden_dim=hidden_dim,
@@ -92,14 +105,14 @@ class SFTTeacherV3(nn.Module):
                 activation=activation,
                 norm=norm,
             )
-        elif model_type == "gamlp_lite_v2":
+        elif canonical_model_type == "gamlp_lite_v2":
             self.core = GAMLPLiteCore(self.block_dims, hidden_dim=hidden_dim, dropout=dropout)
-        elif model_type == "gamlp_recursive_v2":
+        elif canonical_model_type == "gamlp_recursive_v2":
             self.core = GAMLPRecursiveV2Core(self.block_dims, hidden_dim=hidden_dim, dropout=dropout, num_layers=num_layers, activation=activation, norm=norm)
-        elif model_type == "residual_block_gated_v2":
+        elif canonical_model_type == "residual_block_gated_v2":
             self.core = ResidualBlockGatedCore(self.block_dims, hidden_dim=hidden_dim, dropout=dropout)
         else:
-            raise ValueError("unsupported T2.2 SFT teacher model_type")
+            raise ValueError("unsupported T23 SFT teacher model_type")
         self.classifier = nn.Linear(int(hidden_dim), int(num_classes))
 
     def _check(self, blocks: dict[str, torch.Tensor]) -> None:
@@ -117,7 +130,13 @@ class SFTTeacherV3(nn.Module):
         return self.block_norm_metadata()
 
     def _normalized(self, blocks: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
-        return {name: self.normalizers[name](blocks[name].to(torch.float32)) for name in self.block_dims}
+        out = {name: self.normalizers[name](blocks[name].to(torch.float32)) for name in self.block_dims}
+        if self.training and self.label_dropout > 0.0:
+            keep_prob = max(1e-12, 1.0 - float(self.label_dropout))
+            for name in self.label_blocks:
+                mask = (torch.rand(out[name].shape, device=out[name].device) < keep_prob).to(out[name].dtype)
+                out[name] = out[name] * mask / keep_prob
+        return out
 
     def forward(self, blocks: dict[str, torch.Tensor]) -> torch.Tensor:
         self._check(blocks)
@@ -141,6 +160,8 @@ class SFTTeacherV3(nn.Module):
             "block_norm_stats_source": "train_target_rows",
             "has_label_branch": bool(self.label_blocks),
             "has_structure_branch": bool(self.structure_blocks),
+            "label_dropout": float(self.label_dropout),
+            "attention_heads": int(self.attention_heads),
             "label_blocks": list(self.label_blocks),
             "structure_blocks": list(self.structure_blocks),
             "uses_logits_as_input": False,

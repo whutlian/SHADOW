@@ -1,0 +1,6 @@
+accuracy,best_row,dataset,macro_f1,selection_score,status
+0.7016645063061951,A3_true_sagn_lite_v3,ogbn-arxiv,0.5048992808650066,0.7460688483932719,completed_replay
+0.6083323955535889,shadow_b1,ogbn-products,0.3340439060108459,,completed_proxy
+0.924647867679596,current_reference,dblp,0.920296385884285,,completed_replay
+0.9159584641456604,ACM_H512_D0p3_CE,acm,0.9164112210273743,0.9861617396275203,completed_replay
+,train_target_only_policy,ultra-dryrun,,,completed
