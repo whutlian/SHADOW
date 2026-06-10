@@ -9,16 +9,28 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from scripts.run_t25_arxiv_sft_v4 import build_rows as build_t25_arxiv_rows
-from scripts.t24_common import ensure_report, markdown_table, write_csv
+from scripts.t24_common import ensure_report, markdown_table, read_csv, write_csv
 from shadow_hgc.sft.t26_contract import T26_REQUIRED_FIELDS, make_t26_row
 
 
 FIELDS = T26_REQUIRED_FIELDS + ["variant", "selected_blocks", "teacher_gate_A1", "teacher_gate_A2", "teacher_gate_A3", "condensation_status"]
 
 
-def build_rows(seed: int = 42) -> list[dict[str, Any]]:
+def _source_rows(seed: int, actual_source_csv: str | Path | None) -> list[dict[str, Any]]:
+    if actual_source_csv not in {"", None}:
+        source_path = Path(actual_source_csv)
+        if source_path.exists():
+            rows = [row for row in read_csv(source_path) if row.get("dataset") == "ogbn-arxiv"]
+            if rows:
+                for row in rows:
+                    row.setdefault("source_table", str(source_path))
+                return rows
+    return build_t25_arxiv_rows(seed=int(seed))
+
+
+def build_rows(seed: int = 42, actual_source_csv: str | Path | None = "experiments/tables/t26_arxiv_teacher_actual_seed42.csv") -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
-    for source in build_t25_arxiv_rows(seed=int(seed)):
+    for source in _source_rows(int(seed), actual_source_csv):
         acc = source.get("accuracy", "")
         macro = source.get("macro_f1", "")
         predicted = source.get("predicted_class_count", source.get("predicted_classes", ""))
@@ -41,7 +53,7 @@ def build_rows(seed: int = 42) -> list[dict[str, Any]]:
             promotion_status="not_promoted",
             promotion_reason="teacher_first_gate_only" if gate_a1 else "A1_teacher_gate_not_met",
             failure_reason="" if gate_a1 else "A1_teacher_gate_not_met",
-            notes="Condensation rows remain blocked until the arxiv teacher reaches A1 >= 0.715.",
+            notes="Arxiv teacher-first gate row; actual source is used when experiments/tables/t26_arxiv_teacher_actual_seed42.csv exists.",
             full_edge_scans=source.get("full_edge_scans", ""),
             cache_bytes=source.get("cache_bytes", ""),
             uses_dense_p2=source.get("uses_dense_p2", False),
@@ -60,10 +72,11 @@ def build_rows(seed: int = 42) -> list[dict[str, Any]]:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build T26 arxiv teacher-first sweep.")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--actual-source-csv", default="experiments/tables/t26_arxiv_teacher_actual_seed42.csv")
     parser.add_argument("--csv", default="experiments/tables/t26_arxiv_teacher_sweep_seed42.csv")
     parser.add_argument("--report", default="experiments/summaries/t26_arxiv_teacher_notes.md")
     args = parser.parse_args()
-    rows = build_rows(seed=int(args.seed))
+    rows = build_rows(seed=int(args.seed), actual_source_csv=args.actual_source_csv)
     output = write_csv(args.csv, rows, FIELDS)
     ensure_report(
         args.report,

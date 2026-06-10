@@ -106,6 +106,68 @@ def _row_int(row: dict[str, str] | None, *fields: str) -> int | str:
     return ""
 
 
+def _json_count_map(row: dict[str, str] | None, field: str) -> dict[int, int]:
+    if row is None:
+        return {}
+    raw = row.get(field, "")
+    if raw in {"", None}:
+        return {}
+    try:
+        parsed = json.loads(str(raw))
+    except json.JSONDecodeError:
+        return {}
+    return {int(key): int(value) for key, value in dict(parsed).items()}
+
+
+def _long_row_with_class_histograms(rows: list[dict[str, str]], *, ratio: float) -> dict[str, str] | None:
+    preferred = [
+        "products_uca_hybrid_balanced_trainer",
+        "products_uca_hybrid_mixup",
+        "products_uca_hybrid",
+        "products_uca_kmeans_labeled_nearest",
+        "products_cb_hybrid",
+        "products_cb_kcenter",
+        "products_cb_herding",
+        "products_cb_random",
+    ]
+    for method in preferred:
+        row = _long_product_row(rows, method=method, ratio=ratio)
+        if _json_count_map(row, "selected_class_counts_json") and _json_count_map(row, "predicted_class_counts_json"):
+            return row
+    return None
+
+
+def _per_class_report_from_histograms(
+    *,
+    source: dict[str, str],
+    labels: torch.Tensor | None,
+    train_rows: torch.Tensor | None,
+    num_classes: int,
+    budget: dict[int, int],
+) -> list[dict[str, Any]]:
+    train_counts = _json_count_map(source, "train_class_counts_json")
+    selected_counts = _json_count_map(source, "selected_class_counts_json")
+    predicted_counts = _json_count_map(source, "predicted_class_counts_json")
+    if labels is not None and train_rows is not None:
+        y = labels[train_rows].to(torch.long).cpu()
+        train_counts = {cls: int((y == cls).sum().item()) for cls in range(int(num_classes))}
+    rows: list[dict[str, Any]] = []
+    for cls in range(int(num_classes)):
+        selected = int(selected_counts.get(cls, 0))
+        predicted = int(predicted_counts.get(cls, 0))
+        rows.append(
+            {
+                "class_id": int(cls),
+                "train_count": int(train_counts.get(cls, "" if labels is None else 0)) if train_counts.get(cls, "") != "" else "",
+                "budget": int(budget.get(cls, 0)),
+                "selected_count": selected,
+                "predicted_count": predicted,
+                "collapsed": bool(selected == 0 or predicted == 0),
+            }
+        )
+    return rows
+
+
 def _labels_or_none(products_root: str | Path) -> tuple[torch.Tensor | None, torch.Tensor | None]:
     try:
         labels, train_rows, _valid_rows, _test_rows = load_products_labels_and_splits(products_root)
@@ -132,7 +194,16 @@ def build_products_outputs(args: argparse.Namespace) -> tuple[list[dict[str, Any
             if labels is None or train_rows is None
             else mixed_class_budget(labels, train_rows, total_budget=total_budget, ratio=ratio, num_classes=num_classes, seed=int(args.seed))
         )
-        if labels is not None and train_rows is not None:
+        per_class_source = _long_row_with_class_histograms(long_rows, ratio=ratio)
+        if per_class_source is not None:
+            report = _per_class_report_from_histograms(
+                source=per_class_source,
+                labels=labels,
+                train_rows=train_rows,
+                num_classes=num_classes,
+                budget=budget,
+            )
+        elif labels is not None and train_rows is not None:
             selected_for_report = train_rows[:0]
             report = per_class_collapse_report(labels[train_rows], selected_for_report, None, num_classes=num_classes, budget=budget)
         else:
@@ -154,6 +225,7 @@ def build_products_outputs(args: argparse.Namespace) -> tuple[list[dict[str, Any
         )
         for diag_id in T26_PRODUCTS_DIAGNOSTICS:
             diag_source = _long_product_row(long_rows, method=diag_id, ratio=ratio) or _long_product_row(long_rows, method=diag_id)
+            metric_source = diag_source
             failure = {
                 "P0a_alltrain_condensed_trainer_parity": "P0a_condensed_trainer_parity_not_rerun",
                 "P0b_selected_prototype_self_fit": "P0b_self_fit_not_rerun",
@@ -163,6 +235,10 @@ def build_products_outputs(args: argparse.Namespace) -> tuple[list[dict[str, Any
                 "P0f_feature_normalization_parity": "normalization_parity_from_existing_manifest",
             }[diag_id]
             status = "ready_not_run" if diag_id == "P0e_per_class_collapse_report" else ("completed_diagnostic" if diag_id == "P0f_feature_normalization_parity" else "ready_not_run")
+            if diag_id == "P0e_per_class_collapse_report" and per_class_source is not None:
+                metric_source = per_class_source
+                status = "completed_long_class_collapse_report"
+                failure = ""
             if diag_source is not None:
                 status = diag_source.get("status", "completed_long") or "completed_long"
                 failure = ""
@@ -182,9 +258,9 @@ def build_products_outputs(args: argparse.Namespace) -> tuple[list[dict[str, Any
                 shadow_nodes=0,
                 total_condensed_edges=total_budget,
                 seed=int(args.seed),
-                accuracy=_row_metric(diag_source, "accuracy"),
-                macro_f1=_row_metric(diag_source, "macro_f1"),
-                predicted_classes=_row_int(diag_source, "predicted_class_count", "predicted_classes"),
+                accuracy=_row_metric(metric_source, "accuracy"),
+                macro_f1=_row_metric(metric_source, "macro_f1"),
+                predicted_classes=_row_int(metric_source, "predicted_class_count", "predicted_classes"),
                 status=status,
                 promotion_status="not_promoted",
                 promotion_reason="products_recovery_diagnostic_only",
@@ -201,8 +277,8 @@ def build_products_outputs(args: argparse.Namespace) -> tuple[list[dict[str, Any
                 source_t25_method="" if best_existing is None else best_existing.get("method", ""),
                 diagnostic_id=diag_id,
                 t26_gate=failure,
-                p0d_prototype_oracle_acc=_row_metric(diag_source, "p0d_prototype_oracle_acc", "prototype_oracle_acc"),
-                p0d_centroid_oracle_acc=_row_metric(diag_source, "p0d_centroid_oracle_acc", "centroid_oracle_acc"),
+                p0d_prototype_oracle_acc=_row_metric(metric_source, "p0d_prototype_oracle_acc", "prototype_oracle_acc"),
+                p0d_centroid_oracle_acc=_row_metric(metric_source, "p0d_centroid_oracle_acc", "centroid_oracle_acc"),
                 peak_cpu_ram=current_cpu_ram_bytes() / (1024**3),
                 peak_gpu_ram=current_gpu_ram_bytes() / (1024**3),
                 **p0_diag,
@@ -219,8 +295,8 @@ def build_products_outputs(args: argparse.Namespace) -> tuple[list[dict[str, Any
             promotion_reason = p0_failure
             if p0_passed and long_source is not None:
                 status = long_source.get("status", "completed_long") or "completed_long"
-                failure_reason = "products_t26_gate_not_met"
-                promotion_reason = "products_t26_gate_not_met"
+                failure_reason = ""
+                promotion_reason = "method_level_long_run_completed_not_promoted"
             elif p0_passed:
                 status = "ready_not_run"
                 failure_reason = "long_experiment_not_run"

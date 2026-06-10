@@ -1,6 +1,10 @@
 from pathlib import Path
 
+import torch
+
 from scripts.run_t26_arxiv_teacher_sweep import build_rows as build_arxiv_rows
+from scripts.run_t26_arxiv_teacher_actual import _row_from_summary as arxiv_actual_row_from_summary
+from scripts.run_t26_products_long_experiments import _select_train_target_uca_light
 from scripts.run_t26_products_recovery import build_products_outputs
 from scripts.run_t26_reddit_trainer_sweep import build_rows as build_reddit_rows
 from scripts.run_t26_stage import REQUIRED_OUTPUTS, _build_requirement_checks
@@ -27,6 +31,56 @@ def test_t26_arxiv_teacher_rows_block_condensation_until_a1():
     assert all(row["stage"] == "t26" for row in rows)
     assert any(row["condensation_status"] == "blocked_by_teacher_gate" for row in rows)
     assert all(float(row["requested_full_node_ratio"]) == float(row["actual_full_node_ratio"]) for row in rows)
+
+
+def test_t26_arxiv_teacher_rows_use_actual_a1_source_when_present(tmp_path: Path):
+    source = tmp_path / "arxiv_actual.csv"
+    source.write_text(
+        "dataset,variant,status,accuracy,macro_f1,predicted_class_count,selected_blocks,full_edge_scans,cache_bytes\n"
+        "ogbn-arxiv,A1_real_teacher,completed_long,0.716,0.52,40,\"[\"\"self\"\"]\",12,1234\n",
+        encoding="utf-8",
+    )
+
+    rows = build_arxiv_rows(seed=42, actual_source_csv=source)
+
+    assert rows
+    assert all(row["teacher_gate_A1"] is True for row in rows)
+    assert all(row["condensation_status"] == "ready_for_condensation" for row in rows)
+    assert rows[0]["variant"] == "A1_real_teacher"
+
+
+def test_t26_arxiv_actual_row_keeps_forbidden_flags_false():
+    row = arxiv_actual_row_from_summary(
+        variant="A1_unit",
+        summary={
+            "test": {"accuracy": 0.716, "macro_f1": 0.52, "predicted_class_count": 40},
+            "valid": {"accuracy": 0.72, "macro_f1": 0.53},
+            "training_time_s": 1.0,
+            "inference_time_s": 0.5,
+            "peak_cpu_ram_gb": 2.0,
+            "peak_gpu_ram_gb": 1.0,
+            "block_dims": {"self": 64},
+            "epochs_ran": 3,
+            "model_type": "sagn_lite_v4",
+            "loss_type": "cross_entropy",
+            "max_batch_materialized_bytes": 123,
+            "uses_logits_as_input": False,
+            "uses_teacher_logits": False,
+            "uses_kd": False,
+            "uses_dense_p2": False,
+            "uses_bounded_edges": False,
+            "uses_e_by_d_materialization": False,
+        },
+        selected_blocks=["X0"],
+        manifest_dir="manifest",
+        seed=42,
+    )
+
+    assert row["status"] == "completed_long"
+    assert row["teacher_gate_A1"] is True
+    assert row["uses_logits_as_input"] is False
+    assert row["uses_teacher_logits"] is False
+    assert row["uses_kd"] is False
 
 
 def test_t26_ultra_rows_keep_forbidden_flags_false():
@@ -106,6 +160,59 @@ def test_t26_products_long_results_unblock_products_rows(tmp_path: Path):
     assert uca["accuracy"] == 0.71
 
 
+def test_t26_light_uca_selection_returns_budgeted_train_rows():
+    signature = torch.randn(20, 8, generator=torch.Generator().manual_seed(7))
+    train_rows = torch.arange(100, 120, dtype=torch.long)
+
+    selected, stats = _select_train_target_uca_light(signature, train_rows, budget=6, num_domains=4, seed=3)
+
+    assert selected.numel() == 6
+    assert set(selected.tolist()).issubset(set(train_rows.tolist()))
+    assert stats["uca_num_domains"] == 4
+    assert stats["uca_uses_valid_test_labels"] is False
+    assert "selected_coverage_gap_l1" in stats
+
+
+def test_t26_products_long_histograms_make_real_per_class_report(tmp_path: Path):
+    long_csv = tmp_path / "products_long.csv"
+    t25_csv = tmp_path / "t25.csv"
+    t25_csv.write_text(
+        "dataset,method,requested_full_node_ratio,accuracy,macro_f1,predicted_class_count,products_diag_memmap_row_order_matches_node_id,products_diag_masks_aligned\n"
+        "ogbn-products,P0_identity_replay,0.0025,0.75,0.4,47,True,True\n",
+        encoding="utf-8",
+    )
+    long_csv.write_text(
+        "dataset,method,requested_full_node_ratio,accuracy,macro_f1,predicted_class_count,status,p0a_alltrain_acc,p0b_self_fit_acc,selected_class_counts_json,predicted_class_counts_json,train_class_counts_json\n"
+        "ogbn-products,P0a_alltrain_condensed_trainer_parity,0.08,0.75,0.40,47,completed_long,0.75,,,,\n"
+        "ogbn-products,P0b_selected_prototype_self_fit,0.0025,0.96,0.80,47,completed_long,,0.96,,,\n"
+        "ogbn-products,products_uca_hybrid_balanced_trainer,0.0025,0.71,0.30,46,completed_long,,,\"{\"\"0\"\": 2, \"\"1\"\": 1}\",\"{\"\"0\"\": 5, \"\"1\"\": 0}\",\"{\"\"0\"\": 10, \"\"1\"\": 8}\"\n",
+        encoding="utf-8",
+    )
+
+    class Args:
+        products_root = "missing"
+        t25_products_csv = t25_csv
+        long_results_csv = long_csv
+        ratios = [0.0025]
+        uca_domains = 8
+        seed = 42
+        per_class_csv = tmp_path / "per_class.csv"
+
+    diagnostics, _uca_rows, per_class = build_products_outputs(Args())
+    p0e = next(row for row in diagnostics if row["method"] == "P0e_per_class_collapse_report")
+    class_zero = next(row for row in per_class if int(row["class_id"]) == 0)
+    class_one = next(row for row in per_class if int(row["class_id"]) == 1)
+
+    assert p0e["status"] == "completed_long_class_collapse_report"
+    assert p0e["failure_reason"] == ""
+    assert class_zero["selected_count"] == 2
+    assert class_zero["predicted_count"] == 5
+    assert class_zero["collapsed"] is False
+    assert class_one["selected_count"] == 1
+    assert class_one["predicted_count"] == 0
+    assert class_one["collapsed"] is True
+
+
 def test_t26_stage_checks_mark_products_p0_complete_after_long_pass():
     rows = [
         {
@@ -154,6 +261,62 @@ def test_t26_stage_checks_mark_products_p0_complete_after_long_pass():
 
     assert checks["products_P0a"] == "completed"
     assert checks["products_P0b"] == "completed"
+
+
+def test_t26_stage_checks_complete_products_uca_per_class_and_arxiv_when_real_rows_exist():
+    rows = [
+        {
+            "dataset": "ogbn-products",
+            "method": "P0a_alltrain_condensed_trainer_parity",
+            "status": "completed_long",
+            "p0a_passed": True,
+            "promotion_status": "not_promoted",
+        },
+        {
+            "dataset": "ogbn-products",
+            "method": "P0b_selected_prototype_self_fit",
+            "requested_full_node_ratio": 0.0025,
+            "status": "completed_long",
+            "p0b_passed": True,
+            "promotion_status": "not_promoted",
+        },
+        {
+            "dataset": "ogbn-products",
+            "method": "P0b_selected_prototype_self_fit",
+            "requested_full_node_ratio": 0.005,
+            "status": "completed_long",
+            "p0b_passed": True,
+            "promotion_status": "not_promoted",
+        },
+        {
+            "dataset": "ogbn-products",
+            "method": "P0e_per_class_collapse_report",
+            "status": "completed_long_class_collapse_report",
+            "failure_reason": "",
+            "promotion_status": "not_promoted",
+        },
+        {
+            "dataset": "ogbn-products",
+            "method": "products_uca_hybrid_balanced_trainer",
+            "requested_full_node_ratio": 0.0025,
+            "status": "completed_long",
+            "accuracy": 0.71,
+            "promotion_status": "not_promoted",
+            "uca_uses_valid_test_labels": False,
+        },
+        {
+            "dataset": "ogbn-arxiv",
+            "method": "arxiv_teacher_sweep",
+            "condensation_status": "ready_for_condensation",
+            "promotion_status": "not_promoted",
+        },
+    ]
+
+    checks = {row["requirement_check"]: row["requirement_status"] for row in _build_requirement_checks(rows)}
+
+    assert checks["products_per_class_report"] == "completed"
+    assert checks["products_UCA"] == "completed"
+    assert checks["arxiv_teacher_first"] == "completed"
 
 
 def test_t26_stage_checks_block_partial_p0b_ratio_coverage():

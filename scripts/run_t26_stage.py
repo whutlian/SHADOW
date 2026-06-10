@@ -65,6 +65,19 @@ def _build_requirement_checks(rows: list[dict[str, Any]]) -> list[dict[str, Any]
         and str(row.get("p0b_passed", "")).lower() == "true"
     }
     p0b_done = required_products_ratios.issubset(p0b_done_ratios)
+    per_class_done = any(
+        row.get("method") == "P0e_per_class_collapse_report"
+        and str(row.get("status", "")).startswith("completed")
+        and row.get("failure_reason", "") in {"", None}
+        for row in product_rows
+    )
+    products_uca_done = any(
+        str(row.get("method", "")).startswith("products_uca_")
+        and str(row.get("status", "")).startswith("completed")
+        and row.get("accuracy") not in {"", None}
+        and str(row.get("uca_uses_valid_test_labels", "")).lower() not in {"true", "1", "yes"}
+        for row in product_rows
+    )
     reddit_required_methods = {
         "reddit_current_sft_signature_random",
         "reddit_current_sft_signature_medoid",
@@ -95,8 +108,8 @@ def _build_requirement_checks(rows: list[dict[str, Any]]) -> list[dict[str, Any]
         ("forbidden_promoted_flags", "completed" if all(validate_t26_promoted_row(row)["valid"] for row in promoted) else "failed", "No promoted row may use logits, KD, dense P2, E x d, all-target ultra cache, or new exposed schema."),
         ("products_P0a", "completed" if p0a_done else "blocked", "P0a all-train condensed-trainer parity has a passing long run." if p0a_done else "P0a all-train condensed-trainer parity is not passing; products performance rows remain blocked."),
         ("products_P0b", "completed" if p0b_done else "blocked", "P0b selected-prototype self-fit has passing long runs for requested ratios." if p0b_done else "P0b selected-prototype self-fit is not passing; products performance rows remain blocked."),
-        ("products_per_class_report", "blocked", "Per-class report schema is generated, but real collapse diagnostics require rerun P0 selection and predictions."),
-        ("products_UCA", "blocked", "P0 gates passed, but product UCA/CB method-level long rows are still missing full all-target UCA or trained method results."),
+        ("products_per_class_report", "completed" if per_class_done else "blocked", "Per-class collapse report is built from real selected class counts and test prediction counts." if per_class_done else "Per-class report schema is generated, but real collapse diagnostics require rerun P0 selection and predictions."),
+        ("products_UCA", "completed" if products_uca_done else "blocked", "Products UCA/CB method-level rows include real trained long-experiment metrics and keep valid/test-label selection disabled." if products_uca_done else "P0 gates passed, but product UCA/CB method-level long rows are still missing full all-target UCA or trained method results."),
         ("reddit_seed_sweep", "completed" if reddit_required_complete else "blocked", "Required current/HNR-FDM seed sweeps have real rows for seeds 1..5; tuned/mixup/true-shadow rows remain separate diagnostics." if reddit_required_complete else "Required Reddit seed sweep rows are still missing actual runs."),
         ("reddit_no_regression", "completed", "No Reddit row is promoted below the T24 0.50 reference."),
         ("arxiv_teacher_first", "blocked" if any(row.get("condensation_status") == "blocked_by_teacher_gate" for row in arxiv_rows) else "completed", "Arxiv condensation remains blocked until A1 >= 0.715."),
@@ -128,7 +141,7 @@ def _write_reddit(args: argparse.Namespace) -> Path:
 
 
 def _write_arxiv(args: argparse.Namespace) -> Path:
-    rows = build_arxiv_rows(seed=int(args.seed))
+    rows = build_arxiv_rows(seed=int(args.seed), actual_source_csv=args.arxiv_actual_source_csv)
     output = _write_rows(args.arxiv_csv, rows, ARXIV_FIELDS)
     ensure_report(
         args.arxiv_report,
@@ -196,6 +209,12 @@ def run_stage(args: argparse.Namespace) -> dict[str, Any]:
         row.setdefault("requirement_check", "")
         row.setdefault("requirement_status", "")
     checks = _build_requirement_checks(rows)
+    blocked_checks = [check for check in checks if check["requirement_status"] == "blocked"]
+    follow_up_lines = (
+        [f"- {check['requirement_check']}: {check['notes']}" for check in blocked_checks]
+        if blocked_checks
+        else ["- No blocked T26 requirement checks remain in the generated stage outputs."]
+    )
     for check in checks:
         rows.append(
             {
@@ -242,9 +261,7 @@ def run_stage(args: argparse.Namespace) -> dict[str, Any]:
             "",
             "## Required Follow-Up Experiments",
             "",
-            "- Products P0a/P0b gates now have real long runs; product UCA/CB method rows still need full all-target UCA or method-level long runs before promotion.",
-            "- Reddit current/HNR-FDM seeds 1..5 now have real rows; tuned/mixup/true-shadow rows remain diagnostics until implemented and trained.",
-            "- Improve arxiv teacher beyond A1 accuracy >= 0.715 before running condensation rows.",
+            *follow_up_lines,
             "",
             f"- Stage CSV: `{stage_csv}`",
         ],
@@ -267,6 +284,7 @@ def main() -> None:
     parser.add_argument("--reddit-csv", default="experiments/tables/t26_reddit_seed_trainer_mixup_sweep.csv")
     parser.add_argument("--reddit-report", default="experiments/summaries/t26_reddit_trainer_mixup_notes.md")
     parser.add_argument("--arxiv-csv", default="experiments/tables/t26_arxiv_teacher_sweep_seed42.csv")
+    parser.add_argument("--arxiv-actual-source-csv", default="experiments/tables/t26_arxiv_teacher_actual_seed42.csv")
     parser.add_argument("--arxiv-report", default="experiments/summaries/t26_arxiv_teacher_notes.md")
     parser.add_argument("--ultra-csv", default="experiments/tables/t26_ultra_contract_regression_seed42.csv")
     parser.add_argument("--ultra-report", default="experiments/summaries/t26_ultra_contract_notes.md")

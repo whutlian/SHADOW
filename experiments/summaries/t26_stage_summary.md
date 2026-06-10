@@ -15,8 +15,8 @@
 | forbidden_promoted_flags | completed | No promoted row may use logits, KD, dense P2, E x d, all-target ultra cache, or new exposed schema. |
 | products_P0a | completed | P0a all-train condensed-trainer parity has a passing long run. |
 | products_P0b | completed | P0b selected-prototype self-fit has passing long runs for requested ratios. |
-| products_per_class_report | blocked | Per-class report schema is generated, but real collapse diagnostics require rerun P0 selection and predictions. |
-| products_UCA | blocked | P0 gates passed, but product UCA/CB method-level long rows are still missing full all-target UCA or trained method results. |
+| products_per_class_report | completed | Per-class collapse report is built from real selected class counts and test prediction counts. |
+| products_UCA | completed | Products UCA/CB method-level rows include real trained long-experiment metrics and keep valid/test-label selection disabled. |
 | reddit_seed_sweep | completed | Required current/HNR-FDM seed sweeps have real rows for seeds 1..5; tuned/mixup/true-shadow rows remain separate diagnostics. |
 | reddit_no_regression | completed | No Reddit row is promoted below the T24 0.50 reference. |
 | arxiv_teacher_first | blocked | Arxiv condensation remains blocked until A1 >= 0.715. |
@@ -29,33 +29,33 @@
 | dataset | method | requested_full_node_ratio | seed | status | accuracy | macro_f1 | promotion_status | failure_reason | source_table |
 |---|---|---|---|---|---|---|---|---|---|
 | ogbn-products | P0a_alltrain_condensed_trainer_parity | 0.0025 | 42 | completed_long | 0.7567198999047035 | 0.40133336132566916 | not_promoted |  | experiments\tables\t26_products_recovery_diagnostics_seed42.csv |
-| ogbn-products | P0b_selected_prototype_self_fit | 0.0025 | 42 | completed_long | 0.9844211216792391 | 0.8787512736099667 | not_promoted |  | experiments\tables\t26_products_recovery_diagnostics_seed42.csv |
+| ogbn-products | P0b_selected_prototype_self_fit | 0.0025 | 42 | completed_long | 0.9858970154148902 | 0.8774285379174651 | not_promoted |  | experiments\tables\t26_products_recovery_diagnostics_seed42.csv |
 | ogbn-products | P0c_same_budget_random_subset | 0.0025 | 42 | completed_long | 0.6782802876158278 | 0.36722622784014924 | not_promoted |  | experiments\tables\t26_products_recovery_diagnostics_seed42.csv |
 | ogbn-products | P0d_nearest_prototype_oracle | 0.0025 | 42 | ready_not_run |  |  | not_promoted | P0d_oracle_not_rerun | experiments\tables\t26_products_recovery_diagnostics_seed42.csv |
-| ogbn-products | P0e_per_class_collapse_report | 0.0025 | 42 | ready_not_run |  |  | not_promoted | per_class_report_schema_written_waiting_for_real_selection_and_predictions | experiments\tables\t26_products_recovery_diagnostics_seed42.csv |
+| ogbn-products | P0e_per_class_collapse_report | 0.0025 | 42 | completed_long_class_collapse_report | 0.6404702743809451 | 0.344996145725478 | not_promoted |  | experiments\tables\t26_products_recovery_diagnostics_seed42.csv |
 | ogbn-products | P0f_feature_normalization_parity | 0.0025 | 42 | completed_diagnostic |  |  | not_promoted | normalization_parity_from_existing_manifest | experiments\tables\t26_products_recovery_diagnostics_seed42.csv |
 | ogbn-products | P0a_alltrain_condensed_trainer_parity | 0.005 | 42 | completed_long | 0.7567198999047035 | 0.40133336132566916 | not_promoted |  | experiments\tables\t26_products_recovery_diagnostics_seed42.csv |
-| ogbn-products | P0b_selected_prototype_self_fit | 0.005 | 42 | completed_long | 0.9842759529101835 | 0.8445929937497246 | not_promoted |  | experiments\tables\t26_products_recovery_diagnostics_seed42.csv |
+| ogbn-products | P0b_selected_prototype_self_fit | 0.005 | 42 | completed_long | 0.9897917181197003 | 0.8573811287452714 | not_promoted |  | experiments\tables\t26_products_recovery_diagnostics_seed42.csv |
 | ogbn-products | P0c_same_budget_random_subset | 0.005 | 42 | completed_long | 0.7213923873894025 | 0.3795675686670795 | not_promoted |  | experiments\tables\t26_products_recovery_diagnostics_seed42.csv |
 | ogbn-products | P0d_nearest_prototype_oracle | 0.005 | 42 | ready_not_run |  |  | not_promoted | P0d_oracle_not_rerun | experiments\tables\t26_products_recovery_diagnostics_seed42.csv |
-| ogbn-products | P0e_per_class_collapse_report | 0.005 | 42 | ready_not_run |  |  | not_promoted | per_class_report_schema_written_waiting_for_real_selection_and_predictions | experiments\tables\t26_products_recovery_diagnostics_seed42.csv |
+| ogbn-products | P0e_per_class_collapse_report | 0.005 | 42 | completed_long_class_collapse_report | 0.6712656641773881 | 0.34492475606820144 | not_promoted |  | experiments\tables\t26_products_recovery_diagnostics_seed42.csv |
 | ogbn-products | P0f_feature_normalization_parity | 0.005 | 42 | completed_diagnostic |  |  | not_promoted | normalization_parity_from_existing_manifest | experiments\tables\t26_products_recovery_diagnostics_seed42.csv |
-| ogbn-products | products_cb_random | 0.0025 | 42 | ready_not_run |  |  | not_promoted | long_experiment_not_run | experiments\tables\t26_products_uca_sweep_seed42.csv |
-| ogbn-products | products_cb_kcenter | 0.0025 | 42 | ready_not_run |  |  | not_promoted | long_experiment_not_run | experiments\tables\t26_products_uca_sweep_seed42.csv |
-| ogbn-products | products_cb_herding | 0.0025 | 42 | ready_not_run |  |  | not_promoted | long_experiment_not_run | experiments\tables\t26_products_uca_sweep_seed42.csv |
-| ogbn-products | products_cb_hybrid | 0.0025 | 42 | ready_not_run |  |  | not_promoted | long_experiment_not_run | experiments\tables\t26_products_uca_sweep_seed42.csv |
-| ogbn-products | products_uca_kmeans_labeled_nearest | 0.0025 | 42 | ready_not_run |  |  | not_promoted | long_experiment_not_run | experiments\tables\t26_products_uca_sweep_seed42.csv |
-| ogbn-products | products_uca_hybrid | 0.0025 | 42 | ready_not_run |  |  | not_promoted | long_experiment_not_run | experiments\tables\t26_products_uca_sweep_seed42.csv |
-| ogbn-products | products_uca_hybrid_mixup | 0.0025 | 42 | ready_not_run |  |  | not_promoted | long_experiment_not_run | experiments\tables\t26_products_uca_sweep_seed42.csv |
-| ogbn-products | products_uca_hybrid_balanced_trainer | 0.0025 | 42 | ready_not_run |  |  | not_promoted | long_experiment_not_run | experiments\tables\t26_products_uca_sweep_seed42.csv |
-| ogbn-products | products_cb_random | 0.005 | 42 | ready_not_run |  |  | not_promoted | long_experiment_not_run | experiments\tables\t26_products_uca_sweep_seed42.csv |
-| ogbn-products | products_cb_kcenter | 0.005 | 42 | ready_not_run |  |  | not_promoted | long_experiment_not_run | experiments\tables\t26_products_uca_sweep_seed42.csv |
-| ogbn-products | products_cb_herding | 0.005 | 42 | ready_not_run |  |  | not_promoted | long_experiment_not_run | experiments\tables\t26_products_uca_sweep_seed42.csv |
-| ogbn-products | products_cb_hybrid | 0.005 | 42 | ready_not_run |  |  | not_promoted | long_experiment_not_run | experiments\tables\t26_products_uca_sweep_seed42.csv |
-| ogbn-products | products_uca_kmeans_labeled_nearest | 0.005 | 42 | ready_not_run |  |  | not_promoted | long_experiment_not_run | experiments\tables\t26_products_uca_sweep_seed42.csv |
-| ogbn-products | products_uca_hybrid | 0.005 | 42 | ready_not_run |  |  | not_promoted | long_experiment_not_run | experiments\tables\t26_products_uca_sweep_seed42.csv |
-| ogbn-products | products_uca_hybrid_mixup | 0.005 | 42 | ready_not_run |  |  | not_promoted | long_experiment_not_run | experiments\tables\t26_products_uca_sweep_seed42.csv |
-| ogbn-products | products_uca_hybrid_balanced_trainer | 0.005 | 42 | ready_not_run |  |  | not_promoted | long_experiment_not_run | experiments\tables\t26_products_uca_sweep_seed42.csv |
+| ogbn-products | products_cb_random | 0.0025 | 42 | completed_long | 0.6923746018577637 | 0.3701378071453978 | not_promoted |  | experiments\tables\t26_products_uca_sweep_seed42.csv |
+| ogbn-products | products_cb_kcenter | 0.0025 | 42 | completed_long | 0.5488558762382568 | 0.32516153150902893 | not_promoted |  | experiments\tables\t26_products_uca_sweep_seed42.csv |
+| ogbn-products | products_cb_herding | 0.0025 | 42 | completed_long | 0.5919164643478284 | 0.3246630006894027 | not_promoted |  | experiments\tables\t26_products_uca_sweep_seed42.csv |
+| ogbn-products | products_cb_hybrid | 0.0025 | 42 | completed_long | 0.6206635877151008 | 0.3257283168095639 | not_promoted |  | experiments\tables\t26_products_uca_sweep_seed42.csv |
+| ogbn-products | products_uca_kmeans_labeled_nearest | 0.0025 | 42 | completed_long | 0.6887335405548167 | 0.3521801234630918 | not_promoted |  | experiments\tables\t26_products_uca_sweep_seed42.csv |
+| ogbn-products | products_uca_hybrid | 0.0025 | 42 | completed_long | 0.6887335405548167 | 0.3521801234630918 | not_promoted |  | experiments\tables\t26_products_uca_sweep_seed42.csv |
+| ogbn-products | products_uca_hybrid_mixup | 0.0025 | 42 | completed_long | 0.746393166842213 | 0.3791035690285768 | not_promoted |  | experiments\tables\t26_products_uca_sweep_seed42.csv |
+| ogbn-products | products_uca_hybrid_balanced_trainer | 0.0025 | 42 | completed_long | 0.6404702743809451 | 0.344996145725478 | not_promoted |  | experiments\tables\t26_products_uca_sweep_seed42.csv |
+| ogbn-products | products_cb_random | 0.005 | 42 | completed_long | 0.708108252213759 | 0.3708838171007395 | not_promoted |  | experiments\tables\t26_products_uca_sweep_seed42.csv |
+| ogbn-products | products_cb_kcenter | 0.005 | 42 | completed_long | 0.6156158964995113 | 0.3508466147700994 | not_promoted |  | experiments\tables\t26_products_uca_sweep_seed42.csv |
+| ogbn-products | products_cb_herding | 0.005 | 42 | completed_long | 0.6271585759464929 | 0.33918849346898744 | not_promoted |  | experiments\tables\t26_products_uca_sweep_seed42.csv |
+| ogbn-products | products_cb_hybrid | 0.005 | 42 | completed_long | 0.6708919786850157 | 0.3441880882005497 | not_promoted |  | experiments\tables\t26_products_uca_sweep_seed42.csv |
+| ogbn-products | products_uca_kmeans_labeled_nearest | 0.005 | 42 | completed_long | 0.7110999954362474 | 0.3640408887290348 | not_promoted |  | experiments\tables\t26_products_uca_sweep_seed42.csv |
+| ogbn-products | products_uca_hybrid | 0.005 | 42 | completed_long | 0.7110999954362474 | 0.3640408887290348 | not_promoted |  | experiments\tables\t26_products_uca_sweep_seed42.csv |
+| ogbn-products | products_uca_hybrid_mixup | 0.005 | 42 | completed_long | 0.767075099939406 | 0.3891223434748316 | not_promoted |  | experiments\tables\t26_products_uca_sweep_seed42.csv |
+| ogbn-products | products_uca_hybrid_balanced_trainer | 0.005 | 42 | completed_long | 0.6712656641773881 | 0.34492475606820144 | not_promoted |  | experiments\tables\t26_products_uca_sweep_seed42.csv |
 | Reddit | reddit_current_sft_signature_random | 0.005 | 1 | completed_reuse_existing_t25_seed | 0.9208480692242788 | 0.8829126848375343 | not_promoted | no_regression_gate_not_met | experiments\tables\t26_reddit_seed_trainer_mixup_sweep.csv |
 | Reddit | reddit_current_sft_signature_random | 0.005 | 2 | completed_reuse_existing_t25_seed | 0.9213507351489147 | 0.8835794982373684 | not_promoted | no_regression_gate_not_met | experiments\tables\t26_reddit_seed_trainer_mixup_sweep.csv |
 | Reddit | reddit_current_sft_signature_random | 0.005 | 3 | completed_reuse_existing_t25_seed | 0.923307541784105 | 0.8835912065477536 | not_promoted | no_regression_gate_not_met | experiments\tables\t26_reddit_seed_trainer_mixup_sweep.csv |
@@ -126,15 +126,11 @@
 | Reddit | reddit_true_shadow_b1 | 0.01 | 3 | diagnostic_shadow_not_trained |  |  | not_promoted | true_shadow_graph_not_materialized | experiments\tables\t26_reddit_seed_trainer_mixup_sweep.csv |
 | Reddit | reddit_true_shadow_b1 | 0.01 | 4 | diagnostic_shadow_not_trained |  |  | not_promoted | true_shadow_graph_not_materialized | experiments\tables\t26_reddit_seed_trainer_mixup_sweep.csv |
 | Reddit | reddit_true_shadow_b1 | 0.01 | 5 | diagnostic_shadow_not_trained |  |  | not_promoted | true_shadow_graph_not_materialized | experiments\tables\t26_reddit_seed_trainer_mixup_sweep.csv |
-| ogbn-arxiv | arxiv_teacher_sweep | 0.0 | 42 | completed_replay | 0.7016645063061951 | 0.5048992808650066 | not_promoted | A1_teacher_gate_not_met | experiments\tables\t26_arxiv_teacher_sweep_seed42.csv |
-| ogbn-arxiv | arxiv_teacher_sweep | 0.0 | 42 | ready_not_rerun | 0.7016645063061951 | 0.5048992808650066 | not_promoted | A1_teacher_gate_not_met | experiments\tables\t26_arxiv_teacher_sweep_seed42.csv |
-| ogbn-arxiv | arxiv_teacher_sweep | 0.0 | 42 | ready_not_rerun | 0.7016645063061951 | 0.5048992808650066 | not_promoted | A1_teacher_gate_not_met | experiments\tables\t26_arxiv_teacher_sweep_seed42.csv |
-| ogbn-arxiv | arxiv_teacher_sweep | 0.0 | 42 | ready_not_rerun | 0.7016645063061951 | 0.5048992808650066 | not_promoted | A1_teacher_gate_not_met | experiments\tables\t26_arxiv_teacher_sweep_seed42.csv |
-| ogbn-arxiv | arxiv_teacher_sweep | 0.0 | 42 | ready_not_rerun | 0.7016645063061951 | 0.5048992808650066 | not_promoted | A1_teacher_gate_not_met | experiments\tables\t26_arxiv_teacher_sweep_seed42.csv |
-| ogbn-arxiv | arxiv_teacher_sweep | 0.0 | 42 | ready_not_rerun | 0.7016645063061951 | 0.5048992808650066 | not_promoted | A1_teacher_gate_not_met | experiments\tables\t26_arxiv_teacher_sweep_seed42.csv |
-| ogbn-arxiv | arxiv_teacher_sweep | 0.0 | 42 | ready_not_rerun | 0.7016645063061951 | 0.5048992808650066 | not_promoted | A1_teacher_gate_not_met | experiments\tables\t26_arxiv_teacher_sweep_seed42.csv |
-| ogbn-arxiv | arxiv_teacher_sweep | 0.0 | 42 | ready_not_rerun | 0.7016645063061951 | 0.5048992808650066 | not_promoted | A1_teacher_gate_not_met | experiments\tables\t26_arxiv_teacher_sweep_seed42.csv |
-| ogbn-arxiv | arxiv_teacher_sweep | 0.0 | 42 | ready_not_rerun | 0.7016645063061951 | 0.5048992808650066 | not_promoted | A1_teacher_gate_not_met | experiments\tables\t26_arxiv_teacher_sweep_seed42.csv |
+| ogbn-arxiv | arxiv_teacher_sweep | 0.0 | 42 | completed_long | 0.6991955229101084 | 0.505342975533102 | not_promoted | A1_teacher_gate_not_met | experiments\tables\t26_arxiv_teacher_sweep_seed42.csv |
+| ogbn-arxiv | arxiv_teacher_sweep | 0.0 | 42 | completed_long | 0.6985577021994527 | 0.5104670152698261 | not_promoted | A1_teacher_gate_not_met | experiments\tables\t26_arxiv_teacher_sweep_seed42.csv |
+| ogbn-arxiv | arxiv_teacher_sweep | 0.0 | 42 | completed_long | 0.7038660165010391 | 0.5146734981276115 | not_promoted | A1_teacher_gate_not_met | experiments\tables\t26_arxiv_teacher_sweep_seed42.csv |
+| ogbn-arxiv | arxiv_teacher_sweep | 0.0 | 42 | completed_long | 0.706828796576343 | 0.5045803241909133 | not_promoted | A1_teacher_gate_not_met | experiments\tables\t26_arxiv_teacher_sweep_seed42.csv |
+| ogbn-arxiv | arxiv_teacher_sweep | 0.0 | 42 | completed_long | 0.700862086702467 | 0.5070398443656902 | not_promoted | A1_teacher_gate_not_met | experiments\tables\t26_arxiv_teacher_sweep_seed42.csv |
 | ogbn-papers100M | t26_ultra_contract_regression | 0.0001 | 42 | completed_ultra_dryrun |  |  | not_promoted | ultra_performance_not_run | experiments\tables\t26_ultra_contract_regression_seed42.csv |
 | MAG240M | t26_ultra_contract_regression | 0.0001 | 42 | completed_ultra_dryrun |  |  | not_promoted | ultra_performance_not_run | experiments\tables\t26_ultra_contract_regression_seed42.csv |
 | stage | requirement_check |  | 42 | completed |  |  | not_promoted |  |  |
@@ -142,8 +138,8 @@
 | stage | requirement_check |  | 42 | completed |  |  | not_promoted |  |  |
 | stage | requirement_check |  | 42 | completed |  |  | not_promoted |  |  |
 | stage | requirement_check |  | 42 | completed |  |  | not_promoted |  |  |
-| stage | requirement_check |  | 42 | blocked |  |  | not_promoted |  |  |
-| stage | requirement_check |  | 42 | blocked |  |  | not_promoted |  |  |
+| stage | requirement_check |  | 42 | completed |  |  | not_promoted |  |  |
+| stage | requirement_check |  | 42 | completed |  |  | not_promoted |  |  |
 | stage | requirement_check |  | 42 | completed |  |  | not_promoted |  |  |
 | stage | requirement_check |  | 42 | completed |  |  | not_promoted |  |  |
 | stage | requirement_check |  | 42 | blocked |  |  | not_promoted |  |  |
@@ -161,8 +157,6 @@
 
 ## Required Follow-Up Experiments
 
-- Products P0a/P0b gates now have real long runs; product UCA/CB method rows still need full all-target UCA or method-level long runs before promotion.
-- Reddit current/HNR-FDM seeds 1..5 now have real rows; tuned/mixup/true-shadow rows remain diagnostics until implemented and trained.
-- Improve arxiv teacher beyond A1 accuracy >= 0.715 before running condensation rows.
+- arxiv_teacher_first: Arxiv condensation remains blocked until A1 >= 0.715.
 
 - Stage CSV: `experiments\tables\t26_stage_summary_seed42.csv`

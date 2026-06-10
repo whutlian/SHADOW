@@ -202,6 +202,7 @@ def _metrics_from_counts(confusion: torch.Tensor, pred_hist: torch.Tensor) -> di
         "accuracy": correct / total if total else 0.0,
         "macro_f1": macro_f1,
         "predicted_class_count": int((pred_hist > 0).sum().item()),
+        "predicted_class_counts_json": json.dumps({str(idx): int(value) for idx, value in enumerate(pred_hist.tolist()) if int(value) > 0}, sort_keys=True),
         "prediction_entropy": entropy,
     }
 
