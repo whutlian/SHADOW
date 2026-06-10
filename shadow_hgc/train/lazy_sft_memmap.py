@@ -84,13 +84,22 @@ def load_manifest_block_store(manifest_dir: str | Path) -> LazyMemmapBlockStore:
     return LazyMemmapBlockStore.from_manifest(root, _read_json(root / "manifest.json"))
 
 
-def load_products_labels_and_splits(dataset_root: str | Path = "dataset/ogbn_products") -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+def load_ogb_labels_and_splits(dataset_root: str | Path, *, split_name: str) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     root = Path(dataset_root)
     labels = torch.from_numpy(_load_gzip_ints(root / "raw" / "node-label.csv.gz")).to(torch.long)
-    train = torch.from_numpy(_load_gzip_ints(root / "split" / "sales_ranking" / "train.csv.gz")).to(torch.long)
-    valid = torch.from_numpy(_load_gzip_ints(root / "split" / "sales_ranking" / "valid.csv.gz")).to(torch.long)
-    test = torch.from_numpy(_load_gzip_ints(root / "split" / "sales_ranking" / "test.csv.gz")).to(torch.long)
+    split_dir = root / "split" / str(split_name)
+    train = torch.from_numpy(_load_gzip_ints(split_dir / "train.csv.gz")).to(torch.long)
+    valid = torch.from_numpy(_load_gzip_ints(split_dir / "valid.csv.gz")).to(torch.long)
+    test = torch.from_numpy(_load_gzip_ints(split_dir / "test.csv.gz")).to(torch.long)
     return labels, train, valid, test
+
+
+def load_products_labels_and_splits(dataset_root: str | Path = "dataset/ogbn_products") -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    return load_ogb_labels_and_splits(dataset_root, split_name="sales_ranking")
+
+
+def load_arxiv_labels_and_splits(dataset_root: str | Path = "dataset/ogbn_arxiv") -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    return load_ogb_labels_and_splits(dataset_root, split_name="time")
 
 
 def _load_gzip_ints(path: Path) -> np.ndarray:

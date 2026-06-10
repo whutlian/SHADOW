@@ -5,8 +5,9 @@ from pathlib import Path
 
 import numpy as np
 import torch
+import gzip
 
-from shadow_hgc.train.lazy_sft_memmap import LazyMemmapBlockStore, load_manifest_block_store
+from shadow_hgc.train.lazy_sft_memmap import LazyMemmapBlockStore, load_manifest_block_store, load_ogb_labels_and_splits
 
 
 def _write_block(root: Path, name: str, values: np.ndarray) -> dict:
@@ -51,3 +52,25 @@ def test_load_manifest_block_store_uses_frozen_stats_without_full_tensor_load(tm
     assert store.stats["self"]["source"] == "train_target_rows"
     assert store.stats["self"]["frozen"] is True
     assert store.num_rows == 3
+
+
+def test_load_ogb_labels_and_splits_reads_raw_gzip_without_processed_graph(tmp_path):
+    root = tmp_path / "ogbn_arxiv"
+    (root / "raw").mkdir(parents=True)
+    (root / "split" / "time").mkdir(parents=True)
+    for rel, values in {
+        "raw/node-label.csv.gz": [4, 5, 6, 7],
+        "split/time/train.csv.gz": [0, 1],
+        "split/time/valid.csv.gz": [2],
+        "split/time/test.csv.gz": [3],
+    }.items():
+        with gzip.open(root / rel, "wt", encoding="utf-8") as handle:
+            for value in values:
+                handle.write(f"{value}\n")
+
+    labels, train, valid, test = load_ogb_labels_and_splits(root, split_name="time")
+
+    assert labels.tolist() == [4, 5, 6, 7]
+    assert train.tolist() == [0, 1]
+    assert valid.tolist() == [2]
+    assert test.tolist() == [3]

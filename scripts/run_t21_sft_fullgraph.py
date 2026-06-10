@@ -73,14 +73,76 @@ def _convert_fullgraph(row: dict[str, str]) -> dict[str, Any]:
     }
 
 
+def _convert_lazy_medium(row: dict[str, str], *, dataset: str) -> dict[str, Any]:
+    safe = t21_safe_baseline(dataset)
+    acc = _float(row, "accuracy", default=0.0)
+    macro = _float(row, "macro_f1", default=0.0)
+    pred = _float(row, "predicted_class_count", default=0.0)
+    pred_min = max(1.0, float(safe["predicted_class_min"]))
+    manifest_dir = row.get("manifest_dir", "")
+    manifest = {}
+    if manifest_dir:
+        manifest_path = Path(manifest_dir) / "manifest.json"
+        if manifest_path.exists():
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    return {
+        "dataset": dataset,
+        "row_kind": "final",
+        "model_type": row.get("model_type", "sft_table_teacher_v2"),
+        "selection_protocol": "lazy_memmap_gpu_sft",
+        "selection_score": "",
+        "selected_blocks": row.get("selected_blocks", "[]"),
+        "status": row.get("status", ""),
+        "reason": row.get("reason", ""),
+        "accuracy": row.get("accuracy", ""),
+        "macro_f1": row.get("macro_f1", ""),
+        "predicted_class_count": row.get("predicted_class_count", ""),
+        "valid_acc": "",
+        "valid_macro_f1": "",
+        "class_coverage": min(1.0, pred / pred_min) if pred else 0.0,
+        "safe_baseline": safe["variant"],
+        "safe_baseline_acc": safe["accuracy"],
+        "safe_baseline_macro_f1": safe["macro_f1"],
+        "delta_acc_vs_safe": acc - float(safe["accuracy"]) if row.get("accuracy", "") != "" else "",
+        "delta_macro_f1_vs_safe": macro - float(safe["macro_f1"]) if row.get("macro_f1", "") != "" else "",
+        "full_edge_scans": manifest.get("full_edge_scans", ""),
+        "edge_chunk_size": manifest.get("edge_chunk_size", ""),
+        "dst_chunk_size": manifest.get("dst_chunk_size", ""),
+        "feature_dim": manifest.get("feature_dim", ""),
+        "num_blocks": "",
+        "cache_bytes": manifest.get("total_cache_bytes", ""),
+        "peak_cpu_ram_gb": row.get("peak_cpu_ram_gb", ""),
+        "peak_gpu_ram_gb": row.get("peak_gpu_ram_gb", ""),
+        "wall_time_s": row.get("training_time_s", ""),
+        "uses_memmap": True,
+        "uses_logits_as_input": False,
+        "uses_teacher_logits": False,
+        "uses_kd": False,
+        "uses_dense_p2": False,
+        "uses_bounded_edges": False,
+        "uses_e_by_d_materialization": False,
+        "uses_diffusion_legacy": False,
+        "uses_full_graph_backprop": False,
+        "uses_train_labels_only": False,
+        "source_log": "",
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Materialize T2.1 fullgraph table from no-logits rows.")
     parser.add_argument("--input", default="experiments/tables/t2_sft_fullgraph_seed42.csv")
+    parser.add_argument("--arxiv", default="experiments/tables/t21_arxiv_lazy_sft_seed42.csv")
     parser.add_argument("--products", default="experiments/tables/t21_products_full_execution_seed42.csv")
     parser.add_argument("--output", default="experiments/tables/t21_sft_fullgraph_seed42.csv")
     parser.add_argument("--report", default="experiments/reports/t21_sft_fullgraph_summary.md")
     args = parser.parse_args()
     rows = [_convert_fullgraph(row) for row in read_csv(args.input) if row.get("row_kind") in {"final", "resource_guard"}]
+    arxiv = read_csv(args.arxiv)
+    if arxiv:
+        arow = arxiv[0]
+        if arow.get("status") in {"promoted", "completed", "completed_non_regression"}:
+            rows = [row for row in rows if row.get("dataset") != "ogbn-arxiv"]
+            rows.append(_convert_lazy_medium(arow, dataset="ogbn-arxiv"))
     products = read_csv(args.products)
     if products:
         prow = products[0]

@@ -62,6 +62,22 @@ def build_summary() -> None:
     fullgraph_rows = read_csv("experiments/tables/t21_sft_fullgraph_seed42.csv")
     recovery_rows = read_csv("experiments/tables/t21_sft_condensation_recovery_seed42.csv")
     products_rows = read_csv("experiments/tables/t21_products_full_execution_seed42.csv")
+    arxiv_rows = read_csv("experiments/tables/t21_arxiv_lazy_sft_seed42.csv")
+    arxiv_sweep_rows = []
+    for path in sorted(Path("experiments/tables").glob("t21_arxiv_lazy_perf_*_seed42.csv")):
+        for row in read_csv(path):
+            arxiv_sweep_rows.append(
+                {
+                    "variant": path.stem.replace("t21_arxiv_lazy_perf_", "").replace("_seed42", ""),
+                    "accuracy": row.get("accuracy", ""),
+                    "macro_f1": row.get("macro_f1", ""),
+                    "predicted_class_count": row.get("predicted_class_count", ""),
+                    "epochs": row.get("training_epochs", ""),
+                    "cpu_gb": row.get("peak_cpu_ram_gb", ""),
+                    "gpu_gb": row.get("peak_gpu_ram_gb", ""),
+                    "train_s": row.get("training_time_s", ""),
+                }
+            )
     product_sweep_rows = []
     for path in sorted(Path("experiments/tables").glob("t21_products_lazy_perf_*_seed42.csv")):
         for row in read_csv(path):
@@ -132,6 +148,16 @@ def build_summary() -> None:
         "",
         *markdown_table(products_rows, ["dataset", "status", "run_mode", "accuracy", "macro_f1", "full_edge_scans", "total_cache_bytes", "reason"]),
         "",
+        "## Arxiv Lazy SFT",
+        "",
+        "Arxiv lazy rows use CPU/memmap-resident T2.1 preprop blocks and GPU mini-batch SFT. They do not load full `edge_index` during training/eval.",
+        "",
+        "Best row: `gamlp_lite`, hidden dim `512`, `cross_entropy`, `100` epochs, batch size `16384`, eval batch size `65536`.",
+        "",
+        *markdown_table(arxiv_rows, ["dataset", "status", "run_mode", "model_type", "loss_type", "hidden_dim", "accuracy", "macro_f1", "predicted_class_count", "peak_cpu_ram_gb", "peak_gpu_ram_gb"]),
+        "",
+        *markdown_table(arxiv_sweep_rows, ["variant", "accuracy", "macro_f1", "predicted_class_count", "epochs", "cpu_gb", "gpu_gb", "train_s"]),
+        "",
         "## Products Lazy SFT Sweep",
         "",
         "All products sweep rows use CPU/memmap-resident preprop blocks with GPU mini-batch SFT. They do not load full `edge_index` during training/eval and keep logits/KD/dense P2/bounded edges/E*d disabled.",
@@ -159,7 +185,7 @@ def build_summary() -> None:
         f"11. paper100M dry-run: cache={dry_map.get('ogbn-papers100M', {}).get('total_cache_bytes', '')}, scans={dry_map.get('ogbn-papers100M', {}).get('full_edge_scans', '')}, server_recommended={dry_map.get('ogbn-papers100M', {}).get('server_recommended', '')}.",
         f"12. MAG240M dry-run: cache={dry_map.get('MAG240M', {}).get('total_cache_bytes', '')}, scans={dry_map.get('MAG240M', {}).get('full_edge_scans', '')}, server_recommended={dry_map.get('MAG240M', {}).get('server_recommended', '')}.",
         "13. Eligible datasets for recovery: ACM, DBLP, IMDB by current fullgraph gate; DBLP is the immediate started diagnostic target.",
-        "14. Are all attachment gates satisfied? No: products is now achieved locally, but ACM 0.93, IMDB 0.50, and arxiv class coverage/0.64 remain open.",
+        "14. Are all attachment gates satisfied? No: products and arxiv are now achieved locally, but ACM 0.93 and IMDB 0.50 remain open.",
         "",
         "## Artifacts",
         "",

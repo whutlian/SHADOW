@@ -46,19 +46,19 @@
       "target_passed": false
     },
     {
-      "accuracy": "0.6105796098709106",
+      "accuracy": "0.6544040491327696",
       "dataset": "ogbn-arxiv",
-      "delta_acc_vs_safe": "0.013805609870910618",
+      "delta_acc_vs_safe": "0.05763004913276959",
       "forbidden_flags_clear": true,
-      "macro_f1": "0.32606273433193567",
-      "predicted_class_count": "27",
-      "reason": "predicted_class_count<35",
-      "recovery_status": "blocked_by_t21_fullgraph_gate",
+      "macro_f1": "0.420481437217901",
+      "predicted_class_count": "39",
+      "reason": "lazy_memmap_gpu_sft_completed",
+      "recovery_status": "not_recovery_target_medium",
       "safe_baseline": "LAD_reference",
-      "selected_blocks": "[\"B0_self\", \"B1_typed\", \"B3_lad_scap\"]",
-      "status": "blocked_class_collapse",
+      "selected_blocks": "[\"self\", \"x1_cite_ref\", \"x1_cited_by\", \"x2_cite_ref\", \"x2_cited_by\", \"xres\", \"typed_demand\", \"structure\"]",
+      "status": "completed",
       "target_accuracy": 0.64,
-      "target_passed": false
+      "target_passed": true
     },
     {
       "accuracy": "0.7029715452279188",
@@ -68,7 +68,7 @@
       "macro_f1": "0.3420856155760991",
       "predicted_class_count": "40",
       "reason": "lazy_memmap_gpu_sft_completed",
-      "recovery_status": "blocked_by_t21_fullgraph_gate",
+      "recovery_status": "not_recovery_target_medium",
       "safe_baseline": "R++ base shadow-fusion / LAD_reference",
       "selected_blocks": "[\"self\", \"x1_co_purchase\", \"x1_co_purchased_by\"]",
       "status": "completed",

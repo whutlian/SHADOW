@@ -1,0 +1,31 @@
+{
+  "rows": [
+    {
+      "accuracy": 0.6383145073349382,
+      "dataset": "ogbn-arxiv",
+      "hidden_dim": 512,
+      "inference_time_s": 0.08728349999999807,
+      "loss_type": "sqrt_weighted_ce",
+      "macro_f1": 0.4420411939228622,
+      "manifest_dir": "experiments/preprop/t21_seed42/ogbn-arxiv",
+      "model_type": "gamlp_lite",
+      "peak_cpu_ram_gb": 1.3615455627441406,
+      "peak_gpu_ram_gb": 0.9140005111694336,
+      "predicted_class_count": 40,
+      "reason": "lazy_memmap_gpu_sft_completed",
+      "run_mode": "lazy_memmap_cuda",
+      "selected_blocks": "[\"self\", \"x1_cite_ref\", \"x1_cited_by\", \"x2_cite_ref\", \"x2_cited_by\", \"xres\", \"typed_demand\", \"structure\"]",
+      "status": "completed",
+      "target_type": "paper",
+      "training_epochs": 100,
+      "training_time_s": 32.3552897,
+      "uses_bounded_edges": false,
+      "uses_dense_p2": false,
+      "uses_diffusion_legacy": false,
+      "uses_e_by_d_materialization": false,
+      "uses_kd": false,
+      "uses_logits_as_input": false,
+      "uses_teacher_logits": false
+    }
+  ]
+}

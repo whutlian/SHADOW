@@ -17,6 +17,7 @@ def build_recovery_rows(fullgraph_rows: list[dict[str, str]]) -> list[dict[str, 
         dataset = row.get("dataset", "")
         eligible = row.get("status") in {"promoted", "completed_non_regression"} and dataset in {"acm", "dblp", "imdb"}
         if not eligible:
+            medium_completed = dataset in {"ogbn-arxiv", "ogbn-products"} and row.get("status") in {"promoted", "completed", "completed_non_regression"}
             rows.append(
                 {
                     "dataset": dataset,
@@ -25,7 +26,7 @@ def build_recovery_rows(fullgraph_rows: list[dict[str, str]]) -> list[dict[str, 
                     "fullgraph_accuracy": row.get("accuracy", ""),
                     "fullgraph_macro_f1": row.get("macro_f1", ""),
                     "selected_blocks": row.get("selected_blocks", ""),
-                    "status": "blocked_by_t21_fullgraph_gate",
+                    "status": "not_recovery_target_medium" if medium_completed else "blocked_by_t21_fullgraph_gate",
                     "promoted": False,
                     "uses_logits_as_input": False,
                     "uses_teacher_logits": False,
@@ -33,7 +34,7 @@ def build_recovery_rows(fullgraph_rows: list[dict[str, str]]) -> list[dict[str, 
                     "uses_dense_p2": False,
                     "uses_bounded_edges": False,
                     "uses_e_by_d_materialization": False,
-                    "reason": row.get("reason", ""),
+                    "reason": "medium lazy SFT fullgraph row completed; condensation recovery is not in the current T2.1 small-dataset recovery scope" if medium_completed else row.get("reason", ""),
                 }
             )
             continue
