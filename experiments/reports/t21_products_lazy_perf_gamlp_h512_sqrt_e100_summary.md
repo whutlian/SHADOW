@@ -6,4 +6,4 @@ This row never uses bounded edges, logits, KD, dense P2, legacy diffusion, or E 
 |---|---|---|---|---|---|---|---|
 | ogbn-products | completed | lazy_memmap_cuda | 0.7029715452279188 | 0.3420856155760991 | 2 | 940427136 | lazy_memmap_gpu_sft_completed |
 
-- CSV: `experiments\tables\t21_products_full_execution_seed42.csv`
+- CSV: `experiments\tables\t21_products_lazy_perf_gamlp_h512_sqrt_e100_seed42.csv`

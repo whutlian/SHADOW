@@ -37,25 +37,25 @@
   "epochs_ran": 100,
   "eval_batch_size": 65536,
   "final_logits_activation": "none",
-  "inference_time_s": 1.7659835000000008,
+  "inference_time_s": 1.570572000000002,
   "loads_edge_index": false,
-  "loss_type": "sqrt_weighted_ce",
+  "loss_type": "balanced_softmax",
   "max_batch_materialized_bytes": 50331648,
   "model_type": "gamlp_lite",
   "num_blocks": 3,
   "num_rows": 2449029,
-  "peak_cpu_ram_gb": 2.1425247192382812,
-  "peak_gpu_ram_gb": 0.747955322265625,
+  "peak_cpu_ram_gb": 2.1114463806152344,
+  "peak_gpu_ram_gb": 0.2779426574707031,
   "seed": 42,
   "test": {
-    "accuracy": 0.7029715452279188,
-    "macro_f1": 0.3420856155760991,
-    "predicted_class_count": 40,
-    "prediction_entropy": 2.7152148989242315
+    "accuracy": 0.5978380464246612,
+    "macro_f1": 0.27936875967948926,
+    "predicted_class_count": 42,
+    "prediction_entropy": 3.1586472520825124
   },
   "test_rows": 2213091,
   "train_rows": 196615,
-  "training_time_s": 29.286514800000003,
+  "training_time_s": 21.573369500000002,
   "uses_bounded_edges": false,
   "uses_dense_p2": false,
   "uses_diffusion_legacy": false,
@@ -66,12 +66,12 @@
   "uses_logits_as_input": false,
   "uses_teacher_logits": false,
   "valid": {
-    "accuracy": 0.8727207995320805,
+    "accuracy": 0.7712026040739516,
     "epoch": 99,
-    "macro_f1": 0.4120199218082584,
-    "predicted_class_count": 36,
-    "prediction_entropy": 2.53140920080126,
-    "train_loss": 0.5869697124900499
+    "macro_f1": 0.3212051827168094,
+    "predicted_class_count": 42,
+    "prediction_entropy": 2.8730517624076297,
+    "train_loss": 0.4800426678670507
   },
   "valid_rows": 39323
 }

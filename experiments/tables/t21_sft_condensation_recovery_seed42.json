@@ -208,8 +208,8 @@
     },
     {
       "dataset": "ogbn-products",
-      "fullgraph_accuracy": "0.471169960927951",
-      "fullgraph_macro_f1": "0.13056453340379207",
+      "fullgraph_accuracy": "0.7029715452279188",
+      "fullgraph_macro_f1": "0.3420856155760991",
       "fullgraph_status": "completed",
       "promoted": false,
       "reason": "lazy_memmap_gpu_sft_completed",

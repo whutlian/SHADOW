@@ -8,6 +8,6 @@ This table contains no-logits fullgraph SFT rows plus the products execution row
 | dblp | promoted | 0.9426056146621704 | 0.9387593418359756 | 4 | ["B0_self", "B1_typed", "B2_metapath", "B3_lad_scap"] | validation_selected_and_safe_improved |
 | imdb | promoted | 0.47158026695251465 | 0.3900045245885849 | 5 | ["B0_self", "B1_typed", "B2_metapath", "B4_structure"] | validation_selected_and_safe_improved |
 | ogbn-arxiv | blocked_class_collapse | 0.6105796098709106 | 0.32606273433193567 | 27 | ["B0_self", "B1_typed", "B3_lad_scap"] | predicted_class_count<35 |
-| ogbn-products | completed | 0.471169960927951 | 0.13056453340379207 | 15 | ["self", "x1_co_purchase", "x1_co_purchased_by"] | lazy_memmap_gpu_sft_completed |
+| ogbn-products | completed | 0.7029715452279188 | 0.3420856155760991 | 40 | ["self", "x1_co_purchase", "x1_co_purchased_by"] | lazy_memmap_gpu_sft_completed |
 
 - CSV: `experiments\tables\t21_sft_fullgraph_seed42.csv`
