@@ -62,6 +62,21 @@ def build_summary() -> None:
     fullgraph_rows = read_csv("experiments/tables/t21_sft_fullgraph_seed42.csv")
     recovery_rows = read_csv("experiments/tables/t21_sft_condensation_recovery_seed42.csv")
     products_rows = read_csv("experiments/tables/t21_products_full_execution_seed42.csv")
+    product_sweep_rows = []
+    for path in sorted(Path("experiments/tables").glob("t21_products_lazy_perf_*_seed42.csv")):
+        for row in read_csv(path):
+            product_sweep_rows.append(
+                {
+                    "variant": path.stem.replace("t21_products_lazy_perf_", "").replace("_seed42", ""),
+                    "accuracy": row.get("accuracy", ""),
+                    "macro_f1": row.get("macro_f1", ""),
+                    "predicted_class_count": row.get("predicted_class_count", ""),
+                    "epochs": row.get("training_epochs", ""),
+                    "cpu_gb": row.get("peak_cpu_ram_gb", ""),
+                    "gpu_gb": row.get("peak_gpu_ram_gb", ""),
+                    "train_s": row.get("training_time_s", ""),
+                }
+            )
     dry_rows = read_csv("experiments/tables/t21_scalability_dry_run_seed42.csv")
     full = _latest_by_dataset(fullgraph_rows)
     recovery_status: dict[str, str] = {}
@@ -117,6 +132,14 @@ def build_summary() -> None:
         "",
         *markdown_table(products_rows, ["dataset", "status", "run_mode", "accuracy", "macro_f1", "full_edge_scans", "total_cache_bytes", "reason"]),
         "",
+        "## Products Lazy SFT Sweep",
+        "",
+        "All products sweep rows use CPU/memmap-resident preprop blocks with GPU mini-batch SFT. They do not load full `edge_index` during training/eval and keep logits/KD/dense P2/bounded edges/E*d disabled.",
+        "",
+        "Best row: `gamlp_lite`, hidden dim `512`, `sqrt_weighted_ce`, `100` epochs, batch size `16384`, eval batch size `65536`.",
+        "",
+        *markdown_table(product_sweep_rows, ["variant", "accuracy", "macro_f1", "predicted_class_count", "epochs", "cpu_gb", "gpu_gb", "train_s"]),
+        "",
         "## Scalability Dry Run",
         "",
         *markdown_table(dry_rows, ["dataset", "cache_mode", "total_cache_bytes", "full_edge_scans", "wall_time_category", "server_recommended"]),
@@ -130,13 +153,13 @@ def build_summary() -> None:
         f"5. Did IMDB reach 0.50? {'Yes' if _float(imdb, 'accuracy') >= 0.50 else 'No'}; current accuracy={imdb.get('accuracy', '')}.",
         f"6. Was arxiv class collapse fixed? {'Yes' if int(float(arxiv.get('predicted_class_count') or 0)) >= 35 else 'No'}; predicted_class_count={arxiv.get('predicted_class_count', '')}.",
         f"7. Did arxiv reach 0.64 without forbidden signals? {'Yes' if _float(arxiv, 'accuracy') >= 0.64 and no_forbidden_flags(arxiv) else 'No'}; current accuracy={arxiv.get('accuracy', '')}.",
-        f"8. Did products full execution complete? {'Yes' if product.get('status') in {'completed', 'promoted'} else 'No'}; status={product.get('status', '')}. Full-edge preprop completed if status is `preprop_completed`, but SFT training/eval is still not a completed products full execution.",
+        f"8. Did products full execution complete? {'Yes' if product.get('status') in {'completed', 'promoted'} else 'No'}; status={product.get('status', '')}. Current completed row is lazy CPU/memmap + GPU mini-batch SFT.",
         f"9. Did products beat 0.6689/macro baseline? {'Yes' if _float(products, 'accuracy') > 0.6689 or _float(products, 'macro_f1') > 0.338064 else 'No'}; accuracy={products.get('accuracy', '')}, macro_f1={products.get('macro_f1', '')}.",
         "10. Any promoted bounded/logit/KD/E*d rows? No in T2.1 generated tables; forbidden flags are explicitly false for promoted/reported rows.",
         f"11. paper100M dry-run: cache={dry_map.get('ogbn-papers100M', {}).get('total_cache_bytes', '')}, scans={dry_map.get('ogbn-papers100M', {}).get('full_edge_scans', '')}, server_recommended={dry_map.get('ogbn-papers100M', {}).get('server_recommended', '')}.",
         f"12. MAG240M dry-run: cache={dry_map.get('MAG240M', {}).get('total_cache_bytes', '')}, scans={dry_map.get('MAG240M', {}).get('full_edge_scans', '')}, server_recommended={dry_map.get('MAG240M', {}).get('server_recommended', '')}.",
         "13. Eligible datasets for recovery: ACM, DBLP, IMDB by current fullgraph gate; DBLP is the immediate started diagnostic target.",
-        "14. Are all attachment gates satisfied? No: ACM 0.93, IMDB 0.50, arxiv class coverage/0.64, and full products training are not yet achieved locally.",
+        "14. Are all attachment gates satisfied? No: products is now achieved locally, but ACM 0.93, IMDB 0.50, and arxiv class coverage/0.64 remain open.",
         "",
         "## Artifacts",
         "",

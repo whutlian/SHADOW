@@ -23,6 +23,23 @@
 |---|---|---|---|---|---|---|---|
 | ogbn-products | completed | lazy_memmap_cuda | 0.7029715452279188 | 0.3420856155760991 | 2 | 940427136 | lazy_memmap_gpu_sft_completed |
 
+## Products Lazy SFT Sweep
+
+All products sweep rows use CPU/memmap-resident preprop blocks with GPU mini-batch SFT. They do not load full `edge_index` during training/eval and keep logits/KD/dense P2/bounded edges/E*d disabled.
+
+Best row: `gamlp_lite`, hidden dim `512`, `sqrt_weighted_ce`, `100` epochs, batch size `16384`, eval batch size `65536`.
+
+| variant | accuracy | macro_f1 | predicted_class_count | epochs | cpu_gb | gpu_gb | train_s |
+|---|---|---|---|---|---|---|---|
+| gamlp_h128_balanced_e100 | 0.5978380464246612 | 0.27936875967948926 | 42 | 100 | 2.1114463806152344 | 0.2779426574707031 | 21.573369500000002 |
+| gamlp_h128_cbce_e100 | 0.5983088811079165 | 0.2800088511301829 | 42 | 100 | 2.1443328857421875 | 0.2779426574707031 | 21.693146600000002 |
+| gamlp_h128_ce_e100 | 0.6691613675171966 | 0.2812929866013991 | 29 | 100 | 2.0318832397460938 | 0.2779426574707031 | 20.9998462 |
+| gamlp_h128_sqrt_e100 | 0.6780679149659911 | 0.3199320071660929 | 42 | 100 | 2.14544677734375 | 0.2779426574707031 | 21.5504641 |
+| gamlp_h128_sqrt_e20 | 0.6202017901658811 | 0.2711054676261987 | 36 | 20 | 2.1450576782226562 | 0.2779426574707031 | 13.5918037 |
+| gamlp_h256_sqrt_e100 | 0.6951557798572223 | 0.33677949580624167 | 40 | 100 | 2.1458969116210938 | 0.43465423583984375 | 23.2635556 |
+| gamlp_h512_sqrt_e100 | 0.7029715452279188 | 0.3420856155760991 | 40 | 100 | 2.1417236328125 | 0.747955322265625 | 29.2360474 |
+| sagn_h256_sqrt_e100 | 0.6837717021125657 | 0.33625051194466776 | 42 | 100 | 2.1504859924316406 | 0.7486357688903809 | 24.709092499999997 |
+
 ## Scalability Dry Run
 
 | dataset | cache_mode | total_cache_bytes | full_edge_scans | wall_time_category | server_recommended |
@@ -41,13 +58,13 @@
 5. Did IMDB reach 0.50? No; current accuracy=0.47158026695251465.
 6. Was arxiv class collapse fixed? No; predicted_class_count=27.
 7. Did arxiv reach 0.64 without forbidden signals? No; current accuracy=0.6105796098709106.
-8. Did products full execution complete? Yes; status=completed. Full-edge preprop completed if status is `preprop_completed`, but SFT training/eval is still not a completed products full execution.
+8. Did products full execution complete? Yes; status=completed. Current completed row is lazy CPU/memmap + GPU mini-batch SFT.
 9. Did products beat 0.6689/macro baseline? Yes; accuracy=0.7029715452279188, macro_f1=0.3420856155760991.
 10. Any promoted bounded/logit/KD/E*d rows? No in T2.1 generated tables; forbidden flags are explicitly false for promoted/reported rows.
 11. paper100M dry-run: cache=123498671072, scans=6, server_recommended=True.
 12. MAG240M dry-run: cache=130761289284, scans=6, server_recommended=True.
 13. Eligible datasets for recovery: ACM, DBLP, IMDB by current fullgraph gate; DBLP is the immediate started diagnostic target.
-14. Are all attachment gates satisfied? No: ACM 0.93, IMDB 0.50, arxiv class coverage/0.64, and full products training are not yet achieved locally.
+14. Are all attachment gates satisfied? No: products is now achieved locally, but ACM 0.93, IMDB 0.50, and arxiv class coverage/0.64 remain open.
 
 ## Artifacts
 
