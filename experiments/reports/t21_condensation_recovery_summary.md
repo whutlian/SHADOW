@@ -14,6 +14,6 @@ Identity replay is diagnostic and uses frozen SFT block signatures, not logits a
 | imdb | prototype_oracle_sft_block_signature | 0.47158026695251465 | eligible_not_run | diagnostic recovery eligible after fullgraph gate |
 | imdb | shadow_condensed_sft_block_signature | 0.47158026695251465 | eligible_not_run | diagnostic recovery eligible after fullgraph gate |
 | ogbn-arxiv | recovery_gate | 0.6105796098709106 | blocked_by_t21_fullgraph_gate | predicted_class_count<35 |
-| ogbn-products | recovery_gate |  | blocked_by_t21_fullgraph_gate | full_edge_products_preprop_completed |
+| ogbn-products | recovery_gate | 0.471169960927951 | blocked_by_t21_fullgraph_gate | lazy_memmap_gpu_sft_completed |
 
 - CSV: `experiments\tables\t21_sft_condensation_recovery_seed42.csv`

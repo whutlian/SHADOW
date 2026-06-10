@@ -61,17 +61,17 @@
       "target_passed": false
     },
     {
-      "accuracy": "",
+      "accuracy": "0.471169960927951",
       "dataset": "ogbn-products",
-      "delta_acc_vs_safe": "",
+      "delta_acc_vs_safe": "-0.19773803907204895",
       "forbidden_flags_clear": true,
-      "macro_f1": "",
-      "predicted_class_count": "",
-      "reason": "full_edge_products_preprop_completed",
+      "macro_f1": "0.13056453340379207",
+      "predicted_class_count": "15",
+      "reason": "lazy_memmap_gpu_sft_completed",
       "recovery_status": "blocked_by_t21_fullgraph_gate",
       "safe_baseline": "R++ base shadow-fusion / LAD_reference",
-      "selected_blocks": "[]",
-      "status": "preprop_completed",
+      "selected_blocks": "[\"self\", \"x1_co_purchase\", \"x1_co_purchased_by\"]",
+      "status": "completed",
       "target_accuracy": 0.7,
       "target_passed": false
     }

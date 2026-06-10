@@ -17,6 +17,7 @@ from scripts.t21_common import T21_PRODUCTS_FIELDS, markdown_table, write_csv
 from shadow_hgc.eval.resource import current_cpu_ram_bytes, current_gpu_ram_bytes
 from shadow_hgc.preprop.true_preprop import compute_preprop_blocks
 from shadow_hgc.train.train_sft_teacher import train_sft_teacher
+from shadow_hgc.train.lazy_sft_memmap import load_products_labels_and_splits, train_lazy_sft_from_memmap
 
 
 def _read_memmap(path: Path, shape: list[int], dtype: str) -> torch.Tensor:
@@ -59,6 +60,73 @@ def run_products(args) -> dict[str, Any]:
         return _blocked_row(args, "full products run requires --run-full to avoid accidental local OOM")
     started = time.perf_counter()
     try:
+        if args.lazy_sft:
+            manifest_dir = Path(args.output_dir)
+            manifest_path = manifest_dir / "manifest.json"
+            if not manifest_path.exists():
+                return {
+                    **_blocked_row(args, f"lazy SFT requires existing manifest at {manifest_path}; run full preprop first"),
+                    "status": "blocked_missing_manifest",
+                    "run_mode": "lazy_memmap_gpu",
+                }
+            labels, train_rows, valid_rows, test_rows = load_products_labels_and_splits(args.dataset_root)
+            device = "cuda" if args.device == "auto" and torch.cuda.is_available() else ("cpu" if args.device == "auto" else args.device)
+            lazy_result = train_lazy_sft_from_memmap(
+                manifest_dir=manifest_dir,
+                labels=labels,
+                train_rows=train_rows,
+                valid_rows=valid_rows,
+                test_rows=test_rows,
+                num_classes=int(labels.max().item()) + 1,
+                device=device,
+                model_type=args.model_type,
+                hidden_dim=args.hidden_dim,
+                dropout=args.dropout,
+                loss_type=args.loss_type,
+                lr=args.lr,
+                weight_decay=args.weight_decay,
+                epochs=args.train_epochs,
+                batch_size=args.batch_size,
+                eval_batch_size=args.eval_batch_size,
+                seed=args.seed,
+                label_smoothing=args.label_smoothing,
+            )
+            summary = lazy_result.summary
+            log_path = Path(args.log_dir) / f"ogbn_products_lazy_sft_seed{args.seed}.json"
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+            log_path.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            test_metrics = summary["test"]
+            return {
+                "dataset": "ogbn-products",
+                "target_type": "product",
+                "status": "completed",
+                "reason": "lazy_memmap_gpu_sft_completed" if str(device).startswith("cuda") else "lazy_memmap_cpu_sft_completed",
+                "run_mode": f"lazy_memmap_{device}",
+                "accuracy": test_metrics.get("accuracy", ""),
+                "macro_f1": test_metrics.get("macro_f1", ""),
+                "predicted_class_count": test_metrics.get("predicted_class_count", ""),
+                "selected_blocks": json.dumps(list(summary.get("block_dims", {}).keys()), sort_keys=True),
+                "preprop_blocks": json.dumps([block["name"] for block in manifest.get("blocks", [])], sort_keys=True),
+                "manifest_dir": str(manifest_dir),
+                "total_cache_bytes": manifest.get("total_cache_bytes", ""),
+                "full_edge_scans": manifest.get("full_edge_scans", ""),
+                "edge_chunk_size": manifest.get("edge_chunk_size", args.edge_chunk_size),
+                "dst_chunk_size": manifest.get("dst_chunk_size", args.dst_chunk_size),
+                "feature_dim": manifest.get("feature_dim", args.feature_dim),
+                "training_epochs": args.train_epochs,
+                "training_time_s": summary.get("training_time_s", ""),
+                "inference_time_s": summary.get("inference_time_s", ""),
+                "peak_cpu_ram_gb": summary.get("peak_cpu_ram_gb", current_cpu_ram_bytes() / (1024**3)),
+                "peak_gpu_ram_gb": summary.get("peak_gpu_ram_gb", current_gpu_ram_bytes() / (1024**3)),
+                "uses_logits_as_input": False,
+                "uses_teacher_logits": False,
+                "uses_kd": False,
+                "uses_dense_p2": False,
+                "uses_bounded_edges": False,
+                "uses_e_by_d_materialization": False,
+                "uses_diffusion_legacy": False,
+            }
         graph = load_t2_graph("ogbn-products")
         train_rows, valid_rows = split_train_valid(graph, seed=args.seed)
         provider = {name: value.to(torch.float32) for name, value in graph.node_features.items()}
@@ -166,13 +234,20 @@ def main() -> None:
     parser.add_argument("--edge-chunk-size", type=int, default=65536)
     parser.add_argument("--dst-chunk-size", type=int, default=200000)
     parser.add_argument("--train-epochs", type=int, default=0)
+    parser.add_argument("--lazy-sft", action="store_true")
+    parser.add_argument("--device", default="auto", choices=["auto", "cuda", "cpu"])
+    parser.add_argument("--dataset-root", default="dataset/ogbn_products")
+    parser.add_argument("--model-type", default="gamlp_lite", choices=["sagn_lite", "gamlp_lite", "residual_block_gated"])
     parser.add_argument("--hidden-dim", type=int, default=128)
+    parser.add_argument("--dropout", type=float, default=0.3)
     parser.add_argument("--batch-size", type=int, default=32768)
+    parser.add_argument("--eval-batch-size", type=int, default=65536)
     parser.add_argument("--loss-type", default="sqrt_weighted_ce")
     parser.add_argument("--lr", type=float, default=0.003)
     parser.add_argument("--weight-decay", type=float, default=1e-4)
     parser.add_argument("--label-smoothing", type=float, default=0.0)
     parser.add_argument("--output-dir", default="experiments/preprop/t21_products_seed42")
+    parser.add_argument("--log-dir", default="experiments/logs/t21_products_lazy_sft_seed42")
     parser.add_argument("--output", default="experiments/tables/t21_products_full_execution_seed42.csv")
     parser.add_argument("--report", default="experiments/reports/t21_products_full_execution_summary.md")
     args = parser.parse_args()

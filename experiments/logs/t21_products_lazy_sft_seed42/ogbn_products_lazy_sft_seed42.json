@@ -1,0 +1,77 @@
+{
+  "batch_size": 16384,
+  "block_dims": {
+    "self": 64,
+    "x1_co_purchase": 64,
+    "x1_co_purchased_by": 64
+  },
+  "block_gates": {},
+  "block_norm_stats": {
+    "self": {
+      "fit_rows": [],
+      "fitted": true,
+      "frozen": true,
+      "mean_abs": 0.03199801966547966,
+      "source": "train_target_rows",
+      "std_mean": 1.093315839767456
+    },
+    "x1_co_purchase": {
+      "fit_rows": [],
+      "fitted": true,
+      "frozen": true,
+      "mean_abs": 0.0315110869705677,
+      "source": "train_target_rows",
+      "std_mean": 0.41477465629577637
+    },
+    "x1_co_purchased_by": {
+      "fit_rows": [],
+      "fitted": true,
+      "frozen": true,
+      "mean_abs": 0.0315110869705677,
+      "source": "train_target_rows",
+      "std_mean": 0.41477465629577637
+    }
+  },
+  "block_norm_stats_source": "train_target_rows",
+  "device": "cuda",
+  "epochs_ran": 1,
+  "eval_batch_size": 65536,
+  "final_logits_activation": "none",
+  "inference_time_s": 6.4014804000000005,
+  "loads_edge_index": false,
+  "loss_type": "sqrt_weighted_ce",
+  "max_batch_materialized_bytes": 50331648,
+  "model_type": "gamlp_lite",
+  "num_blocks": 3,
+  "num_rows": 2449029,
+  "peak_cpu_ram_gb": 2.143535614013672,
+  "peak_gpu_ram_gb": 0.2779426574707031,
+  "seed": 42,
+  "test": {
+    "accuracy": 0.471169960927951,
+    "macro_f1": 0.13056453340379207,
+    "predicted_class_count": 15,
+    "prediction_entropy": 1.5914448759537771
+  },
+  "test_rows": 2213091,
+  "train_rows": 196615,
+  "training_time_s": 9.778005,
+  "uses_bounded_edges": false,
+  "uses_dense_p2": false,
+  "uses_diffusion_legacy": false,
+  "uses_e_by_d_materialization": false,
+  "uses_full_graph_backprop": false,
+  "uses_kd": false,
+  "uses_lazy_memmap": true,
+  "uses_logits_as_input": false,
+  "uses_teacher_logits": false,
+  "valid": {
+    "accuracy": 0.6255880782239401,
+    "epoch": 0,
+    "macro_f1": 0.16816376109634487,
+    "predicted_class_count": 15,
+    "prediction_entropy": 1.8191845786852014,
+    "train_loss": 3.2605031464824603
+  },
+  "valid_rows": 39323
+}

@@ -4,6 +4,6 @@ This row never uses bounded edges, logits, KD, dense P2, legacy diffusion, or E 
 
 | dataset | status | run_mode | accuracy | macro_f1 | full_edge_scans | total_cache_bytes | reason |
 |---|---|---|---|---|---|---|---|
-| ogbn-products | preprop_completed | full_edges |  |  | 2 | 940427136 | full_edge_products_preprop_completed |
+| ogbn-products | completed | lazy_memmap_cuda | 0.471169960927951 | 0.13056453340379207 | 2 | 940427136 | lazy_memmap_gpu_sft_completed |
 
 - CSV: `experiments\tables\t21_products_full_execution_seed42.csv`

@@ -15,13 +15,13 @@
 | dblp | promoted | 0.9426056146621704 | 0.9387593418359756 | 4 | 0.85 | True | started_diagnostic | validation_selected_and_safe_improved |
 | imdb | promoted | 0.47158026695251465 | 0.3900045245885849 | 5 | 0.5 | False | completed_diagnostic | validation_selected_and_safe_improved |
 | ogbn-arxiv | blocked_class_collapse | 0.6105796098709106 | 0.32606273433193567 | 27 | 0.64 | False | blocked_by_t21_fullgraph_gate | predicted_class_count<35 |
-| ogbn-products | preprop_completed |  |  |  | 0.7 | False | blocked_by_t21_fullgraph_gate | full_edge_products_preprop_completed |
+| ogbn-products | completed | 0.471169960927951 | 0.13056453340379207 | 15 | 0.7 | False | blocked_by_t21_fullgraph_gate | lazy_memmap_gpu_sft_completed |
 
 ## Products Execution
 
 | dataset | status | run_mode | accuracy | macro_f1 | full_edge_scans | total_cache_bytes | reason |
 |---|---|---|---|---|---|---|---|
-| ogbn-products | preprop_completed | full_edges |  |  | 2 | 940427136 | full_edge_products_preprop_completed |
+| ogbn-products | completed | lazy_memmap_cuda | 0.471169960927951 | 0.13056453340379207 | 2 | 940427136 | lazy_memmap_gpu_sft_completed |
 
 ## Scalability Dry Run
 
@@ -41,8 +41,8 @@
 5. Did IMDB reach 0.50? No; current accuracy=0.47158026695251465.
 6. Was arxiv class collapse fixed? No; predicted_class_count=27.
 7. Did arxiv reach 0.64 without forbidden signals? No; current accuracy=0.6105796098709106.
-8. Did products full execution complete? No; status=preprop_completed. Full-edge preprop completed if status is `preprop_completed`, but SFT training/eval is still not a completed products full execution.
-9. Did products beat 0.6689/macro baseline? No; accuracy=, macro_f1=.
+8. Did products full execution complete? Yes; status=completed. Full-edge preprop completed if status is `preprop_completed`, but SFT training/eval is still not a completed products full execution.
+9. Did products beat 0.6689/macro baseline? No; accuracy=0.471169960927951, macro_f1=0.13056453340379207.
 10. Any promoted bounded/logit/KD/E*d rows? No in T2.1 generated tables; forbidden flags are explicitly false for promoted/reported rows.
 11. paper100M dry-run: cache=123498671072, scans=6, server_recommended=True.
 12. MAG240M dry-run: cache=130761289284, scans=6, server_recommended=True.

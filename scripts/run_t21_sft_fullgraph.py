@@ -86,6 +86,8 @@ def main() -> None:
         prow = products[0]
         if prow.get("status") in {"promoted", "completed", "completed_non_regression", "preprop_completed", "blocked_full_execution_failed", "blocked_requires_explicit_full_run"}:
             safe = t21_safe_baseline("ogbn-products")
+            acc = _float(prow, "accuracy", default=0.0)
+            macro = _float(prow, "macro_f1", default=0.0)
             rows = [row for row in rows if row.get("dataset") != "ogbn-products"]
             rows.append(
                 {
@@ -103,6 +105,8 @@ def main() -> None:
                     "safe_baseline": safe["variant"],
                     "safe_baseline_acc": safe["accuracy"],
                     "safe_baseline_macro_f1": safe["macro_f1"],
+                    "delta_acc_vs_safe": acc - float(safe["accuracy"]) if prow.get("accuracy", "") != "" else "",
+                    "delta_macro_f1_vs_safe": macro - float(safe["macro_f1"]) if prow.get("macro_f1", "") != "" else "",
                     "full_edge_scans": prow.get("full_edge_scans", ""),
                     "edge_chunk_size": prow.get("edge_chunk_size", ""),
                     "dst_chunk_size": prow.get("dst_chunk_size", ""),
