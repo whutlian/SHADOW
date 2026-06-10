@@ -152,7 +152,7 @@ def _build_lazy_model(
     activation: str,
     norm: str,
 ):
-    if str(model_type).endswith("_v2") or str(model_type).endswith("_v3"):
+    if str(model_type).endswith("_v2") or str(model_type).endswith("_v3") or str(model_type).endswith("_v4"):
         return SFTTeacherV3(
             block_dims,
             num_classes=int(num_classes),

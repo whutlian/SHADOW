@@ -1,0 +1,37 @@
+stage: T24-MidLarge-SFT-Condense
+seed: 42
+opt_in: true
+default_shadow_hgc_r1_path_frozen: true
+main_datasets: [ogbn-arxiv, ogbn-products, Reddit]
+
+ratio_policy:
+  ratio_mode: full_node
+  medium:
+    default: 0.005
+    sweep: [0.001, 0.0025, 0.005, 0.01]
+  large:
+    default: 0.0025
+    sweep: [0.0005, 0.001, 0.0025, 0.005]
+  ultra:
+    default: 0.0001
+    sweep: [0.00001, 0.00005, 0.0001, 0.0005]
+
+forbidden_promoted_components:
+  - logits_as_input
+  - teacher_logits
+  - kd
+  - dense_p2
+  - legacy_diffusion
+  - coverage_medoid
+  - source_anchors
+  - bounded_edge_performance
+  - e_by_d_materialization
+
+products:
+  fullgraph_teacher: P7_sagn_lite_v2
+  recovery_ratios: [0.0005, 0.001, 0.0025, 0.005]
+  selected_blocks: [X0, X1, X2, X3, Xres1, Xres2, structure, Y1, Y2, Y3]
+
+reddit:
+  root: dataset/Reddit
+  self_loop: false

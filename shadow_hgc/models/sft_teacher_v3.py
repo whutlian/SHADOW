@@ -64,6 +64,8 @@ class SFTTeacherV3(nn.Module):
             "residual_block_gated_v2",
             "sagn_lite_v3",
             "gamlp_lite_v3",
+            "sagn_lite_v4",
+            "gamlp_lite_v4",
         ] = "sagn_lite_v2",
         hidden_dim: int = 512,
         dropout: float = 0.3,
@@ -84,7 +86,12 @@ class SFTTeacherV3(nn.Module):
         if forbidden:
             raise ValueError(f"logits are forbidden as T2.2 SFT-NL input blocks: {forbidden}")
         self.block_dims = OrderedDict((str(name), int(dim)) for name, dim in block_dims.items())
-        aliases = {"sagn_lite_v3": "sagn_lite_v2", "gamlp_lite_v3": "gamlp_lite_v2"}
+        aliases = {
+            "sagn_lite_v3": "sagn_lite_v2",
+            "gamlp_lite_v3": "gamlp_lite_v2",
+            "sagn_lite_v4": "sagn_lite_v2",
+            "gamlp_lite_v4": "gamlp_lite_v2",
+        }
         self.model_type = str(model_type)
         canonical_model_type = aliases.get(self.model_type, self.model_type)
         self.num_classes = int(num_classes)

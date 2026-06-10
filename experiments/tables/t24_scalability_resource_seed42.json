@@ -1,0 +1,97 @@
+{
+  "rows": [
+    {
+      "condensation_time_s": "",
+      "condensed_edge_count": "",
+      "condensed_node_count": "",
+      "condensed_train_time_s": "",
+      "dataset": "ogbn-arxiv",
+      "edges": 1166243,
+      "full_edge_scans": "",
+      "fullgraph_train_time_s": "121.7950859",
+      "nodes": 169343,
+      "peak_cpu_ram_gb": "",
+      "peak_gpu_ram_gb": "",
+      "preprop_cache_gb": "",
+      "sft_signature_cache_gb": ""
+    },
+    {
+      "condensation_time_s": "",
+      "condensed_edge_count": "0",
+      "condensed_node_count": "1225",
+      "condensed_train_time_s": "",
+      "dataset": "ogbn-products",
+      "edges": 123718280,
+      "full_edge_scans": "",
+      "fullgraph_train_time_s": "",
+      "nodes": 2449029,
+      "peak_cpu_ram_gb": "",
+      "peak_gpu_ram_gb": "",
+      "preprop_cache_gb": "",
+      "sft_signature_cache_gb": 0.19556360319256783
+    },
+    {
+      "condensation_time_s": "",
+      "condensed_edge_count": "",
+      "condensed_node_count": "",
+      "condensed_train_time_s": "",
+      "dataset": "Reddit",
+      "edges": "114615892",
+      "full_edge_scans": "0",
+      "fullgraph_train_time_s": "0.3443424999999998",
+      "nodes": "232965",
+      "peak_cpu_ram_gb": "",
+      "peak_gpu_ram_gb": "",
+      "preprop_cache_gb": 0.5224530771374702,
+      "sft_signature_cache_gb": ""
+    },
+    {
+      "cache_bytes": "120833232128",
+      "cache_mode": "all_target_rows",
+      "dataset": "ogbn-papers100M",
+      "edge_scans": "4",
+      "edges": "1615685872",
+      "estimated_precompute_time": "server_recommended",
+      "nodes": "111059956",
+      "selected_blocks": "X0,X1,X2,Y1,Y2,structure",
+      "server_recommended": "True",
+      "target_train_nodes": "1207179"
+    },
+    {
+      "cache_bytes": "1313410752",
+      "cache_mode": "train_target_only",
+      "dataset": "ogbn-papers100M",
+      "edge_scans": "4",
+      "edges": "1615685872",
+      "estimated_precompute_time": "server_recommended",
+      "nodes": "111059956",
+      "selected_blocks": "X0,X1,X2,Y1,Y2,structure",
+      "server_recommended": "True",
+      "target_train_nodes": "1207179"
+    },
+    {
+      "cache_bytes": "123212685992",
+      "cache_mode": "all_target_rows",
+      "dataset": "MAG240M",
+      "edge_scans": "4",
+      "edges": "17283641232",
+      "estimated_precompute_time": "server_recommended",
+      "nodes": "121751666",
+      "selected_blocks": "X0,X1,X2,Y1,Y2,structure",
+      "server_recommended": "True",
+      "target_train_nodes": "1112392"
+    },
+    {
+      "cache_bytes": "1125740704",
+      "cache_mode": "train_target_only",
+      "dataset": "MAG240M",
+      "edge_scans": "4",
+      "edges": "17283641232",
+      "estimated_precompute_time": "server_recommended",
+      "nodes": "121751666",
+      "selected_blocks": "X0,X1,X2,Y1,Y2,structure",
+      "server_recommended": "True",
+      "target_train_nodes": "1112392"
+    }
+  ]
+}

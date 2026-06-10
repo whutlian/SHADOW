@@ -1,0 +1,5 @@
+dataset,nodes,edges,target_train_nodes,cache_mode,selected_blocks,cache_bytes,edge_scans,estimated_precompute_time,server_recommended
+ogbn-papers100M,111059956,1615685872,1207179,all_target_rows,"X0,X1,X2,Y1,Y2,structure",120833232128,4,server_recommended,True
+ogbn-papers100M,111059956,1615685872,1207179,train_target_only,"X0,X1,X2,Y1,Y2,structure",1313410752,4,server_recommended,True
+MAG240M,121751666,17283641232,1112392,all_target_rows,"X0,X1,X2,Y1,Y2,structure",123212685992,4,server_recommended,True
+MAG240M,121751666,17283641232,1112392,train_target_only,"X0,X1,X2,Y1,Y2,structure",1125740704,4,server_recommended,True

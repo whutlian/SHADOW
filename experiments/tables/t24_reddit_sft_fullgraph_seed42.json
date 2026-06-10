@@ -1,0 +1,26 @@
+{
+  "rows": [
+    {
+      "accuracy": 0.32427337765693665,
+      "cache_bytes": 560979720,
+      "dataset": "Reddit",
+      "feature_dim": 602,
+      "full_edge_scans": 0,
+      "macro_f1": 0.0982786856773423,
+      "model": "sagn_lite_v4_x0_smoke",
+      "num_edges": 114615892,
+      "num_nodes": 232965,
+      "peak_cpu_ram_gb": "",
+      "peak_gpu_ram_gb": "",
+      "precompute_time_s": 0,
+      "predicted_class_count": 13,
+      "reason": "X0-only table SFT smoke completed; full X1-X3 preprop is not run by default",
+      "status": "completed_x0_sft_smoke",
+      "test_nodes": 55703,
+      "train_nodes": 153431,
+      "train_time_s": 0.3443424999999998,
+      "uses_e_by_d": false,
+      "valid_nodes": 23831
+    }
+  ]
+}

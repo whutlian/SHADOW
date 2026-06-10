@@ -1,0 +1,40 @@
+{
+  "rows": [
+    {
+      "accuracy": "",
+      "actual_full_node_ratio": 0.005,
+      "byte_size_compression": "",
+      "condensation_time_s": "",
+      "condensed_edges": "",
+      "condensed_nodes": "",
+      "dataset": "ogbn-arxiv",
+      "macro_f1": "",
+      "method": "not_run_until_arxiv_gate_A",
+      "training_time_s": ""
+    },
+    {
+      "accuracy": "",
+      "actual_full_node_ratio": "",
+      "byte_size_compression": "",
+      "condensation_time_s": "",
+      "condensed_edges": "",
+      "condensed_nodes": "",
+      "dataset": "Reddit",
+      "macro_f1": "",
+      "method": "Shadow-HGC-SFT b=1",
+      "training_time_s": ""
+    },
+    {
+      "accuracy": "0.174593814714352",
+      "actual_full_node_ratio": "0.0024969079582152763",
+      "byte_size_compression": "",
+      "condensation_time_s": "",
+      "condensed_edges": "8188",
+      "condensed_nodes": "6115",
+      "dataset": "ogbn-products",
+      "macro_f1": "0.11342605750338396",
+      "method": "P3_shadow_condensed_medoid_b1",
+      "training_time_s": "0.17031559999999502"
+    }
+  ]
+}

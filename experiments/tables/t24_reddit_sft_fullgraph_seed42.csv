@@ -1,0 +1,2 @@
+dataset,model,status,reason,accuracy,macro_f1,predicted_class_count,precompute_time_s,train_time_s,peak_cpu_ram_gb,peak_gpu_ram_gb,cache_bytes,full_edge_scans,num_nodes,num_edges,feature_dim,train_nodes,valid_nodes,test_nodes,uses_e_by_d
+Reddit,sagn_lite_v4_x0_smoke,completed_x0_sft_smoke,X0-only table SFT smoke completed; full X1-X3 preprop is not run by default,0.32427337765693665,0.0982786856773423,13,0,0.3443424999999998,,,560979720,0,232965,114615892,602,153431,23831,55703,False
