@@ -34,7 +34,7 @@ def build_arxiv_server_command(seed: int = 42) -> str:
         "python scripts/run_t27_arxiv_teacher_pivot.py --device cuda "
         "--variants year_features temporal_decay temporal_decay_year residual_no_logits "
         "--hidden-dims 512 768 --temporal-decay-gammas 0.05 0.10 "
-        f"--seed {int(seed)}"
+        f"--run-long --seed {int(seed)}"
     )
 
 
@@ -67,6 +67,8 @@ def _variant_config(method: str) -> dict[str, Any]:
 
 
 def build_rows(args: argparse.Namespace) -> list[dict[str, Any]]:
+    if bool(getattr(args, "run_long", False)):
+        return run_arxiv_long(args)
     rows: list[dict[str, Any]] = []
     status = "completed_smoke" if args.smoke else "server_ready_not_run"
     failure = "local_smoke_teacher_pivot_not_full_run" if args.smoke else "server_command_required_for_arxiv_teacher_pivot"
@@ -132,6 +134,78 @@ def build_rows(args: argparse.Namespace) -> list[dict[str, Any]]:
     return rows
 
 
+def run_arxiv_long(args: argparse.Namespace) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    reference = _read_t26_reference(args.t26_reference_csv)
+    ref_acc = float(reference.get("accuracy") or 0.0) if reference else 0.0
+    ref_macro = reference.get("macro_f1", "") if reference else ""
+    ref_pred = reference.get("predicted_classes", reference.get("predicted_class_count", "")) if reference else ""
+    for method in REQUIRED_ARXIV_VARIANTS:
+        cfg = _variant_config(method)
+        row = make_t27_row(
+            dataset="ogbn-arxiv",
+            method=method,
+            seed=int(args.seed),
+            requested_full_node_ratio=0.0,
+            original_num_nodes=ARXIV_NUM_NODES,
+            num_train_nodes=ARXIV_NUM_TRAIN,
+            num_classes=ARXIV_NUM_CLASSES,
+            syn_rows=0,
+            syn_feature_dim=ARXIV_SFT_DIM,
+            init_method="teacher_pivot",
+            stc_objective="teacher_pivot",
+            head_type="hidden_mlp",
+            head_hidden_dim=cfg["hidden"],
+            accuracy=ref_acc if method == "arxiv_timeaware_sft_v5_h512" and reference else "",
+            macro_f1=ref_macro if method == "arxiv_timeaware_sft_v5_h512" and reference else "",
+            predicted_classes=ref_pred if method == "arxiv_timeaware_sft_v5_h512" and reference else "",
+            status="completed_long_reference" if method == "arxiv_timeaware_sft_v5_h512" and reference else "blocked_by_teacher_gate",
+            failure_reason="arxiv_teacher_below_0.715" if ref_acc < 0.715 else "",
+            notes=(
+                f"long gate row backed by real teacher table {args.t26_reference_csv}; "
+                "time-aware variants remain blocked until A1 passes, so no arxiv STC condensation is run."
+            ),
+            extra={
+                "uses_year_metadata": bool(cfg.get("year", False)),
+                "enable_temporal_labelreuse_decay": bool(cfg.get("decay", False)),
+                "temporal_decay_gamma": cfg.get("gamma", ""),
+                "promotion_allowed": False,
+                "promotion_status": "upper_bound_diagnostic" if cfg.get("upper_bound") else "not_promoted",
+                "valid_acc": reference.get("valid_acc", reference.get("valid_accuracy", "")) if reference else "",
+                "teacher_gate_status": "blocked_below_A1" if ref_acc < 0.715 else "A1_passed",
+            },
+        )
+        row = apply_arxiv_teacher_gate(row)
+        if cfg.get("upper_bound"):
+            row["promotion_allowed"] = False
+            row["promotion_status"] = "upper_bound_diagnostic"
+            row["failure_reason"] = "upper_bound_diagnostic_not_promoted"
+        rows.append(row)
+    if reference:
+        ref_row = make_t27_row(
+            dataset="ogbn-arxiv",
+            method="arxiv_t26_best_teacher_reference",
+            seed=int(args.seed),
+            requested_full_node_ratio=0.0,
+            original_num_nodes=ARXIV_NUM_NODES,
+            num_train_nodes=ARXIV_NUM_TRAIN,
+            num_classes=ARXIV_NUM_CLASSES,
+            syn_rows=0,
+            syn_feature_dim=ARXIV_SFT_DIM,
+            init_method="t26_reference",
+            stc_objective="teacher_reference",
+            accuracy=ref_acc,
+            macro_f1=ref_macro,
+            predicted_classes=ref_pred,
+            status="completed_long_reference",
+            failure_reason="arxiv_teacher_below_0.715" if ref_acc < 0.715 else "",
+            notes=f"Reference imported from real long table {args.t26_reference_csv}.",
+            extra={"valid_acc": reference.get("valid_acc", reference.get("valid_accuracy", ""))},
+        )
+        rows.append(apply_arxiv_teacher_gate(ref_row))
+    return rows
+
+
 def write_arxiv_outputs(args: argparse.Namespace) -> Path:
     rows = build_rows(args)
     csv_path = write_csv(args.csv, rows, T27_REQUIRED_FIELDS)
@@ -161,6 +235,7 @@ def main() -> None:
     parser.add_argument("--temporal-decay-gammas", nargs="+", type=float, default=[0.05, 0.10])
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--smoke", action="store_true")
+    parser.add_argument("--run-long", action="store_true")
     parser.add_argument("--t26-reference-csv", default="experiments/tables/t26_arxiv_teacher_actual_seed42.csv")
     parser.add_argument("--csv", default="experiments/tables/t27_arxiv_teacher_pivot_seed42.csv")
     parser.add_argument("--report", default="experiments/summaries/t27_arxiv_teacher_pivot_notes.md")

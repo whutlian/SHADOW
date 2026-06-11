@@ -1,14 +1,20 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import time
+from typing import Any
 
 import numpy as np
 import torch
 from torch import nn
 import torch.nn.functional as F
 
+from shadow_hgc.eval.resource import current_cpu_ram_bytes, current_gpu_ram_bytes
+from shadow_hgc.models.sft_teacher_v3 import SFTTeacherV3
 from shadow_hgc.sft.stc import BlockSpec, apply_tanh_bounded_delta, delta_bound_ratios
 from shadow_hgc.sft.stc_losses import weighted_cross_entropy
+from shadow_hgc.train.lazy_sft_memmap import _load_block_stats_into_model, evaluate_lazy_sft
+from shadow_hgc.train.train_sft_teacher import sft_loss
 
 
 @dataclass
@@ -21,6 +27,16 @@ class STCOptimizationResult:
     used_valid_labels: bool = False
     used_test_labels: bool = False
     metrics: dict[str, float] = field(default_factory=dict)
+
+
+@dataclass
+class STCFinalTrainResult:
+    metrics: dict[str, Any]
+    valid_metrics: dict[str, Any]
+    training_time_s: float
+    inference_time_s: float
+    peak_cpu_ram_gb: float
+    peak_gpu_ram_gb: float
 
 
 class FlatTableHead(nn.Module):
@@ -47,6 +63,18 @@ def _as_tensor(value: torch.Tensor | np.ndarray, *, dtype: torch.dtype, device: 
     if isinstance(value, torch.Tensor):
         return value.to(device=device, dtype=dtype)
     return torch.as_tensor(value, dtype=dtype, device=device)
+
+
+def split_flat_table_by_blocks(z_flat: torch.Tensor, block_dims: dict[str, int]) -> dict[str, torch.Tensor]:
+    blocks: dict[str, torch.Tensor] = {}
+    offset = 0
+    for name, dim in block_dims.items():
+        end = offset + int(dim)
+        blocks[name] = z_flat[:, offset:end]
+        offset = end
+    if offset != int(z_flat.shape[1]):
+        raise ValueError(f"flat table dim {z_flat.shape[1]} does not match block dims total {offset}")
+    return blocks
 
 
 def _prototype_logits(z_real: torch.Tensor, z_syn: torch.Tensor, y_syn: torch.Tensor, num_classes: int) -> torch.Tensor:
@@ -95,8 +123,9 @@ def optimize_trainable_delta(
     optimizer = torch.optim.Adam([raw_delta], lr=float(lr))
     generator = torch.Generator(device=dev).manual_seed(int(seed) + 17)
     with torch.no_grad():
-        initial_logits = _prototype_logits(z_real_t, z_init_t, y_syn_t, int(num_classes))
-        initial_loss = float(F.cross_entropy(initial_logits, y_real_t).item())
+        init_z, init_y = _sample_batch(z_real_t, y_real_t, real_batch_size, generator)
+        initial_logits = _prototype_logits(init_z, z_init_t, y_syn_t, int(num_classes))
+        initial_loss = float(F.cross_entropy(initial_logits, init_y).item())
     for _ in range(int(outer_steps)):
         batch_z, batch_y = _sample_batch(z_real_t, y_real_t, real_batch_size, generator)
         z_syn, _ = apply_tanh_bounded_delta(z_init_t, raw_delta, blocks, rho=float(rho))
@@ -107,8 +136,9 @@ def optimize_trainable_delta(
         optimizer.step()
     with torch.no_grad():
         z_syn, delta = apply_tanh_bounded_delta(z_init_t, raw_delta, blocks, rho=float(rho))
-        final_logits = _prototype_logits(z_real_t, z_syn, y_syn_t, int(num_classes))
-        final_loss = float(F.cross_entropy(final_logits, y_real_t).item())
+        final_z, final_y = _sample_batch(z_real_t, y_real_t, real_batch_size, generator)
+        final_logits = _prototype_logits(final_z, z_syn, y_syn_t, int(num_classes))
+        final_loss = float(F.cross_entropy(final_logits, final_y).item())
         ratios = delta_bound_ratios(z_init_t, delta, blocks)
     return STCOptimizationResult(z_syn.detach().cpu(), y_syn_t.detach().cpu(), initial_loss, final_loss, ratios)
 
@@ -140,8 +170,9 @@ def optimize_gradient_matching(
     optimizer = torch.optim.Adam([raw_delta], lr=float(lr))
     generator = torch.Generator(device=dev).manual_seed(int(seed) + 31)
     with torch.no_grad():
-        initial_logits = _prototype_logits(z_real_t, z_init_t, y_syn_t, int(num_classes))
-        initial_loss = float(F.cross_entropy(initial_logits, y_real_t).item())
+        init_z, init_y = _sample_batch(z_real_t, y_real_t, int(real_batch_size), generator)
+        initial_logits = _prototype_logits(init_z, z_init_t, y_syn_t, int(num_classes))
+        initial_loss = float(F.cross_entropy(initial_logits, init_y).item())
     for step in range(int(outer_steps)):
         total_loss = z_init_t.new_tensor(0.0)
         for head_id in range(int(gm_num_heads)):
@@ -161,14 +192,113 @@ def optimize_gradient_matching(
         optimizer.step()
     with torch.no_grad():
         z_syn, delta = apply_tanh_bounded_delta(z_init_t, raw_delta, blocks, rho=float(rho))
-        final_logits = _prototype_logits(z_real_t, z_syn, y_syn_t, int(num_classes))
-        final_loss = float(F.cross_entropy(final_logits, y_real_t).item())
+        final_z, final_y = _sample_batch(z_real_t, y_real_t, int(real_batch_size), generator)
+        final_logits = _prototype_logits(final_z, z_syn, y_syn_t, int(num_classes))
+        final_loss = float(F.cross_entropy(final_logits, final_y).item())
         ratios = delta_bound_ratios(z_init_t, delta, blocks)
     return STCOptimizationResult(z_syn.detach().cpu(), y_syn_t.detach().cpu(), initial_loss, final_loss, ratios)
 
 
 def optimize_outer_loop(*args, **kwargs) -> STCOptimizationResult:
     return optimize_trainable_delta(*args, **kwargs)
+
+
+def _iter_index_batches(num_rows: int, *, batch_size: int, shuffle: bool, seed: int, device: torch.device) -> list[torch.Tensor]:
+    order = torch.arange(int(num_rows), dtype=torch.long, device=device)
+    if shuffle:
+        generator = torch.Generator(device=device).manual_seed(int(seed))
+        order = order[torch.randperm(order.numel(), generator=generator, device=device)]
+    return [order[start : start + int(batch_size)] for start in range(0, int(order.numel()), int(batch_size))]
+
+
+def train_sft_teacher_on_synthetic_table(
+    *,
+    store,
+    labels: torch.Tensor,
+    train_rows: torch.Tensor,
+    valid_rows: torch.Tensor,
+    test_rows: torch.Tensor,
+    z_syn: torch.Tensor | np.ndarray,
+    y_syn: torch.Tensor | np.ndarray,
+    num_classes: int,
+    device: str | torch.device,
+    model_type: str = "sagn_lite_v4",
+    hidden_dim: int = 128,
+    dropout: float = 0.3,
+    epochs: int = 80,
+    batch_size: int = 4096,
+    eval_batch_size: int = 65536,
+    lr: float = 0.003,
+    weight_decay: float = 1e-4,
+    loss_type: str = "sqrt_weighted_ce",
+    label_smoothing: float = 0.0,
+    mixup_alpha: float = 0.0,
+    seed: int = 42,
+) -> STCFinalTrainResult:
+    started = time.perf_counter()
+    torch.manual_seed(int(seed))
+    target_device = torch.device(device)
+    z_syn_t = _as_tensor(z_syn, dtype=torch.float32, device=target_device)
+    y_syn_t = _as_tensor(y_syn, dtype=torch.long, device=target_device)
+    labels_cpu = labels.to(torch.long).cpu()
+    train_labels = labels_cpu[train_rows.to(torch.long).cpu()].to(target_device)
+    model = SFTTeacherV3(
+        store.block_dims,
+        num_classes=int(num_classes),
+        model_type=model_type,
+        hidden_dim=int(hidden_dim),
+        dropout=float(dropout),
+    ).to(target_device)
+    _load_block_stats_into_model(model, store)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=float(lr), weight_decay=float(weight_decay))
+    rng = np.random.default_rng(int(seed))
+    for epoch in range(int(epochs)):
+        model.train()
+        for idx in _iter_index_batches(z_syn_t.shape[0], batch_size=int(batch_size), shuffle=True, seed=int(seed) + epoch, device=target_device):
+            optimizer.zero_grad(set_to_none=True)
+            blocks = split_flat_table_by_blocks(z_syn_t[idx], store.block_dims)
+            y = y_syn_t[idx]
+            if float(mixup_alpha) > 0.0 and int(idx.numel()) > 1:
+                lam = float(rng.beta(float(mixup_alpha), float(mixup_alpha)))
+                perm = torch.randperm(int(idx.numel()), device=target_device)
+                mixed_blocks = {name: lam * value + (1.0 - lam) * value[perm] for name, value in blocks.items()}
+                logits = model(mixed_blocks)
+                loss = lam * sft_loss(logits, y, loss_type=loss_type, train_labels=train_labels, label_smoothing=float(label_smoothing))
+                loss = loss + (1.0 - lam) * sft_loss(logits, y[perm], loss_type=loss_type, train_labels=train_labels, label_smoothing=float(label_smoothing))
+            else:
+                logits = model(blocks)
+                loss = sft_loss(logits, y, loss_type=loss_type, train_labels=train_labels, label_smoothing=float(label_smoothing))
+            loss.backward()
+            optimizer.step()
+    train_s = float(time.perf_counter() - started)
+    valid_metrics = evaluate_lazy_sft(
+        model,
+        store,
+        labels_cpu,
+        valid_rows.to(torch.long).cpu(),
+        num_classes=int(num_classes),
+        batch_size=int(eval_batch_size),
+        device=target_device,
+    )
+    infer_started = time.perf_counter()
+    metrics = evaluate_lazy_sft(
+        model,
+        store,
+        labels_cpu,
+        test_rows.to(torch.long).cpu(),
+        num_classes=int(num_classes),
+        batch_size=int(eval_batch_size),
+        device=target_device,
+    )
+    infer_s = float(time.perf_counter() - infer_started)
+    return STCFinalTrainResult(
+        metrics=metrics,
+        valid_metrics=valid_metrics,
+        training_time_s=train_s,
+        inference_time_s=infer_s,
+        peak_cpu_ram_gb=current_cpu_ram_bytes() / (1024**3),
+        peak_gpu_ram_gb=current_gpu_ram_bytes() / (1024**3),
+    )
 
 
 def train_flat_head(
