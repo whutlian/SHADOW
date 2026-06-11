@@ -96,6 +96,8 @@ def write_semantic_cache_manifest(
     feature_dim: int,
     dtype: str,
     cache_bytes: int,
+    node_ordering: str = "ogb_node_id",
+    text_fields: list[str] | tuple[str, ...] = ("title", "abstract"),
 ) -> Path:
     root = Path(cache_dir)
     root.mkdir(parents=True, exist_ok=True)
@@ -105,6 +107,8 @@ def write_semantic_cache_manifest(
         "shape": [int(num_nodes), int(feature_dim)],
         "dtype": dtype,
         "cache_bytes": int(cache_bytes),
+        "node_ordering": node_ordering,
+        "text_fields": list(text_fields),
     }
     path = root / "semantic_manifest.json"
     path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
