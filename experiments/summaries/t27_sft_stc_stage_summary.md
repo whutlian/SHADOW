@@ -25,7 +25,7 @@
 
 ## Tests
 
-- Verification result: `full pytest: 357 passed in 73.79s; T27 focused tests: 14 passed in 3.03s; Products long rows=18; Reddit long rows=80; Arxiv long/reference rows=7`
+- Verification result: `full pytest: 357 passed in 73.79s; latest T27 focused tests: 14 passed in 2.73s; Products long rows=18; Products tiny-ratio rows=27; Reddit long rows=80; Arxiv long/reference rows=7`
 - Added tests: `tests/test_t27_stc_core.py`, `tests/test_t27_scripts.py`.
 
 ## Requirement Checklist
@@ -161,6 +161,19 @@
 | stage | requirement_check |  | 42 | completed |  |  |  | not_promoted |  |  |
 | stage | requirement_check |  | 42 | completed |  |  |  | not_promoted |  |  |
 
+## Products Tiny-Ratio Sweep
+
+Additional ogbn-products T27 SFT-STC long sweep at full-node ratios 0.02%, 0.04%, and 0.08%.
+
+| ratio_percent | requested_full_node_ratio | best_method | syn_rows | accuracy | macro_f1 | predicted_classes | promotion_status |
+|---|---|---|---|---|---|---|---|
+| 0.02 | 0.0002 | products_uca_mixup_trainable_delta_rho010 | 490 | 0.6858000868 | 0.3094500395 | 22 | not_promoted |
+| 0.04 | 0.0004 | products_uca_mixup_frozen | 980 | 0.7000873439 | 0.3283601128 | 27 | not_promoted |
+| 0.08 | 0.0008 | products_uca_mixup_frozen | 1959 | 0.7204511699 | 0.3483658099 | 27 | not_promoted |
+
+- Full 27-row CSV: `experiments/tables/t27_stc_products_0p02_0p04_0p08_percent_seed42.csv`
+- All rows are `completed_long`, with `promotion_status=not_promoted` and `failure_reason=products_gate_not_met`.
+
 ## Promotion Decision
 
 - Promoted rows: `0`.
@@ -171,6 +184,7 @@
 ## CSV Paths
 
 - `experiments/tables/t27_stc_products_seed42.csv`
+- `experiments/tables/t27_stc_products_0p02_0p04_0p08_percent_seed42.csv`
 - `experiments/tables/t27_stc_reddit_seed42.csv`
 - `experiments/tables/t27_arxiv_teacher_pivot_seed42.csv`
 - `experiments/tables/t27_stage_summary_seed42.csv`
