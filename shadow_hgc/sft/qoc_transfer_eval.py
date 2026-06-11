@@ -52,6 +52,7 @@ def train_qoc_table_head(
     lr: float = 0.05,
     dropout: float = 0.0,
     seed: int = 42,
+    eval_rows: torch.Tensor | None = None,
 ) -> QOCTransferResult:
     torch.manual_seed(int(seed))
     started = time.perf_counter()
@@ -72,16 +73,22 @@ def train_qoc_table_head(
     training_time = time.perf_counter() - train_started
     eval_started = time.perf_counter()
     with torch.no_grad():
-        logits_real = model(input_real.to(torch.float32))
+        eval_input = input_real.to(torch.float32)
+        eval_labels = labels_real.to(torch.long)
+        if eval_rows is not None:
+            rows = eval_rows.to(torch.long).cpu()
+            eval_input = eval_input[rows]
+            eval_labels = eval_labels[rows]
+        logits_real = model(eval_input)
         pred = logits_real.argmax(dim=1)
-        labels = labels_real.to(torch.long)
-        acc = float((pred == labels).to(torch.float32).mean().item())
-        macro = _macro_f1(pred, labels, int(num_classes))
+        acc = float((pred == eval_labels).to(torch.float32).mean().item())
+        macro = _macro_f1(pred, eval_labels, int(num_classes))
     eval_time = time.perf_counter() - eval_started
     metrics = {
         "accuracy": acc,
         "macro_f1": macro,
         "predicted_classes": int(torch.unique(pred).numel()),
+        "eval_rows": int(eval_labels.numel()),
         "transfer_eval_type": "real_transfer_eval",
         "student_model": "operator_sft_table_head",
         "training_time": float(training_time),

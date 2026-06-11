@@ -41,6 +41,28 @@ def test_t30_qoc_table_head_reports_real_transfer_eval_metrics() -> None:
     assert result.metrics["uses_full_edge_index_on_gpu"] is False
 
 
+def test_t30_qoc_table_head_can_evaluate_selected_real_rows_only() -> None:
+    input_syn = torch.tensor([[2.0, 0.0], [0.0, 2.0], [1.8, 0.1], [0.2, 1.7]])
+    labels_syn = torch.tensor([0, 1, 0, 1])
+    weights = torch.ones(4)
+    input_real = torch.tensor([[2.2, 0.1], [0.1, 2.1], [2.1, 0.0], [0.0, 2.2]])
+    labels_real = torch.tensor([0, 1, 1, 0])
+    result = train_qoc_table_head(
+        input_syn=input_syn,
+        labels_syn=labels_syn,
+        code_weights=weights,
+        input_real=input_real,
+        labels_real=labels_real,
+        eval_rows=torch.tensor([0, 1]),
+        num_classes=2,
+        hidden_dim=8,
+        epochs=80,
+        seed=3,
+    )
+    assert result.metrics["eval_rows"] == 2
+    assert result.metrics["accuracy"] >= 0.75
+
+
 def test_t30_pltc_soft_labels_are_sota_only_and_train_free() -> None:
     assignments = torch.tensor([0, 0, 1, 1])
     teacher_probs = torch.tensor(
