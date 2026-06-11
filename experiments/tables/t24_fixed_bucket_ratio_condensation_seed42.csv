@@ -1,4 +1,0 @@
-accuracy,actual_full_node_ratio,byte_size_compression,condensation_time_s,condensed_edges,condensed_nodes,dataset,macro_f1,method,training_time_s
-,0.005,,,,,ogbn-arxiv,,not_run_until_arxiv_gate_A,
-,,,,,,Reddit,,Shadow-HGC-SFT b=1,
-0.174593814714352,0.0024969079582152763,,,8188,6115,ogbn-products,0.11342605750338396,P3_shadow_condensed_medoid_b1,0.17031559999999502

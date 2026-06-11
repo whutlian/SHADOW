@@ -1,9 +1,0 @@
-dataset,num_nodes,num_edges,num_classes,block_set,cache_mode,total_cache_bytes,feature_cache_bytes,label_cache_bytes,structure_cache_bytes,full_edge_scans,peak_cpu_ram_estimate_gb,peak_gpu_ram_estimate_gb,wall_time_category,server_recommended,uses_logits_as_input,uses_kd,uses_dense_p2,uses_e_by_d_materialization
-ogbn-arxiv,169343,1166243,40,"X0,X1,X2,X3,Y1,Y2,Y3,structure",all_target_rows,130055424,86703616,40642320,2709488,6,2.018168532848358,1.0,local_short,False,False,False,False,False
-ogbn-arxiv,169343,1166243,40,"X0,X1,X2,X3,Y1,Y2,Y3,structure",train_target_only,69842688,46561792,21825840,1455056,6,2.0097569108009337,1.0,local_short,False,False,False,False,False
-ogbn-products,2449029,123718280,47,"X0,X1,X2,X3,Y1,Y2,Y3,structure",all_target_rows,1983713490,1253902848,690626178,39184464,6,2.2771215732209384,1.0,local_long,False,False,False,False,False
-ogbn-products,2449029,123718280,47,"X0,X1,X2,X3,Y1,Y2,Y3,structure",train_target_only,159258150,100666880,55445430,3145840,6,2.0222481065429747,1.0,local_long,False,False,False,False,False
-ogbn-papers100M,111059956,1615685872,172,"X0,X1,X2,Y1,Y2,structure",all_target_rows,120833232128,42647023104,76409249728,1776959296,4,18.880207526683808,1.0,server_recommended,True,False,False,False,False
-ogbn-papers100M,111059956,1615685872,172,"X0,X1,X2,Y1,Y2,structure",train_target_only,1313410752,463556736,830539152,19314864,4,2.183481362462044,1.0,server_recommended,True,False,False,False,False
-MAG240M,121751666,17283641232,153,"X0,X1,X2,Y1,Y2,structure",all_target_rows,123212685992,46752639744,74512019592,1948026656,4,19.21261339150369,1.0,server_recommended,True,False,False,False,False
-MAG240M,121751666,17283641232,153,"X0,X1,X2,Y1,Y2,structure",train_target_only,1125740704,427158528,680783904,17798272,4,2.157264159619808,1.0,server_recommended,True,False,False,False,False

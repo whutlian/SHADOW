@@ -1,6 +1,0 @@
-dataset,seed,fullgraph_variant,fullgraph_accuracy,fullgraph_gate_passed,condensation_status,promoted,ratio_plan,reason
-acm,42,t0s_sfb_scap,0.9211520552635193,False,blocked_by_t0s_fullgraph_gate,False,blocked,completed
-dblp,42,t0s_sfb_scap_full_schema,0.7133802771568298,False,blocked_by_t0s_fullgraph_gate,False,blocked,completed
-imdb,42,t0s_sfb_scap,0.36851966381073,False,blocked_by_t0s_fullgraph_gate,False,blocked,completed
-ogbn-arxiv,42,t0s_sfb_scap_resource_guard,,False,blocked_by_t0s_fullgraph_gate,False,blocked,"medium fullgraph SFB+SCAP is resource-guarded on this local desktop; no diffusion, dense P2, or full-graph backprop path was executed"
-ogbn-products,42,t0s_sfb_scap_resource_guard,,False,blocked_by_t0s_fullgraph_gate,False,blocked,"medium fullgraph SFB+SCAP is resource-guarded on this local desktop; no diffusion, dense P2, or full-graph backprop path was executed"

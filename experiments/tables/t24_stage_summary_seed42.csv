@@ -1,4 +1,0 @@
-accuracy,best,dataset,macro_f1,status
-0.7016645063061951,A0_current_A3_true_sagn_lite_v3_replay,ogbn-arxiv,0.5048992808650066,completed_replay
-0.174593814714352,P3_shadow_condensed_medoid_b1,ogbn-products,0.11342605750338396,completed_streaming
-0.32427337765693665,sagn_lite_v4_x0_smoke,Reddit,0.0982786856773423,completed_x0_sft_smoke

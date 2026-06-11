@@ -1,5 +1,0 @@
-dataset,target_type,num_target_rows,num_edges,block_dim,dtype_bytes,x0_cache_bytes,x1_cache_bytes,x2_cache_bytes,lad_scap_cache_bytes,total_cache_bytes,edge_scans,full_edge_scans,active_source_nodes_estimate,cache_mode,uses_memmap,uses_e_by_d_materialization,uses_dense_p2,uses_logits_as_input,uses_bounded_edges,uses_diffusion_legacy,wall_time_category,server_recommended
-ogbn-arxiv,paper,169343,1166243,64,2,21675904,43351808,43351808,13547440,121926960,6,6,169343,all_target_rows,True,False,False,False,False,False,local_short,False
-ogbn-products,product,2449029,123718280,64,2,313475712,626951424,626951424,230208726,1797587286,6,6,2449029,all_target_rows,True,False,False,False,False,False,local_long,False
-ogbn-papers100M,paper,111059956,1615685872,64,2,14215674368,28431348736,28431348736,38204624864,109282996704,6,6,111059956,train_target_only,True,False,False,False,False,False,server_recommended,True
-MAG240M,paper,121751666,1728430000,64,2,15584213248,31168426496,31168426496,37256009796,115177076036,6,6,121751666,train_target_only,True,False,False,False,False,False,server_recommended,True

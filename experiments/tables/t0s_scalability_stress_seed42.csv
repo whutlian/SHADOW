@@ -1,5 +1,0 @@
-dataset,status,num_nodes,num_edges,num_target_rows,num_train_target_rows,num_active_sources,num_classes,feature_dim,scap_topk,full_edge_scans,peak_cpu_ram_gb,peak_gpu_ram_gb,disk_cache_gb,scap_cache_gb,feature_demand_cache_gb,wall_time_s,edge_scan_throughput_edges_per_s,cache_all_targets,uses_dense_e_by_d,valid,reasons
-ogbn-arxiv,dry_run_estimate,169343,2332486,169343,90941,169343,40,128,8,2,2.09429831802845,0.0,0.09429831802845001,0.007570222020149231,0.08672809600830078,0.0,0.0,False,False,True,[]
-ogbn-products,dry_run_estimate,2449029,123718280,2449029,196615,786460,47,100,8,2,2.2559697180986404,0.0,0.25596971809864044,0.1094801276922226,0.14648959040641785,0.0,0.0,False,False,True,[]
-ogbn-papers100M,dry_run_estimate,111059956,1615685872,111059956,1207179,4828716,172,128,8,2,8.116022527217865,0.0,6.116022527217865,4.9647669196128845,1.1512556076049805,0.0,0.0,False,False,True,[]
-mag240m,dry_run_estimate,121751666,1728364232,121751666,1112392,4449568,153,768,8,2,13.80788168311119,0.0,11.80788168311119,5.442723602056503,6.3651580810546875,0.0,0.0,False,False,True,[]

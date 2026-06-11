@@ -23,10 +23,11 @@ env/
 *.memmap
 *.mmap
 
-# One-off local debug attempts; canonical experiment outputs remain tracked.
-/experiments/logs/medium_products_attempt/
-/experiments/tables/medium_products_attempt*.csv
-/experiments/logit_caches/
+# Local-only experiment artifacts, generated reports, summaries, and references.
+/experiments/
+/docs/
+/baselines/
+/handoff.md
 /experiment_result_zips/
 
 # Local/editor metadata

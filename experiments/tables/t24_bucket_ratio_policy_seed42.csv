@@ -1,4 +1,0 @@
-dataset,main_ratio,nodes,ratio_mode,scale_bucket,sweep_ratios
-ogbn-arxiv,0.005,169343,full_node,medium,"0.001,0.0025,0.005,0.01"
-Reddit,0.005,232965,full_node,medium,"0.001,0.0025,0.005,0.01"
-ogbn-products,0.0025,2449029,full_node,large,"0.0005,0.001,0.0025,0.005"

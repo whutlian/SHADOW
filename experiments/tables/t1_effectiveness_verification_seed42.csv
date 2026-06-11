@@ -1,4 +1,0 @@
-dataset,base_variant,base_valid_acc,base_test_acc,best_validated_variant,best_validated_test_acc,best_validated_macro_f1,delta_test_acc,promotion_status,verification_scope
-acm,B3_scap_v2,0.9285714030265808,0.8956562876701355,smooth_prob,0.906987726688385,0.9076114495595297,0.011331439018249512,promoted,available_sfb_v2_logit_cache_matches_acm_t1_base_family
-dblp,B2_metapath,0.6065573692321777,0.5845070481300354,,,,,no_promoted_t1_row,available_sfb_v2_logit_cache_not_historical_safe_row
-imdb,B2_metapath,0.35036495327949524,0.3244847059249878,,,,,no_promoted_t1_row,available_sfb_v2_logit_cache_not_historical_safe_row

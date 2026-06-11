@@ -1,3 +1,0 @@
-dataset,base_variant,path_set,alpha,space,valid_acc_before,valid_acc_after,valid_macro_f1_after,test_acc_before,test_acc_after,macro_f1_before,macro_f1_after,predicted_class_count_before,predicted_class_count_after,promotion_status,promotion_reason,uses_dense_path_adjacency,exposes_metapath_edge_type
-dblp,R+ relation-linear current-best,author-paper-author,0.1,logit,0.8155737519264221,0.8196721076965332,0.8164494186639786,0.8369718194007874,0.8376760482788086,0.8299370408058167,0.8305231779813766,4,4,promoted,validation_selected,False,False
-imdb,clean S1 MAM/MDM/MKM,,,,,,,,,,,,,blocked,replay accuracy mismatch,False,False

@@ -1,2 +1,0 @@
-best_tune_accuracy,dataset,ratio,ratio_percent,reason,status
-0.9159584641456604,acm,,,"ACM fullgraph tune did not reach 0.93, so prompt-gated condensed sweep was not run",skipped_by_gate

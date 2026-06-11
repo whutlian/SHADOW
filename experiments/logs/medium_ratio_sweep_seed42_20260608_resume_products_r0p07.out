@@ -1,2 +1,0 @@
-[dataset] loading ogbn-products
-[run] ogbn-products seed=42 ratio=0.0700

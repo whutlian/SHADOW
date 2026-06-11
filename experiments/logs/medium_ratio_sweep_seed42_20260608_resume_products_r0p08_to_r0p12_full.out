@@ -1,6 +1,0 @@
-[dataset] loading ogbn-products
-[run] ogbn-products seed=42 ratio=0.0800
-[done] ogbn-products ratio=0.0800 acc=0.5649044513702393 f1=0.2504369306546497 nodes=23110
-[run] ogbn-products seed=42 ratio=0.0850
-[done] ogbn-products ratio=0.0850 acc=0.5675636529922485 f1=0.2541120659034858 nodes=24538
-[run] ogbn-products seed=42 ratio=0.0900

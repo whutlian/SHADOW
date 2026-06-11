@@ -1,7 +1,0 @@
-# DBLP Demand Equivalence Seed 42
-
-| dataset | relation_name | shape_a | shape_b | num_train_target_ids | row_l2_mean | row_l2_median | row_l2_max | cosine_mean | cosine_min | allclose_fraction | nan_count_a | nan_count_b | source_type | destination_type | edge_direction_checked | alpha_normalization_checked | status | gate_passed |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| dblp | written_by | [1217, 4231] | [1217, 4231] | 1217 | 0.0 | 0.0 | 0.0 | 1.0 | 0.9999995827674866 | 1.0 | 0 | 0 | paper | author | True | True | completed | True |
-
-- CSV: `experiments\tables\dblp_demand_equivalence_seed42.csv`

@@ -1,3 +1,0 @@
-block_dim,block_name,block_nan_count,block_norm_stats_source,block_type,branch_test_acc,branch_train_acc,branch_val_acc,branch_val_macro_f1,drop_reason,gate_final,gate_initial,kept_or_dropped,safe_candidate_val_acc,safe_candidate_val_macro_f1
-2,useful,0,"{'mean_abs': 0.5, 'std_mean': 0.5}",useful,1.0,1.0,1.0,1.0,,5.755476539803794e-09,0.00033540636650286615,kept,0.5,0.3333333432674408
-2,noise,0,"{'mean_abs': 0.25687500834465027, 'std_mean': 0.2794669270515442}",noise,0.0,1.0,0.0,0.0,validation_non_regression_gate,17.65916633605957,0.00033540636650286615,dropped,0.0,0.0
