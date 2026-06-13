@@ -15,6 +15,7 @@ env/
 # Large downloaded datasets and local benchmark caches
 /dataset/
 /data/
+/caches/
 *.pt
 *.pth
 *.ckpt
@@ -31,6 +32,7 @@ env/
 /experiment_result_zips/
 
 # Local/editor metadata
+.codex_tmp/
 .idea/
 .vscode/
 *.swp

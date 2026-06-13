@@ -16,6 +16,24 @@ Do not broaden the claim to arbitrary graph tasks, arbitrary HGNNs, or full high
 
 ---
 
+## Server operation constraints
+
+When operating on the remote server, the agent is allowed to read, write, create, delete, and execute files only under:
+
+```text
+/data1/data_1/slian
+```
+
+The agent must not perform any file operation outside `/data1/data_1/slian` on the remote server.
+
+All remote experiments, scripts, and project commands must use the conda environment:
+
+```text
+slian
+```
+
+---
+
 ## Non-negotiable method invariants
 
 ### 1. Main method is frozen

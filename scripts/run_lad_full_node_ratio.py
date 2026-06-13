@@ -229,6 +229,8 @@ def _write_report(rows: list[dict], path: Path, csv_path: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run LAD V2 by requested full-graph condensed node ratio.")
+    parser.add_argument("--datasets", nargs="+", choices=SMALL_DATASETS + MEDIUM_DATASETS)
+    parser.add_argument("--ratios", nargs="+", type=float)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--epochs", type=int, default=500)
     parser.add_argument("--download", action="store_true")
@@ -239,14 +241,11 @@ def main() -> None:
     args = parser.parse_args()
     Path(args.log_dir).mkdir(parents=True, exist_ok=True)
     rows = []
-    for dataset in SMALL_DATASETS:
+    datasets = args.datasets if args.datasets else SMALL_DATASETS + MEDIUM_DATASETS
+    for dataset in datasets:
         graph = _load_dataset(dataset, download=args.download)
-        for ratio in SMALL_FULL_NODE_RATIOS:
-            summary = _run_one(graph, dataset, ratio, args)
-            rows.append(_row(summary, dataset, ratio))
-    for dataset in MEDIUM_DATASETS:
-        graph = _load_dataset(dataset, download=args.download)
-        for ratio in MEDIUM_FULL_NODE_RATIOS:
+        default_ratios = SMALL_FULL_NODE_RATIOS if dataset in SMALL_DATASETS else MEDIUM_FULL_NODE_RATIOS
+        for ratio in (args.ratios if args.ratios is not None else default_ratios):
             summary = _run_one(graph, dataset, ratio, args)
             rows.append(_row(summary, dataset, ratio))
     output = Path(args.output)
