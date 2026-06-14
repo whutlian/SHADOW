@@ -28,7 +28,7 @@ DEFAULT_RATIOS: dict[str, list[float]] = {
     "Reddit": [0.0005, 0.001, 0.002, 0.0025, 0.005, 0.01],
     "ogbn-products": [0.0002, 0.0004, 0.0008, 0.0025, 0.005],
     "ogbn-papers100M": [0.00005, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01],
-    "ogbn-arxiv": [],
+    "ogbn-arxiv": [0.0005, 0.001, 0.0025, 0.005, 0.01],
 }
 
 ALIASES: dict[str, str] = {
@@ -121,10 +121,20 @@ def load_reference_index(tables_dir: str | Path = "experiments/tables") -> dict[
             row["compression_ratio"] = row.get("requested_full_node_ratio", "")
             row["source_file"] = name
             rows.append(row)
+    for row in read_csv_rows(tables / "t38_arxiv_unified_seed42.csv"):
+        if str(row.get("dataset")) != "ogbn-arxiv":
+            continue
+        row = dict(row)
+        row["_t38_comparison_type"] = "ours_native"
+        row["compression_ratio"] = row.get("requested_full_node_ratio", "")
+        row["source_file"] = "t38_arxiv_unified_seed42.csv"
+        rows.append(row)
     return _best_by_accuracy(rows)
 
 
 def _post_cache_time(source: dict[str, Any]) -> float | str:
+    if source.get("post_cache_time_sec") not in {"", None}:
+        return fvalue(source.get("post_cache_time_sec"))
     if source.get("post_cache_total_time_sec") not in {"", None}:
         return fvalue(source.get("post_cache_total_time_sec"))
     parts = [
@@ -286,9 +296,6 @@ def build_t38_rows(
         selected_datasets = list(DEFAULT_RATIOS)
     for dataset in selected_datasets:
         ratio_list = [float(value) for value in (ratios if ratios is not None else DEFAULT_RATIOS[dataset])]
-        if dataset == "ogbn-arxiv" and not ratio_list:
-            rows.append(blocked_t38_row(dataset=dataset, ratio=0.0, seed=seed, reason="arxiv_unified_full_node_run_missing_or_teacher_limited"))
-            continue
         for ratio in ratio_list:
             emitted = False
             for comparison_type in _comparison_types_for(dataset, ratio):
