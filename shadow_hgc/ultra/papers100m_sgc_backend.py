@@ -64,12 +64,14 @@ def train_and_eval_sgc_condensed(
     epochs: int = 180,
     temperature: float = 1.5,
     lambda_hard: float = 0.75,
+    lambda_soft: float = 1.0,
     lambda_prior: float = 0.02,
     batch_size: int = 8192,
     eval_batch_size: int = 65536,
     device: str = "auto",
     ant_edge_dir: str | Path | None = None,
     sgc_hops: int = 1,
+    use_soft_targets: bool = True,
 ) -> dict[str, Any]:
     started = time.perf_counter()
     cache_root = ctx.cache_root
@@ -117,7 +119,10 @@ def train_and_eval_sgc_condensed(
         for start in range(0, num_rows, int(batch_size)):
             idx = perm[start : start + int(batch_size)]
             logits = model(x[idx])
-            loss = -(y[idx] * F.log_softmax(logits / temp, dim=1)).sum(dim=1).mean() * (temp * temp)
+            if bool(use_soft_targets) and float(lambda_soft) != 0.0:
+                loss = float(lambda_soft) * (-(y[idx] * F.log_softmax(logits / temp, dim=1)).sum(dim=1).mean() * (temp * temp))
+            else:
+                loss = logits.sum() * 0.0
             mask = hard_t[idx] >= 0
             if bool(mask.any().item()) and float(lambda_hard) != 0.0:
                 loss = loss + float(lambda_hard) * F.cross_entropy(logits[mask], hard_t[idx][mask].long())
@@ -168,6 +173,9 @@ def train_and_eval_sgc_condensed(
         "hidden_dim": int(hidden_dim),
         "epochs": int(epochs),
         "temperature": float(temperature),
+        "lambda_hard": float(lambda_hard),
+        "lambda_soft": float(lambda_soft),
         "lambda_prior": float(lambda_prior),
+        "uses_teacher_probs_as_soft_targets": bool(use_soft_targets),
         "ant_edges": ant_edges,
     }
