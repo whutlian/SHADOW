@@ -57,9 +57,11 @@ T38_MAIN_FIELDS: list[str] = [
     "failure_reason",
     "budget_per_class",
     "budget_phase_tau",
+    "budget_phase",
     "teacher_reliability_q",
     "teacher_cache_policy",
     "teacher_cache_mode",
+    "teacher_cache_k",
     "teacher_cache_bytes",
     "coverage_weight",
     "hard_weight",
@@ -74,11 +76,13 @@ T38_MAIN_FIELDS: list[str] = [
     "soft_temperature",
     "student_family",
     "student_internal_style",
+    "student_capacity",
     "hidden_dim",
     "epochs",
     "shared_cache_time_sec",
     "post_cache_time_sec",
     "total_storage_bytes",
+    "storage",
     "peak_cpu_ram",
     "peak_gpu_ram",
     "edge_cache_id",
@@ -216,6 +220,8 @@ def make_t38_row(
     }
     row.update(schedule_to_row_fields(schedule))
     row.update(fields)
+    if row.get("storage") in {"", None}:
+        row["storage"] = row.get("total_storage_bytes", "")
     for field in T38_MAIN_FIELDS:
         row.setdefault(field, "")
     return row

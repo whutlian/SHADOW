@@ -9,6 +9,7 @@ from typing import Any
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 
 from shadow_hgc.eval.resource import current_cpu_ram_bytes, current_gpu_ram_bytes
 from shadow_hgc.models.sft_teacher_v3 import SFTTeacherV3
@@ -152,6 +153,19 @@ def _build_lazy_model(
     activation: str,
     norm: str,
 ):
+    if str(model_type) == "stt_gated_mixer":
+        from shadow_hgc.sft.stt_gated_mixer import STTGatedMixer
+
+        return STTGatedMixer(
+            block_dims,
+            num_classes=int(num_classes),
+            hidden_dim=int(hidden_dim),
+            dropout=float(dropout),
+            internal_style="auto",
+            num_layers=int(num_layers),
+            activation=str(activation),
+            norm=str(norm),
+        )
     if str(model_type).endswith("_v2") or str(model_type).endswith("_v3") or str(model_type).endswith("_v4"):
         return SFTTeacherV3(
             block_dims,
@@ -267,6 +281,12 @@ def train_lazy_sft_from_memmap(
     eval_batch_size: int = 65_536,
     seed: int = 42,
     label_smoothing: float = 0.0,
+    eval_every: int = 1,
+    teacher_probs: torch.Tensor | np.ndarray | None = None,
+    lambda_hard: float = 1.0,
+    lambda_soft: float = 0.0,
+    lambda_prior: float = 0.0,
+    soft_temperature: float = 2.0,
 ) -> LazySFTTrainResult:
     started = time.perf_counter()
     torch.manual_seed(int(seed))
@@ -292,6 +312,14 @@ def train_lazy_sft_from_memmap(
     valid_rows = valid_rows.to(torch.long).cpu()
     test_rows = test_rows.to(torch.long).cpu()
     train_labels = labels[train_rows].to(torch.long)
+    teacher_probs_cpu: torch.Tensor | None = None
+    teacher_prior: torch.Tensor | None = None
+    if teacher_probs is not None and float(lambda_soft) > 0.0:
+        teacher_probs_cpu = torch.as_tensor(teacher_probs, dtype=torch.float32).cpu()
+        teacher_probs_cpu = teacher_probs_cpu.clamp_min(0.0)
+        teacher_probs_cpu = teacher_probs_cpu / teacher_probs_cpu.sum(dim=1, keepdim=True).clamp_min(1e-12)
+        teacher_prior = teacher_probs_cpu[train_rows].mean(dim=0)
+        teacher_prior = teacher_prior / teacher_prior.sum().clamp_min(1e-12)
     opt = torch.optim.AdamW(model.parameters(), lr=float(lr), weight_decay=float(weight_decay))
     best_valid: dict[str, Any] | None = None
     best_score = -1.0
@@ -323,29 +351,41 @@ def train_lazy_sft_from_memmap(
                 blocks = store.fetch(batch_rows, device=target_device)
                 y = labels[batch_rows].to(device=target_device, dtype=torch.long)
                 logits = model(blocks)
-                loss = sft_loss(logits, y, loss_type=current_loss_type, train_labels=train_labels.to(target_device), label_smoothing=label_smoothing)
+                if teacher_probs_cpu is not None:
+                    temp = max(float(soft_temperature), 1e-6)
+                    soft = teacher_probs_cpu[batch_rows].to(device=target_device, dtype=torch.float32)
+                    soft_loss = F.kl_div(F.log_softmax(logits / temp, dim=1), soft, reduction="batchmean") * (temp * temp)
+                    hard_loss = sft_loss(logits, y, loss_type=current_loss_type, train_labels=train_labels.to(target_device), label_smoothing=label_smoothing)
+                    loss = float(lambda_hard) * hard_loss + float(lambda_soft) * soft_loss
+                    if teacher_prior is not None and float(lambda_prior) != 0.0:
+                        pred_prior = torch.softmax(logits.float(), dim=1).mean(dim=0).clamp_min(1e-12)
+                        loss = loss + float(lambda_prior) * F.kl_div(pred_prior.log(), teacher_prior.to(target_device), reduction="sum")
+                else:
+                    loss = sft_loss(logits, y, loss_type=current_loss_type, train_labels=train_labels.to(target_device), label_smoothing=label_smoothing)
                 loss.backward()
                 opt.step()
                 batch_size_seen = int(batch_rows.numel())
                 total_loss += float(loss.detach().cpu().item()) * batch_size_seen
                 seen += batch_size_seen
-            valid = evaluate_lazy_sft(
-                model,
-                store,
-                labels,
-                valid_rows,
-                num_classes=int(num_classes),
-                batch_size=int(eval_batch_size),
-                device=target_device,
-            )
-            valid["epoch"] = int(current_epoch)
-            valid["train_loss"] = total_loss / max(1, seen)
-            score = float(valid["accuracy"]) + 0.05 * float(valid["macro_f1"])
-            if score > best_score:
-                best_score = score
-                best_valid = dict(valid)
-                best_state = {key: value.detach().cpu().clone() for key, value in model.state_dict().items()}
-            stage_valid = valid
+            should_eval = ((epoch + 1) % max(1, int(eval_every)) == 0) or (epoch + 1 == int(stage["epochs"]))
+            if should_eval:
+                valid = evaluate_lazy_sft(
+                    model,
+                    store,
+                    labels,
+                    valid_rows,
+                    num_classes=int(num_classes),
+                    batch_size=int(eval_batch_size),
+                    device=target_device,
+                )
+                valid["epoch"] = int(current_epoch)
+                valid["train_loss"] = total_loss / max(1, seen)
+                score = float(valid["accuracy"]) + 0.05 * float(valid["macro_f1"])
+                if score > best_score:
+                    best_score = score
+                    best_valid = dict(valid)
+                    best_state = {key: value.detach().cpu().clone() for key, value in model.state_dict().items()}
+                stage_valid = valid
         stage_summaries.append(
             {
                 "stage": int(stage_idx + 1),
@@ -378,6 +418,7 @@ def train_lazy_sft_from_memmap(
         "best_valid_score": float(best_score),
         "batch_size": int(batch_size),
         "eval_batch_size": int(eval_batch_size),
+        "eval_every": int(eval_every),
         "device": str(target_device),
         "block_dims": dict(store.block_dims),
         "num_blocks": int(len(store.block_dims)),
@@ -397,7 +438,12 @@ def train_lazy_sft_from_memmap(
         "loads_edge_index": False,
         "uses_logits_as_input": False,
         "uses_teacher_logits": False,
-        "uses_kd": False,
+        "uses_kd": bool(teacher_probs_cpu is not None),
+        "uses_teacher_probs_as_soft_targets": bool(teacher_probs_cpu is not None),
+        "lambda_hard": float(lambda_hard) if teacher_probs_cpu is not None else "",
+        "lambda_soft": float(lambda_soft) if teacher_probs_cpu is not None else "",
+        "lambda_prior": float(lambda_prior) if teacher_probs_cpu is not None else "",
+        "soft_temperature": float(soft_temperature) if teacher_probs_cpu is not None else "",
         "uses_dense_p2": False,
         "uses_bounded_edges": False,
         "uses_e_by_d_materialization": False,

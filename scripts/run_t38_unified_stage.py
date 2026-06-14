@@ -347,7 +347,7 @@ def main() -> None:
     parser.add_argument("--datasets", nargs="+", default=["all"])
     parser.add_argument("--ratios", nargs="+", type=float)
     parser.add_argument("--method", default=PUBLIC_METHOD_ID)
-    parser.add_argument("--teacher-cache-policy", default="auto_by_bytes")
+    parser.add_argument("--teacher-cache-policy", default="auto_topk_by_class")
     parser.add_argument("--one-cache", action="store_true")
     parser.add_argument("--reuse-existing-cache", action="store_true")
     parser.add_argument("--seed", type=int, default=42)
@@ -359,8 +359,8 @@ def main() -> None:
     args = parser.parse_args()
     if args.method != PUBLIC_METHOD_ID:
         raise SystemExit(f"T38 main runner only exposes method={PUBLIC_METHOD_ID}")
-    if args.teacher_cache_policy != "auto_by_bytes":
-        raise SystemExit("T38 main runner requires --teacher-cache-policy auto_by_bytes")
+    if args.teacher_cache_policy not in {"auto_topk_by_class", "auto_by_bytes"}:
+        raise SystemExit("T38 main runner requires --teacher-cache-policy auto_topk_by_class")
     path = write_t38_main_curve(args)
     print(json.dumps({"status": "completed", "csv": str(path)}, sort_keys=True))
 

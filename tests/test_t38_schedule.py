@@ -54,14 +54,17 @@ def test_t38_teacher_disabled_schedule_zeroes_teacher_terms() -> None:
     assert schedule.epochs == 220
 
 
-def test_t38_teacher_cache_policy_uses_byte_budget_not_dataset_name() -> None:
+def test_t38_teacher_cache_policy_uses_class_count_topk_for_main_method() -> None:
     small = compute_teacher_cache_policy(num_nodes=200_000, num_teacher_nodes=200_000, num_classes=41)
     medium = compute_teacher_cache_policy(num_nodes=2_449_029, num_teacher_nodes=2_449_029, num_classes=47)
     ultra = compute_teacher_cache_policy(num_nodes=111_059_956, num_teacher_nodes=1_546_782, num_classes=172)
 
-    assert small.cache_mode == "dense_fp16"
-    assert medium.cache_mode == "dense_fp16"
+    assert small.cache_mode == "topk4_tail"
+    assert small.cache_k == 4
+    assert medium.cache_mode == "topk4_tail"
+    assert medium.cache_k == 4
     assert ultra.cache_mode == "topk8_tail"
+    assert ultra.cache_k == 8
     assert ultra.uses_dense_all_node_teacher_cache is False
 
 

@@ -13,6 +13,7 @@ DEFAULT_TEACHER_CACHE_DENSE_BUDGET_BYTES = 256 * MI_B
 class TeacherCacheDecision:
     policy: str
     cache_mode: str
+    cache_k: int
     dense_bytes: int
     cache_bytes: int
     uses_dense_all_node_teacher_cache: bool
@@ -121,27 +122,18 @@ def compute_teacher_cache_policy(
     num_classes: int,
     dense_budget_bytes: int = DEFAULT_TEACHER_CACHE_DENSE_BUDGET_BYTES,
 ) -> TeacherCacheDecision:
+    del dense_budget_bytes
     dense_bytes = int(num_teacher_nodes) * int(num_classes) * 2
-    if int(num_nodes) > 10_000_000:
-        mode = "topk8_tail" if int(num_classes) > 64 else "topk4_tail"
-    elif dense_bytes <= int(dense_budget_bytes):
-        mode = "dense_fp16"
-    else:
-        mode = "topk8_tail" if int(num_classes) > 64 else "topk4_tail"
-
-    if mode == "dense_fp16":
-        cache_bytes = dense_bytes
-        dense_all_node = int(num_teacher_nodes) == int(num_nodes)
-    else:
-        k = 8 if mode == "topk8_tail" else 4
-        cache_bytes = _topk_cache_bytes(num_teacher_nodes, num_classes, k)
-        dense_all_node = False
+    k = 4 if int(num_classes) <= 64 else 8
+    mode = f"topk{k}_tail"
+    cache_bytes = _topk_cache_bytes(num_teacher_nodes, num_classes, k)
     return TeacherCacheDecision(
-        policy="auto_by_bytes",
+        policy="auto_topk_by_class",
         cache_mode=mode,
+        cache_k=k,
         dense_bytes=dense_bytes,
         cache_bytes=cache_bytes,
-        uses_dense_all_node_teacher_cache=dense_all_node and int(num_nodes) > 10_000_000,
+        uses_dense_all_node_teacher_cache=False,
     )
 
 
@@ -191,9 +183,11 @@ def schedule_to_row_fields(schedule: UnifiedSchedule) -> dict[str, Any]:
     return {
         "budget_per_class": schedule.budget_per_class,
         "budget_phase_tau": schedule.budget_phase_tau,
+        "budget_phase": schedule.budget_phase_tau,
         "teacher_reliability_q": schedule.teacher_reliability_q,
         "teacher_cache_policy": schedule.teacher_cache.policy,
         "teacher_cache_mode": schedule.teacher_cache.cache_mode,
+        "teacher_cache_k": schedule.teacher_cache.cache_k,
         "teacher_cache_bytes": schedule.teacher_cache.cache_bytes,
         "coverage_weight": schedule.selection_weights["coverage"],
         "hard_weight": schedule.selection_weights["hard"],
@@ -208,6 +202,7 @@ def schedule_to_row_fields(schedule: UnifiedSchedule) -> dict[str, Any]:
         "soft_temperature": schedule.soft_temperature,
         "student_family": schedule.student_family,
         "student_internal_style": schedule.student_internal_style,
+        "student_capacity": f"{schedule.student_family}:{schedule.student_internal_style}:h{schedule.hidden_dim}:e{schedule.epochs}",
         "hidden_dim": schedule.hidden_dim,
         "epochs": schedule.epochs,
         "uses_dense_all_node_teacher_cache": schedule.teacher_cache.uses_dense_all_node_teacher_cache,
