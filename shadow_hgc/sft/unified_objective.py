@@ -7,6 +7,7 @@ from typing import Any
 import numpy as np
 import torch
 
+from shadow_hgc.sft.domain_coverage import domain_train_all_undercoverage_scores, domain_undercoverage_scores
 from shadow_hgc.train.lazy_sft_memmap import load_manifest_block_store
 
 
@@ -67,6 +68,7 @@ def build_unified_ranked_prefixes(
     seed: int,
     selection_weights: dict[str, float],
     teacher_probs: np.ndarray | None = None,
+    domain_bucket_ids: np.ndarray | None = None,
 ) -> dict[int, torch.Tensor]:
     requested = sorted({max(1, int(value)) for value in budgets})
     if not requested:
@@ -86,6 +88,18 @@ def build_unified_ranked_prefixes(
     rare = rare / max(float(rare.max(initial=1.0)), 1e-12)
     rng = np.random.default_rng(int(seed))
     diversity = rng.uniform(0.0, 1.0, size=rows.numel())
+    domain = np.zeros(rows.numel(), dtype=np.float32)
+    if domain_bucket_ids is not None:
+        all_domain = np.asarray(domain_bucket_ids)
+        row_np = rows.numpy()
+        if all_domain.shape[0] == rows.numel():
+            domain_buckets = all_domain
+            domain = domain_undercoverage_scores(domain_buckets).astype(np.float32)
+        elif all_domain.shape[0] > int(row_np.max(initial=0)):
+            domain_buckets = all_domain[row_np]
+            domain = domain_train_all_undercoverage_scores(all_domain, row_np)[row_np].astype(np.float32)
+        else:
+            raise ValueError("domain_bucket_ids must be aligned to train_rows or contain all node rows")
     soft = np.zeros(rows.numel(), dtype=np.float32)
     boundary = np.zeros(rows.numel(), dtype=np.float32)
     if teacher_probs is not None:
@@ -101,6 +115,7 @@ def build_unified_ranked_prefixes(
     score = (
         weights.get("coverage", 0.0) * coverage
         + weights.get("hard", 0.0)
+        + weights.get("domain", 0.0) * domain
         + weights.get("soft", 0.0) * soft
         + weights.get("boundary", 0.0) * boundary
         + weights.get("rare", 0.0) * rare
@@ -147,6 +162,7 @@ def select_unified_prefixes_from_memmap(
     selection_weights: dict[str, float],
     feature_block: str = "X0",
     teacher_probs_path: str | Path | None = None,
+    domain_bucket_ids: np.ndarray | None = None,
 ) -> dict[int, torch.Tensor]:
     store = load_manifest_block_store(manifest_dir).subset([feature_block])
     key = "self" if str(feature_block) == "X0" else str(feature_block).lower()
@@ -164,4 +180,5 @@ def select_unified_prefixes_from_memmap(
         seed=int(seed),
         selection_weights=selection_weights,
         teacher_probs=teacher_probs,
+        domain_bucket_ids=domain_bucket_ids,
     )
