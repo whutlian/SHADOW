@@ -178,10 +178,21 @@ def run_medium_dataset(args: argparse.Namespace, dataset: str, ratios: list[floa
     candidate_rows: list[dict[str, Any]] = []
     prefixes_by_policy: dict[str, dict[int, torch.Tensor]] = {}
     selection_time_by_policy: dict[str, float] = {}
+    reservoir_mode = str(getattr(args, "reservoir_mode", "staged"))
     for policy in args.candidate_policies:
         schedule = _candidate_schedule(dataset, max_budget, teacher_valid_acc, domain_gap, args, str(policy))
+        stage_selection_weights = {
+            int(budget): dict(_candidate_schedule(dataset, int(budget), teacher_valid_acc, domain_gap, args, str(policy)).selection_weights)
+            for budget in budgets
+        }
         selection_started = time.perf_counter()
-        print(json.dumps({"event": "selection_start", "dataset": dataset, "policy": policy, "max_budget": max_budget}, sort_keys=True), flush=True)
+        print(
+            json.dumps(
+                {"event": "selection_start", "dataset": dataset, "policy": policy, "max_budget": max_budget, "reservoir_mode": reservoir_mode},
+                sort_keys=True,
+            ),
+            flush=True,
+        )
         prefixes_by_policy[str(policy)] = select_unified_prefixes_from_memmap(
             labels=labels,
             train_rows=train_rows,
@@ -190,13 +201,20 @@ def run_medium_dataset(args: argparse.Namespace, dataset: str, ratios: list[floa
             num_classes=NUM_CLASSES[dataset],
             seed=int(args.seed),
             selection_weights=schedule.selection_weights,
+            stage_selection_weights=stage_selection_weights if reservoir_mode == "staged" else None,
             teacher_probs_path=teacher_probs_path,
             domain_bucket_ids=domain_buckets,
         )
         selection_time_by_policy[str(policy)] = float(time.perf_counter() - selection_started)
         print(
             json.dumps(
-                {"event": "selection_done", "dataset": dataset, "policy": policy, "selection_time_sec": selection_time_by_policy[str(policy)]},
+                {
+                    "event": "selection_done",
+                    "dataset": dataset,
+                    "policy": policy,
+                    "selection_time_sec": selection_time_by_policy[str(policy)],
+                    "reservoir_mode": reservoir_mode,
+                },
                 sort_keys=True,
             ),
             flush=True,
@@ -276,7 +294,13 @@ def run_medium_dataset(args: argparse.Namespace, dataset: str, ratios: list[floa
                         if teacher_probs_path
                         else "teacher_disabled"
                     ),
-                    reservoir_cache_id=reservoir_cache_id(dataset, seed=int(args.seed), policy=policy, max_budget=max_budget, domain_gap=domain_gap),
+                    reservoir_cache_id=reservoir_cache_id(
+                        dataset,
+                        seed=int(args.seed),
+                        policy=f"{policy}_{reservoir_mode}",
+                        max_budget=max_budget,
+                        domain_gap=domain_gap,
+                    ),
                     cache_reused=True,
                     incremental_edge_scans_after_cache_build=0,
                     uses_teacher_probs_as_soft_targets=bool(teacher_probs_path),
@@ -289,7 +313,7 @@ def run_medium_dataset(args: argparse.Namespace, dataset: str, ratios: list[floa
                     predicted_classes=int(test.get("predicted_class_count", 0)),
                     table_role="candidate",
                     promotion_status="diagnostic",
-                    notes="T40 fixed candidate policy row; validation is used only for policy selection",
+                    notes=f"T40 fixed candidate policy row using {reservoir_mode} nested reservoir; validation is used only for policy selection",
                     **_schedule_fields(schedule),
                     **diag,
                 )
@@ -723,6 +747,7 @@ def main() -> None:
     parser.add_argument("--teacher-cache-policy", default="auto_by_bytes")
     parser.add_argument("--dense-cache-budget-mb", type=int, default=256)
     parser.add_argument("--candidate-policies", nargs="+", default=list(FIXED_CANDIDATE_POLICIES))
+    parser.add_argument("--reservoir-mode", choices=["staged", "legacy"], default="staged")
     parser.add_argument("--arxiv-manifest-dir", default="experiments/preprop/t22_ogbn_arxiv_seed42")
     parser.add_argument("--products-manifest-dir", default="experiments/preprop/t22_ogbn_products_seed42")
     parser.add_argument("--reddit-manifest-dir", default="experiments/preprop/t24_reddit_streaming_seed42")
