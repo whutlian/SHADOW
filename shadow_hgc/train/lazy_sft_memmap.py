@@ -10,8 +10,10 @@ from typing import Any
 import numpy as np
 import torch
 import torch.nn.functional as F
+from torch import nn
 
 from shadow_hgc.eval.resource import current_cpu_ram_bytes, current_gpu_ram_bytes
+from shadow_hgc.models.sft_teacher import _TorchBlockStandardizer, _contains_forbidden_logit_name
 from shadow_hgc.models.sft_teacher_v3 import SFTTeacherV3
 from shadow_hgc.models.sft_table_teacher import SFTTableTeacherV2
 from shadow_hgc.train.train_sft_teacher import sft_loss
@@ -138,6 +140,86 @@ def _load_block_stats_into_model(model: SFTTableTeacherV2, store: LazyMemmapBloc
         normalizer.frozen = True
 
 
+class _ConcatTableStudent(nn.Module):
+    def __init__(
+        self,
+        block_dims: dict[str, int],
+        *,
+        num_classes: int,
+        model_type: str,
+        hidden_dim: int,
+        dropout: float,
+        num_layers: int,
+        activation: str,
+        norm: str,
+    ) -> None:
+        super().__init__()
+        if not block_dims:
+            raise ValueError("at least one SFT block is required")
+        forbidden = [name for name in block_dims if _contains_forbidden_logit_name(str(name))]
+        if forbidden:
+            raise ValueError(f"teacher/logit blocks are forbidden as table student inputs: {forbidden}")
+        if str(model_type) not in {"linear_probe", "concat_mlp"}:
+            raise ValueError("model_type must be linear_probe or concat_mlp")
+        from shadow_hgc.models.sagn_lite import make_mlp
+
+        self.block_dims = {str(name): int(dim) for name, dim in block_dims.items()}
+        self.block_names = list(self.block_dims)
+        self.num_classes = int(num_classes)
+        self.model_type = str(model_type)
+        self.hidden_dim = int(hidden_dim)
+        self.normalizers = nn.ModuleDict({name: _TorchBlockStandardizer(dim, name=name) for name, dim in self.block_dims.items()})
+        input_dim = int(sum(self.block_dims.values()))
+        if self.model_type == "linear_probe":
+            self.encoder = nn.Identity()
+            self.classifier = nn.Linear(input_dim, int(num_classes))
+        else:
+            self.encoder = make_mlp(
+                input_dim,
+                int(hidden_dim),
+                num_layers=max(1, int(num_layers)),
+                dropout=float(dropout),
+                activation=str(activation),
+                norm=str(norm),
+            )
+            self.classifier = nn.Linear(int(hidden_dim), int(num_classes))
+
+    def _check(self, blocks: dict[str, torch.Tensor]) -> None:
+        for name, dim in self.block_dims.items():
+            if name not in blocks:
+                raise ValueError(f"missing SFT block {name}")
+            if blocks[name].ndim != 2 or int(blocks[name].shape[1]) != int(dim):
+                raise ValueError(f"{name}: expected dim {dim}, got {tuple(blocks[name].shape)}")
+
+    def _normalized(self, blocks: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
+        return {name: self.normalizers[name](blocks[name].to(torch.float32)) for name in self.block_dims}
+
+    def forward(self, blocks: dict[str, torch.Tensor]) -> torch.Tensor:
+        self._check(blocks)
+        normalized = self._normalized(blocks)
+        first = normalized[self.block_names[0]]
+        x = torch.cat([normalized[name].to(device=first.device, dtype=first.dtype) for name in self.block_names], dim=1)
+        return self.classifier(self.encoder(x))
+
+    def block_norm_metadata(self) -> dict:
+        return {name: self.normalizers[name].metadata() for name in self.block_dims}
+
+    def diagnostics(self) -> dict[str, Any]:
+        return {
+            "model_type": self.model_type,
+            "student_family": self.model_type,
+            "student_internal_style": "concat_linear" if self.model_type == "linear_probe" else "concat_mlp",
+            "block_dims": dict(self.block_dims),
+            "block_norm_stats": self.block_norm_metadata(),
+            "block_norm_stats_source": "train_target_rows",
+            "uses_logits_as_input": False,
+            "uses_teacher_logits": False,
+            "uses_kd": False,
+            "uses_full_graph_backprop": False,
+            "final_logits_activation": "none",
+        }
+
+
 def _build_lazy_model(
     block_dims: dict[str, int],
     *,
@@ -154,6 +236,17 @@ def _build_lazy_model(
     activation: str,
     norm: str,
 ):
+    if str(model_type) in {"linear_probe", "concat_mlp"}:
+        return _ConcatTableStudent(
+            block_dims,
+            num_classes=int(num_classes),
+            model_type=str(model_type),
+            hidden_dim=int(hidden_dim),
+            dropout=float(dropout),
+            num_layers=int(num_layers),
+            activation=str(activation),
+            norm=str(norm),
+        )
     if str(model_type) == "stt_gated_mixer":
         from shadow_hgc.sft.stt_gated_mixer import STTGatedMixer
 
@@ -437,6 +530,7 @@ def train_lazy_sft_from_memmap(
         "max_batch_materialized_bytes": int(store.max_batch_materialized_bytes),
         "peak_cpu_ram_gb": current_cpu_ram_bytes() / (1024**3),
         "peak_gpu_ram_gb": current_gpu_ram_bytes() / (1024**3),
+        "trainable_params": int(sum(value.numel() for value in model.parameters() if value.requires_grad)),
         "uses_lazy_memmap": True,
         "loads_edge_index": False,
         "uses_logits_as_input": False,
