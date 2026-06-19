@@ -19,6 +19,20 @@ def _ratio_dir_name(ratio: float) -> str:
     return f"ratio={float(ratio):.12g}".replace("+", "")
 
 
+def _safe_component(value: str) -> str:
+    return "".join(ch if ch.isalnum() or ch in {"-", "_", ".", "="} else "_" for ch in str(value))
+
+
+def _condensed_dir(ctx: Papers100MCacheContext, ratio: float, *, policy: str | None = None, seed: int | None = None) -> Path:
+    policy_value = _safe_component(str(ctx.selection_policy if policy is None else policy))
+    seed_value = int(ctx.seed if seed is None else seed)
+    return ctx.cache_root / "condensed" / f"policy={policy_value}_seed{seed_value}" / _ratio_dir_name(float(ratio))
+
+
+def _legacy_condensed_dir(ctx: Papers100MCacheContext, ratio: float) -> Path:
+    return ctx.cache_root / "condensed" / _ratio_dir_name(float(ratio))
+
+
 def _concat_sft(cache_root: Path, target_size: int, feature_dim: int, rows: np.ndarray) -> np.ndarray:
     blocks = [
         np.memmap(cache_root / "sft" / "X0_target.fp16.memmap", mode="r", dtype=np.float16, shape=(target_size, feature_dim)),
@@ -93,7 +107,11 @@ def train_and_eval_condensed_table(
 ) -> dict[str, Any]:
     started = time.perf_counter()
     cache_root = ctx.cache_root
-    out_dir = cache_root / "condensed" / _ratio_dir_name(float(ratio))
+    out_dir = _condensed_dir(ctx, float(ratio))
+    if not (out_dir / "condensed_manifest.json").exists():
+        legacy = _legacy_condensed_dir(ctx, float(ratio))
+        if (legacy / "condensed_manifest.json").exists():
+            out_dir = legacy
     manifest = read_json(out_dir / "condensed_manifest.json")
     num_rows = int(manifest["condensed_nodes"])
     z_shape = tuple(int(v) for v in manifest["z_shape"])
@@ -202,7 +220,7 @@ def materialize_condensed_table(ctx: Papers100MCacheContext, ratio: float, *, po
     bank = load_selection_bank(cache_root, policy=policy, seed=seed)
     selected = bank.select_prefix(float(ratio), full_node_denominator=denominator)
     rows = np.asarray(selected, dtype=np.int64)
-    out_dir = cache_root / "condensed" / _ratio_dir_name(float(ratio))
+    out_dir = _condensed_dir(ctx, float(ratio), policy=policy, seed=seed)
     out_dir.mkdir(parents=True, exist_ok=True)
     z = _concat_sft(cache_root, target_size, feature_dim, rows)
     z_mm = np.memmap(out_dir / "z_syn.fp16.memmap", mode="w+", dtype=np.float16, shape=z.shape)
@@ -248,13 +266,16 @@ def materialize_condensed_table(ctx: Papers100MCacheContext, ratio: float, *, po
         "condensed_edges": 0,
         "z_shape": list(z.shape),
         "source_node_ids_shape": [int(rows.size)],
+        "selection_policy": str(policy),
+        "seed": int(seed),
+        "condensed_dir": str(out_dir.relative_to(cache_root)),
         "teacher_cache_mode": ctx.teacher.get("teacher_cache_mode", ""),
         "parent_cache_ids": ids_dict,
         "condensed_cache_bytes": condensed_bytes,
         "condensed_materialize_time": float(time.perf_counter() - started),
         "created_at": utc_now(),
     }
-    manifest["condensed_cache_id"] = stable_hash({"ratio": float(ratio), "parents": ids_dict, "rows": int(rows.size)})
+    manifest["condensed_cache_id"] = stable_hash({"ratio": float(ratio), "policy": str(policy), "seed": int(seed), "parents": ids_dict, "rows": int(rows.size)})
     write_json(out_dir / "condensed_manifest.json", manifest)
     row = make_t35_row(
         requested_full_node_ratio=float(ratio),
